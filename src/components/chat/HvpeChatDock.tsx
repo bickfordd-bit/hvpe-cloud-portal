@@ -30,16 +30,25 @@ export default function HvpeChatDock() {
       const res = await fetch("/api/hvpe-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: nextMessages })
+        body: JSON.stringify({
+          messages: nextMessages.map((m) => ({
+            role: m.role,
+            content: m.content
+          }))
+        })
       });
 
       if (!res.ok) {
+        const errorText = await res.text();
+        console.error("hvpe-chat error:", errorText);
         throw new Error(`HTTP ${res.status}`);
       }
 
       const data = await res.json();
       const replyText =
-        typeof data?.reply?.content === "string"
+        typeof data?.reply === "string"
+          ? data.reply
+          : typeof data?.reply?.content === "string"
           ? data.reply.content
           : "No response received.";
 
