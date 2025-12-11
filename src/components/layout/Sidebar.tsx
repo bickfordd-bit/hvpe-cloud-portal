@@ -24,6 +24,7 @@ const navSections: { section: string; items: NavItem[] }[] = [
       { label: "Live Dashboard", key: "engine-dashboard", href: "/trading" },
       { label: "Trade Packets", key: "trade-packets", href: "/packets" },
       { label: "Arbitrator", key: "arbitrator", href: "/arbitrator" },
+      { label: "OPTR", key: "optr", href: "/dashboard/optr" }
     ],
   },
   {
