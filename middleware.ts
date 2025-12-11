@@ -3,11 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 // Session cookie for auth
 const SESSION_COOKIE_NAME = "optr";
 
-function isLoggedIn(req: NextRequest): boolean {
-  const cookie = req.cookies.get(SESSION_COOKIE_NAME)?.value;
-  return !!cookie;
-}
-
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -20,7 +15,8 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (isLoggedIn(req)) {
+  const cookie = req.cookies.get(SESSION_COOKIE_NAME)?.value;
+  if (cookie) {
     return NextResponse.next();
   }
 
