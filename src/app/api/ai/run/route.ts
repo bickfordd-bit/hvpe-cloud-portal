@@ -4,7 +4,9 @@ import { runChat } from "@/lib/ai/openaiClient";
 
 type Mode =
   | "optr-gap-analysis"
+  | "optr-bid-draft"
   | "bic-objective-plan"
+  | "bic-exec-summary"
   | "hvpe-idea"
   | "generic";
 
@@ -23,6 +25,19 @@ function buildPrompt(mode: Mode, payload: any) {
         }
       ];
 
+    case "optr-bid-draft":
+      return [
+        {
+          role: "system" as const,
+          content:
+            "You are OPTR, drafting a concise response for a government bid. Write crisp sections with compliance language, avoid fluff, and align to the provided RFP language."
+        },
+        {
+          role: "user" as const,
+          content: `RFP section:\n${payload?.rfp || ""}\n\nOur capabilities/background:\n${payload?.capabilities || ""}\n\nRequested sections:\n${payload?.sections || ""}`
+        }
+      ];
+
     case "bic-objective-plan":
       return [
         {
@@ -33,6 +48,19 @@ function buildPrompt(mode: Mode, payload: any) {
         {
           role: "user" as const,
           content: `Objective:\n${payload?.objective || ""}\n\nContext:\n${payload?.context || ""}`
+        }
+      ];
+
+    case "bic-exec-summary":
+      return [
+        {
+          role: "system" as const,
+          content:
+            "You are BIC writing a terse executive summary for leadership. Provide 3-5 bullets: outcome, impact, risk, next steps."
+        },
+        {
+          role: "user" as const,
+          content: `Topic:\n${payload?.topic || ""}\n\nKey facts:\n${payload?.facts || ""}`
         }
       ];
 

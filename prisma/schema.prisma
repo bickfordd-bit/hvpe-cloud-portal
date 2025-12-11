@@ -35,6 +35,7 @@ model AiUsageLog {
   tenantId         String?
   userId           String?
   mode             String?
+  taskType         String?
   model            String?
   promptTokens     Int?
   completionTokens Int?
