@@ -2,8 +2,8 @@ import { cookies } from "next/headers";
 
 const SESSION_COOKIE_NAME = "optr";
 
-export default function DashboardPage() {
-  const cookieStore = cookies();
+export default async function DashboardPage() {
+  const cookieStore = await cookies();
   const raw = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   let email = "Unknown";
   let role = "user";
