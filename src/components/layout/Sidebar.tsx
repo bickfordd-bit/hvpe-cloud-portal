@@ -10,6 +10,7 @@ type NavItem = {
   label: string;
   key: string;
   href?: string;
+  external?: boolean;
 };
 
 const navSections: { section: string; items: NavItem[] }[] = [
@@ -49,6 +50,12 @@ const navSections: { section: string; items: NavItem[] }[] = [
       { label: "Configurations", key: "config" },
       { label: "Licensing & Billing", key: "license", href: "/license" },
       { label: "Investor View", key: "investor", href: "/investor" },
+      {
+        label: "DoD Portal",
+        key: "dod-portal",
+        href: "https://hvpe-dod-portal-new.vercel.app",
+        external: true
+      }
     ],
   },
 ];
@@ -111,6 +118,19 @@ export function Sidebar() {
                   );
 
                   if (item.href) {
+                    if (item.external) {
+                      return (
+                        <a
+                          key={item.key}
+                          href={item.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={itemClass}
+                        >
+                          {itemContent}
+                        </a>
+                      );
+                    }
                     return (
                       <Link key={item.key} href={item.href} className={itemClass}>
                         {itemContent}

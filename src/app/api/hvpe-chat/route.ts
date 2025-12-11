@@ -2,10 +2,6 @@ import OpenAI from "openai";
 
 export const runtime = "nodejs";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
-
 type Role = "user" | "assistant" | "system";
 type ChatMessage = { role: Role; content: string };
 type Persona = "trader" | "founder" | "investor" | "dod";
@@ -96,6 +92,7 @@ export async function POST(req: Request) {
         500
       );
     }
+    const client = getOpenAIClient(apiKey);
 
     const body = (await req.json().catch(() => null)) as
       | {
@@ -324,4 +321,8 @@ function formatContext(context: any): string {
   } catch {
     return String(context);
   }
+}
+
+function getOpenAIClient(apiKey: string) {
+  return new OpenAI({ apiKey });
 }

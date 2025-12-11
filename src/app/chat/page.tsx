@@ -1,7 +1,7 @@
 // src/app/chat/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import DoDLayout from "@/components/layout/DoDLayout";
 import { Send, Shield, Crosshair, Cpu, Workflow } from "lucide-react";
 
@@ -150,7 +150,7 @@ function ModeSelector({
   mode: Mode;
   onChange: (m: Mode) => void;
 }) {
-  const modes: { id: Mode; label: string; icon: JSX.Element }[] = [
+  const modes: { id: Mode; label: string; icon: ReactNode }[] = [
     { id: "general", label: "General", icon: <Shield size={14} /> },
     { id: "optr", label: "OPTR", icon: <Crosshair size={14} /> },
     { id: "bic", label: "BIC", icon: <Cpu size={14} /> },
