@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// TODO: replace with your real session cookie name
-const SESSION_COOKIE_NAME = "hvpe_session";
+// Session cookie for auth
+const SESSION_COOKIE_NAME = "optr";
 
 function isLoggedIn(req: NextRequest): boolean {
-  const cookie = req.cookies.get(SESSION_COOKIE_NAME);
-  return Boolean(cookie?.value);
+  const cookie = req.cookies.get(SESSION_COOKIE_NAME)?.value;
+  return !!cookie;
 }
 
 export function middleware(req: NextRequest) {
