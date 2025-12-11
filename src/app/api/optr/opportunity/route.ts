@@ -11,7 +11,8 @@ export async function GET(req: NextRequest) {
       title: "Advanced Battle Management Support",
       agency: "Department of the Air Force",
       responseDate: "2026-01-14",
-      status: "Ready for Realization"
+      status: "Ready for Realization",
+      readinessScore: 78
     });
   }
 
@@ -34,12 +35,19 @@ export async function GET(req: NextRequest) {
       throw new Error("No record found");
     }
 
+    const readinessScore = score({
+      title: record.title,
+      agency: record.agency,
+      responseDate: record.responseDate
+    });
+
     return NextResponse.json({
       id: record.noticeId || id,
       title: record.title || "Untitled Opportunity",
       agency: record.agency || "Unknown Agency",
       responseDate: record.responseDate || "TBD",
-      status: record.status || "Evaluation"
+      status: record.status || statusFromScore(readinessScore),
+      readinessScore
     });
   } catch (err) {
     console.error("SAM.gov detail fallback:", err);
@@ -48,7 +56,46 @@ export async function GET(req: NextRequest) {
       title: "Advanced Battle Management Support",
       agency: "Department of the Air Force",
       responseDate: "2026-01-14",
-      status: "Ready for Realization"
+      status: "Ready for Realization",
+      readinessScore: 78
     });
   }
+}
+
+type SamRecord = { title?: string; agency?: string; responseDate?: string };
+
+function score(rec: SamRecord): number {
+  let s = 50;
+  const title = (rec.title || "").toLowerCase();
+  const agency = (rec.agency || "").toLowerCase();
+
+  if (title.includes("ai") || title.includes("ml")) s += 10;
+  if (title.includes("cyber") || title.includes("security")) s += 8;
+  if (title.includes("cloud")) s += 5;
+  if (title.includes("maintenance") || title.includes("logistics")) s += 5;
+  if (agency.includes("air force")) s += 4;
+  if (agency.includes("army") || agency.includes("peo")) s += 3;
+
+  const days = daysUntil(rec.responseDate);
+  if (days !== null) {
+    if (days <= 7) s += 8;
+    else if (days <= 14) s += 6;
+    else if (days <= 30) s += 3;
+  }
+
+  return Math.max(30, Math.min(97, s));
+}
+
+function statusFromScore(score: number): string {
+  if (score >= 80) return "READY";
+  if (score >= 65) return "EVALUATE";
+  return "REVIEW";
+}
+
+function daysUntil(dateStr?: string): number | null {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return null;
+  const diff = d.getTime() - Date.now();
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
 }

@@ -50,7 +50,7 @@ export async function GET() {
         agency: rec.agency || "Unknown Agency",
         responseDate: rec.responseDate || "TBD",
         readinessScore,
-        status: readinessScore >= 75 ? "READY" : readinessScore >= 55 ? "EVALUATE" : "REVIEW"
+        status: statusFromScore(readinessScore)
       };
     });
 
@@ -68,12 +68,38 @@ export async function GET() {
 function score(rec: SamRecord): number {
   let s = 50;
   const title = (rec.title || "").toLowerCase();
+  const agency = (rec.agency || "").toLowerCase();
+
   if (title.includes("ai") || title.includes("ml")) s += 10;
   if (title.includes("cyber") || title.includes("security")) s += 8;
   if (title.includes("cloud")) s += 5;
   if (title.includes("maintenance") || title.includes("logistics")) s += 5;
-  if ((rec.agency || "").toLowerCase().includes("air force")) s += 4;
-  return Math.min(95, s);
+  if (agency.includes("air force")) s += 4;
+  if (agency.includes("army") || agency.includes("peo")) s += 3;
+
+  // nudge for closer deadlines (sooner = higher priority)
+  const days = daysUntil(rec.responseDate);
+  if (days !== null) {
+    if (days <= 7) s += 8;
+    else if (days <= 14) s += 6;
+    else if (days <= 30) s += 3;
+  }
+
+  return Math.max(30, Math.min(97, s));
+}
+
+function daysUntil(dateStr?: string): number | null {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return null;
+  const diff = d.getTime() - Date.now();
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
+function statusFromScore(score: number): string {
+  if (score >= 80) return "READY";
+  if (score >= 65) return "EVALUATE";
+  return "REVIEW";
 }
 
 function placeholderResults(): OptrListing[] {

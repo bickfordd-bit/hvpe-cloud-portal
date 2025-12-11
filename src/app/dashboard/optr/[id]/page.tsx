@@ -47,6 +47,11 @@ export default function OPTRWorkspace({ params }: { params: { id: string } }) {
         <div>
           <p className="text-sm text-neutral-400">OPTR Status:</p>
           <p className="text-xl">{opp.status}</p>
+          {typeof opp.readinessScore === "number" && (
+            <p className="text-sm text-neutral-400">
+              Readiness Score: {opp.readinessScore}%
+            </p>
+          )}
         </div>
 
         <button
