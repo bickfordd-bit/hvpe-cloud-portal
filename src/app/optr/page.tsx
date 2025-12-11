@@ -3,6 +3,7 @@
 
 import DoDLayout from "@/components/layout/DoDLayout";
 import { Filter, ArrowUpRight, FileText, AlertTriangle } from "lucide-react";
+import { BidSubmissionTracker } from "@/components/optr/BidSubmissionTracker";
 
 type Phase = "R" | "E" | "P" | "S";
 
@@ -201,6 +202,9 @@ export default function OPTRPage() {
             </table>
           </div>
         </div>
+
+        {/* Bid submission tracker */}
+        <BidSubmissionTracker opportunities={mockData} />
 
         {/* Legend */}
         <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600">
