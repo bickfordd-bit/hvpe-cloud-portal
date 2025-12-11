@@ -58,7 +58,16 @@ export default function OPTRWorkspace({ params }: { params: { id: string } }) {
               body: JSON.stringify({ id: params.id })
             });
             const out = await res.json();
-            alert("Submission generated: " + out.pdfUrl);
+            if (typeof out.pdfUrl === "string" && out.pdfUrl.startsWith("data:application/pdf")) {
+              const link = document.createElement("a");
+              link.href = out.pdfUrl;
+              link.download = out.fileName || `optr-submission-${params.id}.pdf`;
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+            } else {
+              alert("Submission generated: " + (out.pdfUrl || "No PDF URL"));
+            }
           }}
         >
           Generate Submission PDF
