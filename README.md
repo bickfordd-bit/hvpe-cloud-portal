@@ -52,5 +52,11 @@ curl -X POST https://your-domain/api/license/approve \
   - `optr-gap-analysis` (RFI/RFP delta analysis)
   - `bic-objective-plan` (goal/plan decomposition)
   - `hvpe-idea` (trading/growth idea)
+  - `hvpe-trade-narrative` (trading posture narrative)
+  - `bic-risk-summary` (risk + mitigations)
   - `generic` (provide your own `messages`)
 - Logs usage to `AiUsageLog` (Prisma)
+
+## Admin
+- AI usage logs: `/admin/ai-logs`
+- Protected by middleware; set `ADMIN_DASH_TOKEN` (use Bearer token or `?token=` query)
