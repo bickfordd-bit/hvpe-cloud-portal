@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 type NavItem = {
   label: string;
   key: string;
-  section: string;
 };
 
 const navSections: { section: string; items: NavItem[] }[] = [

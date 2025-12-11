@@ -2,15 +2,15 @@ import { Buffer } from "node:buffer";
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
-  apiVersion: "2023-10-16",
-});
+function getStripe() {
+  const secret = process.env.STRIPE_SECRET_KEY;
+  if (!secret) {
+    throw new Error("STRIPE_SECRET_KEY is not set");
+  }
+  return new Stripe(secret, {
+    apiVersion: "2025-11-17.clover",
+  });
+}
 const LICENSE_ACTIVATION_URL = process.env.LICENSE_ACTIVATION_URL;
 const LICENSE_ACTIVATION_TOKEN = process.env.LICENSE_ACTIVATION_TOKEN;
 
@@ -25,6 +25,7 @@ export async function POST(req: Request) {
 
   let event: Stripe.Event;
   try {
+    const stripe = getStripe();
     event = stripe.webhooks.constructEvent(
       rawBody,
       sig,

@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
-  apiVersion: "2023-10-16",
-});
+function getStripe() {
+  const secret = process.env.STRIPE_SECRET_KEY;
+  if (!secret) {
+    throw new Error("STRIPE_SECRET_KEY is not set");
+  }
+  return new Stripe(secret, {
+    apiVersion: "2025-11-17.clover",
+  });
+}
 
 const priceMap: Record<string, string> = {
   FOUNDING_MONTHLY: process.env.STRIPE_PRICE_FOUNDING_MONTHLY ?? "",
@@ -26,6 +32,7 @@ export async function POST(req: Request) {
     `https://${req.headers.get("host") ?? "localhost"}`;
 
   try {
+    const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],

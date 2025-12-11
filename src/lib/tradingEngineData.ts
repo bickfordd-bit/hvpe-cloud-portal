@@ -1,4 +1,4 @@
-type RiskMode = "conservative" | "balanced" | "aggressive";
+export type RiskMode = "conservative" | "balanced" | "aggressive";
 
 export type TradingPosition = {
   symbol: string;

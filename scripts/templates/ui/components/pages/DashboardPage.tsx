@@ -5,6 +5,7 @@ import { BillionaireTracker } from "@/components/widgets/BillionaireTracker";
 import { MoneyVelocityGauge } from "@/components/widgets/MoneyVelocityGauge";
 import { SupraHeatmap } from "@/components/widgets/SupraHeatmap";
 import { MetricMiniGrid } from "@/components/widgets/MetricMiniGrid";
+import { defaultDashboardData } from "@/lib/hvpeDashboardData";
 
 export function DashboardPage() {
   return (
@@ -12,20 +13,24 @@ export function DashboardPage() {
       {/* Top row: Engine + Velocity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
-          <EngineStatusPanel />
+          <EngineStatusPanel data={defaultDashboardData.engineStatus} />
         </div>
-        <MoneyVelocityGauge />
+        <MoneyVelocityGauge snapshot={defaultDashboardData.velocity} />
       </div>
 
       {/* Middle row: Metrics */}
-      <MetricMiniGrid />
+      <MetricMiniGrid metrics={defaultDashboardData.metricTiles} />
 
       {/* Bottom row: Billionaire tracker + supra heatmap */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
-          <BillionaireTracker />
+          <BillionaireTracker
+            target={defaultDashboardData.billionaires.target}
+            description={defaultDashboardData.billionaires.description}
+            people={defaultDashboardData.billionaires.people}
+          />
         </div>
-        <SupraHeatmap />
+        <SupraHeatmap heatmap={defaultDashboardData.heatmap} />
       </div>
     </div>
   );
