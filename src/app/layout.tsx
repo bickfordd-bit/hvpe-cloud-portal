@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { PersonaProvider } from "@/components/providers/PersonaProvider";
+import HvpeChatDock from "@/components/chat/HvpeChatDock";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,7 +19,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-black text-white">
       <body className={inter.className}>
-        <PersonaProvider>{children}</PersonaProvider>
+        <PersonaProvider>
+          {children}
+          <HvpeChatDock />
+        </PersonaProvider>
       </body>
     </html>
   );

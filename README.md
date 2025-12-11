@@ -5,6 +5,7 @@ Set these in `.env.local` (and in Vercel Project Settings → Environment Variab
 
 - `DATABASE_URL` (Postgres)
 - Other app-specific vars you already use (`STRIPE_SECRET_KEY`, webhook secrets, mail creds, etc.)
+- `OPENAI_API_KEY` (for the in-portal HVPE chat dock)
 
 ## Prisma setup (Postgres)
 1) Generate client (requires `DATABASE_URL` set):
@@ -39,3 +40,7 @@ curl -X POST https://your-domain/api/license/approve \
 - Dev server: `npm run dev`
 - Build: `npm run build`
 - Lint: `npm run lint`
+
+## HVPE chat dock
+- API: `POST /api/hvpe-chat` (requires `OPENAI_API_KEY`)
+- UI: floating chat button/dock on all pages via `HvpeChatDock`
