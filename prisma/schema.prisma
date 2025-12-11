@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model LicenseRequest {
+  id         String                @id @default(cuid())
+  email      String
+  name       String?
+  reason     String?
+  status     LicenseRequestStatus  @default(PENDING)
+  createdAt  DateTime              @default(now())
+  approvedAt DateTime?
+  licenseId  String?
+  license    License?              @relation(fields: [licenseId], references: [id])
+}
+
+model License {
+  id          String        @id @default(cuid())
+  key         String        @unique
+  email       String
+  status      LicenseStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+  activatedAt DateTime?
+  requests    LicenseRequest[]
+}
+
+enum LicenseRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LicenseStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
