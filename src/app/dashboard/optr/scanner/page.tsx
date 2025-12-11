@@ -39,6 +39,11 @@ export default function OPTRScanner() {
             <h2 className="text-xl font-semibold">{opp.title}</h2>
             <p className="text-sm text-neutral-400">{opp.agency}</p>
             <p className="mt-1 text-xs text-neutral-500">Due: {opp.responseDate}</p>
+            {typeof opp.readinessScore === "number" && (
+              <p className="mt-1 text-xs text-neutral-400">
+                Readiness: {opp.readinessScore}% · {opp.status}
+              </p>
+            )}
           </a>
         ))}
       </div>
