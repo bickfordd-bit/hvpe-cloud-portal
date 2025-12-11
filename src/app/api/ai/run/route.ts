@@ -7,7 +7,9 @@ type Mode =
   | "optr-bid-draft"
   | "bic-objective-plan"
   | "bic-exec-summary"
+  | "bic-risk-summary"
   | "hvpe-idea"
+  | "hvpe-trade-narrative"
   | "generic";
 
 function buildPrompt(mode: Mode, payload: any) {
@@ -64,6 +66,19 @@ function buildPrompt(mode: Mode, payload: any) {
         }
       ];
 
+    case "bic-risk-summary":
+      return [
+        {
+          role: "system" as const,
+          content:
+            "You are BIC acting as a risk officer. Summarize top risks and mitigations in short bullets. Be specific and actionable."
+        },
+        {
+          role: "user" as const,
+          content: `Context:\n${payload?.context || ""}\n\nKnown risks:\n${payload?.risks || ""}`
+        }
+      ];
+
     case "hvpe-idea":
       return [
         {
@@ -74,6 +89,19 @@ function buildPrompt(mode: Mode, payload: any) {
         {
           role: "user" as const,
           content: `Current focus:\n${payload?.focus || ""}\nConstraints:\n${payload?.constraints || ""}`
+        }
+      ];
+
+    case "hvpe-trade-narrative":
+      return [
+        {
+          role: "system" as const,
+          content:
+            "You are HVPE Supra narrating current trading posture. Provide a concise narrative: market context, posture, key positions, risk, and next action."
+        },
+        {
+          role: "user" as const,
+          content: `Markets:\n${payload?.markets || ""}\nPositions:\n${payload?.positions || ""}\nFocus:\n${payload?.focus || ""}`
         }
       ];
 
