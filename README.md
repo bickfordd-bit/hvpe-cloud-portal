@@ -6,6 +6,7 @@ Set these in `.env.local` (and in Vercel Project Settings → Environment Variab
 - `DATABASE_URL` (Postgres)
 - Other app-specific vars you already use (`STRIPE_SECRET_KEY`, webhook secrets, mail creds, etc.)
 - `OPENAI_API_KEY` (for the in-portal HVPE chat dock)
+- `HVPE_OPENAI_API_KEY` (preferred alias for AI Core; falls back to `OPENAI_API_KEY`)
 
 ## Prisma setup (Postgres)
 1) Generate client (requires `DATABASE_URL` set):
@@ -44,3 +45,12 @@ curl -X POST https://your-domain/api/license/approve \
 ## HVPE chat dock
 - API: `POST /api/hvpe-chat` (requires `OPENAI_API_KEY`)
 - UI: floating chat button/dock on all pages via `HvpeChatDock`
+
+## AI Core endpoint
+- API: `POST /api/ai/run` (preferred key `HVPE_OPENAI_API_KEY`)
+- Modes supported:
+  - `optr-gap-analysis` (RFI/RFP delta analysis)
+  - `bic-objective-plan` (goal/plan decomposition)
+  - `hvpe-idea` (trading/growth idea)
+  - `generic` (provide your own `messages`)
+- Logs usage to `AiUsageLog` (Prisma)

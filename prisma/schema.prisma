@@ -29,6 +29,21 @@ model License {
   requests    LicenseRequest[]
 }
 
+model AiUsageLog {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+  tenantId         String?
+  userId           String?
+  mode             String?
+  model            String?
+  promptTokens     Int?
+  completionTokens Int?
+  totalTokens      Int?
+  latencyMs        Int?
+  success          Boolean  @default(true)
+  errorMessage     String?
+}
+
 enum LicenseRequestStatus {
   PENDING
   APPROVED
