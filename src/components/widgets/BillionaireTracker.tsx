@@ -21,6 +21,32 @@ function getDaysUntilSale(dateString: string): number {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
+function calculateBillionairePath(totalValue: number, years: number): { 
+  requiredReturn: number; 
+  projectedValue: number; 
+  isAchievable: boolean 
+} {
+  const target = 1_000_000_000; // $1B
+  const currentValue = totalValue;
+  
+  if (currentValue >= target) {
+    return { requiredReturn: 0, projectedValue: currentValue, isAchievable: true };
+  }
+  
+  // Calculate required annual return to reach $1B
+  const requiredReturn = Math.pow(target / currentValue, 1 / years) - 1;
+  
+  // Assuming 15% annual return (conservative for high-growth investments)
+  const assumedReturn = 0.15;
+  const projectedValue = currentValue * Math.pow(1 + assumedReturn, years);
+  
+  return {
+    requiredReturn,
+    projectedValue,
+    isAchievable: projectedValue >= target
+  };
+}
+
 function getStatusColor(status: BillionairePerson['status']): string {
   switch (status) {
     case 'sold': return 'text-emerald-400';
@@ -38,6 +64,9 @@ export function BillionaireTracker({
   people: BillionairePerson[];
   description: string;
 }) {
+  const projection = calculateProjectedWealth(people);
+  const billionairePath = calculateBillionairePath(projection.totalValue, projection.timelineYears);
+  
   return (
     <Card>
       <div className="flex items-center justify-between mb-3">
@@ -46,7 +75,16 @@ export function BillionaireTracker({
             IP Portfolio Sale Tracker
           </div>
           <div className="mt-1 text-[11px] text-neutral-400">
-            Created IP awaiting sale through OPTR opportunities.
+            Projected Total Value: <span className="text-neutral-100 font-semibold">${projection.totalValue.toLocaleString("en-US")}</span>
+          </div>
+          <div className="text-[11px] text-neutral-400">
+            Timeline to Complete: <span className="text-neutral-100 font-semibold">{projection.timelineYears.toFixed(1)} years</span>
+          </div>
+          <div className="text-[11px] text-neutral-400">
+            Billionaire Path: <span className={`font-semibold ${billionairePath.isAchievable ? 'text-emerald-400' : 'text-orange-400'}`}>
+              ${billionairePath.projectedValue.toLocaleString("en-US")} 
+              {billionairePath.isAchievable ? ' ✓' : ' (needs acceleration)'}
+            </span>
           </div>
         </div>
         <div className="text-[11px] text-neutral-500 text-right">

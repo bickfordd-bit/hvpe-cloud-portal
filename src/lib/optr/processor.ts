@@ -109,6 +109,61 @@ export async function runOptr(oppty: Opportunity, requirements?: Requirement[]):
   const reqTexts = reqs.map((r) => r.text);
   const reqEmbeds = await embedTexts(reqTexts);
 
+  function analyzeGaps(
+    confidence: number,
+    bestSim: number,
+    docTexts: { id: string; text: string }[],
+    bestIdx: number,
+    requirement: Requirement,
+    opportunity: Opportunity
+  ): string[] {
+    const gaps: string[] = [];
+
+    // Confidence-based gaps
+    if (confidence < 0.3) {
+      gaps.push("Very low confidence match; manual review strongly recommended");
+    } else if (confidence < 0.5) {
+      gaps.push("Low semantic match; verify evidence manually");
+    }
+
+    // Similarity threshold gaps
+    if (bestSim < 0.6) {
+      gaps.push("Poor semantic similarity; evidence may not adequately address requirement");
+    }
+
+    // Document availability gaps
+    if (!docTexts[bestIdx] || !docTexts[bestIdx].text) {
+      gaps.push("No supporting documentation found for this requirement");
+    }
+
+    // Content length gaps
+    const snippet = docTexts[bestIdx]?.text || "";
+    if (snippet.length < 100) {
+      gaps.push("Supporting evidence is very brief; may lack sufficient detail");
+    }
+
+    // Priority-based gaps
+    if (requirement.priority >= 4 && confidence < 0.8) {
+      gaps.push(`High-priority requirement (${requirement.priority}) lacks strong evidence`);
+    }
+
+    // Timeline/deadline gaps
+    const deadline = new Date(opportunity.deadline_iso);
+    const now = new Date();
+    const daysUntilDeadline = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysUntilDeadline < 30 && confidence < 0.6) {
+      gaps.push("Urgent deadline with weak evidence; immediate action required");
+    }
+
+    // Requirement type gaps
+    if (requirement.kind === 'shall' && confidence < 0.7) {
+      gaps.push("Mandatory requirement lacks sufficient evidence");
+    }
+
+    return gaps;
+  }
+
   const traces: Trace[] = reqs.map((r, i) => {
     const re = reqEmbeds[i];
     let bestSim = 0;
@@ -122,8 +177,7 @@ export async function runOptr(oppty: Opportunity, requirements?: Requirement[]):
     }
 
     const confidence = Math.max(0, Math.min(1, bestSim));
-    const gaps: string[] = [];
-    if (confidence < 0.5) gaps.push("Low semantic match; verify evidence manually.");
+    const gaps = analyzeGaps(confidence, bestSim, docTexts, bestIdx, r, oppty);
 
     const snippet = (docTexts[bestIdx]?.text || "").replace(/\s+/g, " ").slice(0, 300);
 

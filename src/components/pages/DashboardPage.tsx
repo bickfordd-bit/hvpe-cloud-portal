@@ -4,6 +4,8 @@ import { useHvpeDashboard } from "@/hooks/useHvpeDashboard";
 import ChatDock from "@/components/chat/ChatDock";
 import { EngineStatusPanel } from "@/components/widgets/EngineStatusPanel";
 import { BillionaireTracker } from "@/components/widgets/BillionaireTracker";
+import { IPSellingPanel } from "@/components/widgets/IPSellingPanel";
+import { ValuationPanel } from "@/components/widgets/ValuationPanel";
 import { MoneyVelocityGauge } from "@/components/widgets/MoneyVelocityGauge";
 import { SupraHeatmap } from "@/components/widgets/SupraHeatmap";
 import { MetricMiniGrid } from "@/components/widgets/MetricMiniGrid";
@@ -36,14 +38,16 @@ export function DashboardPage() {
         {/* Middle row: Metrics */}
         <MetricMiniGrid metrics={data.metricTiles} />
 
-        {/* Bottom row: Billionaire tracker + supra heatmap */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* Bottom row: Billionaire tracker + IP selling + valuation + supra heatmap */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <BillionaireTracker
               description={data.billionaires.description}
               people={data.billionaires.people}
             />
           </div>
+          <IPSellingPanel />
+          <ValuationPanel />
           <SupraHeatmap heatmap={data.heatmap} />
         </div>
       </div>

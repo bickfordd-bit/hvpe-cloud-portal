@@ -81,41 +81,41 @@ export const defaultDashboardData: DashboardData = {
     { label: "Risk Level", value: "Aggressive", accent: "text-orange-300" },
   ],
   billionaires: {
-    description: "IP portfolio sale timelines - created but not yet sold.",
+    description: "IP portfolio sale acceleration - OPTR-driven monetization.",
     people: [
       { 
         name: "Derek", 
         ipCreated: true, 
         ipValue: 250000, 
-        saleTimeline: "2026-06-15T00:00:00.000Z",
+        saleTimeline: "2025-12-31T00:00:00.000Z",
         status: "ready-to-sell"
       },
       { 
         name: "Jenna", 
         ipCreated: true, 
         ipValue: 150000, 
-        saleTimeline: "2027-03-22T00:00:00.000Z", 
+        saleTimeline: "2026-03-15T00:00:00.000Z", 
         status: "ready-to-sell"
       },
       { 
         name: "Penelope", 
         ipCreated: true, 
         ipValue: 25000, 
-        saleTimeline: "2028-11-30T00:00:00.000Z",
+        saleTimeline: "2026-06-30T00:00:00.000Z",
         status: "created"
       },
       { 
         name: "Xavier", 
-        ipCreated: false, 
-        ipValue: 0, 
-        saleTimeline: "2029-08-14T00:00:00.000Z",
-        status: "in-development"
+        ipCreated: true, 
+        ipValue: 50000, 
+        saleTimeline: "2026-09-15T00:00:00.000Z",
+        status: "ready-to-sell"
       },
       { 
         name: "Naomi", 
         ipCreated: true, 
-        ipValue: 15000, 
-        saleTimeline: "2030-01-10T00:00:00.000Z",
+        ipValue: 75000, 
+        saleTimeline: "2027-01-31T00:00:00.000Z",
         status: "created"
       },
     ],
