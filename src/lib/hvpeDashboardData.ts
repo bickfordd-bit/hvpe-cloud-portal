@@ -23,9 +23,10 @@ export type MetricTile = {
 
 export type BillionairePerson = {
   name: string;
-  current: number;
-  target: number;
-  dailyVelocity: number;
+  ipCreated: boolean;
+  ipValue: number;
+  saleTimeline: string; // ISO date string for expected sale
+  status: 'created' | 'in-development' | 'ready-to-sell' | 'sold';
 };
 
 export type VelocitySnapshot = {
@@ -45,9 +46,8 @@ export type DashboardData = {
   engineStatus: EngineStatusData;
   metricTiles: MetricTile[];
   billionaires: {
-    target: number;
-    people: BillionairePerson[];
     description: string;
+    people: BillionairePerson[];
   };
   velocity: VelocitySnapshot;
   heatmap: HeatmapData;
@@ -81,14 +81,43 @@ export const defaultDashboardData: DashboardData = {
     { label: "Risk Level", value: "Aggressive", accent: "text-orange-300" },
   ],
   billionaires: {
-    target: 1_000_000_000,
-    description: "Velocity-driven wealth trajectories for the Bickford family.",
+    description: "IP portfolio sale timelines - created but not yet sold.",
     people: [
-      { name: "Derek", current: 250_000, target: 1_000_000_000, dailyVelocity: 1250 },
-      { name: "Jenna", current: 150_000, target: 1_000_000_000, dailyVelocity: 750 },
-      { name: "Penelope", current: 25_000, target: 1_000_000_000, dailyVelocity: 125 },
-      { name: "Xavier", current: 20_000, target: 1_000_000_000, dailyVelocity: 100 },
-      { name: "Naomi", current: 15_000, target: 1_000_000_000, dailyVelocity: 75 },
+      { 
+        name: "Derek", 
+        ipCreated: true, 
+        ipValue: 250000, 
+        saleTimeline: "2026-06-15T00:00:00.000Z",
+        status: "ready-to-sell"
+      },
+      { 
+        name: "Jenna", 
+        ipCreated: true, 
+        ipValue: 150000, 
+        saleTimeline: "2027-03-22T00:00:00.000Z", 
+        status: "ready-to-sell"
+      },
+      { 
+        name: "Penelope", 
+        ipCreated: true, 
+        ipValue: 25000, 
+        saleTimeline: "2028-11-30T00:00:00.000Z",
+        status: "created"
+      },
+      { 
+        name: "Xavier", 
+        ipCreated: false, 
+        ipValue: 0, 
+        saleTimeline: "2029-08-14T00:00:00.000Z",
+        status: "in-development"
+      },
+      { 
+        name: "Naomi", 
+        ipCreated: true, 
+        ipValue: 15000, 
+        saleTimeline: "2030-01-10T00:00:00.000Z",
+        status: "created"
+      },
     ],
   },
   velocity: {

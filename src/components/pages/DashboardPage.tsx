@@ -40,7 +40,6 @@ export function DashboardPage() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <BillionaireTracker
-              target={data.billionaires.target}
               description={data.billionaires.description}
               people={data.billionaires.people}
             />
