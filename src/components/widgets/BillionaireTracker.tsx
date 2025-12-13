@@ -9,6 +9,13 @@ function percent(p: BillionairePerson) {
   return (p.current / p.target) * 100;
 }
 
+function yearsToTarget(p: BillionairePerson) {
+  const remaining = p.target - p.current;
+  if (remaining <= 0) return 0;
+  const days = remaining / p.dailyVelocity;
+  return days / 365.25; // account for leap years
+}
+
 export function BillionaireTracker({
   target,
   description,
@@ -60,17 +67,25 @@ export function BillionaireTracker({
               </div>
               <div className="flex items-center justify-between text-[10px] text-neutral-500">
                 <span>{pct.toFixed(4)}% of target</span>
-                <span>
-                  Daily Velocity:{" "}
-                  <span className="text-neutral-200">
-                    {p.dailyVelocity.toLocaleString("en-US", {
-                      style: "currency",
-                      currency: "USD",
-                      maximumFractionDigits: 2,
-                    })}
-                    /day
-                  </span>
-                </span>
+                <div className="text-right">
+                  <div>
+                    Daily Velocity:{" "}
+                    <span className="text-neutral-200">
+                      {p.dailyVelocity.toLocaleString("en-US", {
+                        style: "currency",
+                        currency: "USD",
+                        maximumFractionDigits: 2,
+                      })}
+                      /day
+                    </span>
+                  </div>
+                  <div>
+                    Timeline:{" "}
+                    <span className="text-neutral-200">
+                      {yearsToTarget(p).toFixed(1)} years
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           );
