@@ -18,6 +18,7 @@ export function OptrTraceTable({ traces }: { traces: Trace[] }) {
             <tr>
               <th className="px-3 py-2">Req</th>
               <th className="px-3 py-2">Response</th>
+              <th className="px-3 py-2">Excerpt</th>
               <th className="px-3 py-2">Confidence</th>
               <th className="px-3 py-2">Gaps</th>
             </tr>
@@ -28,6 +29,13 @@ export function OptrTraceTable({ traces }: { traces: Trace[] }) {
                 <tr key={i} className="align-top hover:bg-neutral-900/40">
                   <td className="px-3 py-2 font-mono text-xs text-neutral-300">{t.req_id}</td>
                   <td className="px-3 py-2 font-mono text-xs text-neutral-300">{t.response_id}</td>
+                  <td className="px-3 py-2 text-xs text-neutral-300 max-w-[28rem]">
+                    {t.evidence_snippets && t.evidence_snippets.length ? (
+                      <div className="text-xs text-neutral-300 line-clamp-3">{t.evidence_snippets[0]}</div>
+                    ) : (
+                      <span className="text-xs text-neutral-500">—</span>
+                    )}
+                  </td>
                   <td className="px-3 py-2">{pct(t.confidence)}</td>
                   <td className="px-3 py-2 text-neutral-300">
                     {t.gaps.length ? (

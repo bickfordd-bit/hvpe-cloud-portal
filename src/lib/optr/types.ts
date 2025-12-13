@@ -42,6 +42,7 @@ export type Trace = {
   req_id: string;
   response_id: string;
   evidence_doc_ids: string[];
+  evidence_snippets?: string[];
   confidence: number; // 0..1
   gaps: string[];
 };

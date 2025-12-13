@@ -45,6 +45,28 @@ model AiUsageLog {
   errorMessage     String?
 }
 
+model Embedding {
+  id        String   @id @default(cuid())
+  docId     String
+  optrId    String?
+  vector    Json
+  snippet   String?
+  createdAt DateTime @default(now())
+}
+
+model AIPatchLog {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String?
+  instruction String
+  patch     String
+  applied   Boolean  @default(false)
+  branch    String?
+  prUrl     String?
+  approvedBy String?
+  approvedAt DateTime?
+}
+
 enum LicenseRequestStatus {
   PENDING
   APPROVED
