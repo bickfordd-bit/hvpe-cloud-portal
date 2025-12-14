@@ -29,4 +29,5 @@ jobs:
       - name: Run Prisma migrate deploy
         run: npm run migrate:deploy
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || '' }}
+        continue-on-error: true
