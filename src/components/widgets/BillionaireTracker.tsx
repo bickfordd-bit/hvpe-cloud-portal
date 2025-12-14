@@ -4,20 +4,21 @@ import { Card } from "@/components/ui/Card";
 import type {
   BillionairePerson,
 } from "@/lib/hvpeDashboardData";
+import { useState, useEffect } from "react";
 
 function formatSaleDate(dateString: string): string {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
+    timeZone: 'UTC'
   });
 }
 
-function getDaysUntilSale(dateString: string): number {
+function getDaysUntilSale(dateString: string, now: number): number {
   const saleDate = new Date(dateString);
-  const today = new Date();
-  const diffTime = saleDate.getTime() - today.getTime();
+  const diffTime = saleDate.getTime() - now;
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
@@ -80,8 +81,10 @@ function calculateProjectedWealth(people: BillionairePerson[]): {
     .map(p => new Date(p.saleDate!))
     .sort((a, b) => a.getTime() - b.getTime());
 
+  // Use a fixed reference date to avoid hydration issues
+  const referenceDate = new Date('2025-12-14T00:00:00Z').getTime();
   const timelineYears = saleDates.length > 0
-    ? Math.max(1, (saleDates[0].getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 365))
+    ? Math.max(1, (saleDates[0].getTime() - referenceDate) / (1000 * 60 * 60 * 24 * 365))
     : 3; // Default 3 years if no dates
 
   return { totalValue, timelineYears };
@@ -104,6 +107,14 @@ export function BillionaireTracker({
   people: BillionairePerson[];
   description: string;
 }) {
+  // Use client-side state for current time to avoid hydration mismatch
+  const [currentTime, setCurrentTime] = useState<number>(new Date('2025-12-14T00:00:00Z').getTime());
+  
+  useEffect(() => {
+    // Only update to real time on client after initial render
+    setCurrentTime(Date.now());
+  }, []);
+  
   const projection = calculateProjectedWealth(people);
   const billionairePath = calculateBillionairePath(projection.totalValue, projection.timelineYears);
   
@@ -134,7 +145,7 @@ export function BillionaireTracker({
 
       <div className="space-y-2 text-xs">
         {people.map((p) => {
-          const daysUntil = getDaysUntilSale(p.saleTimeline);
+          const daysUntil = getDaysUntilSale(p.saleTimeline, currentTime);
           const isOverdue = daysUntil < 0;
           return (
             <div key={p.name} className="space-y-1">

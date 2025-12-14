@@ -489,6 +489,453 @@ When building new components:
 
 ---
 
+---
+
+## Form Components & Input Patterns
+
+### Input Field
+
+```tsx
+<div className="space-y-2">
+  <label className="text-sm font-medium text-white">Label</label>
+  <input
+    type="text"
+    placeholder="Placeholder text"
+    className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded-lg text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500 transition"
+  />
+</div>
+```
+
+**Styling:**
+- Background: `bg-neutral-900`
+- Border: `border-neutral-800`
+- Focus state: `focus:border-blue-500`
+- Rounded: `rounded-lg`
+
+### Textarea
+
+```tsx
+<div className="space-y-2">
+  <label className="text-sm font-medium text-white">Description</label>
+  <textarea
+    placeholder="Multi-line input"
+    rows={4}
+    className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded-lg text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500 transition resize-none"
+  />
+</div>
+```
+
+### Select/Dropdown
+
+```tsx
+<select className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded-lg text-white focus:outline-none focus:border-blue-500 transition">
+  <option value="">Select an option</option>
+  <option value="1">Option 1</option>
+  <option value="2">Option 2</option>
+</select>
+```
+
+### Checkbox
+
+```tsx
+<label className="flex items-center gap-2 cursor-pointer">
+  <input
+    type="checkbox"
+    className="w-4 h-4 bg-neutral-900 border border-neutral-800 rounded accent-blue-500"
+  />
+  <span className="text-sm text-white">Checkbox label</span>
+</label>
+```
+
+### Toggle Switch
+
+```tsx
+export function Toggle({
+  enabled,
+  onChange,
+}: {
+  enabled: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <button
+      onClick={() => onChange(!enabled)}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+        enabled ? "bg-blue-500" : "bg-neutral-700"
+      }`}
+    >
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+          enabled ? "translate-x-6" : "translate-x-1"
+        }`}
+      />
+    </button>
+  );
+}
+```
+
+### Button Variants
+
+**Primary Button:**
+```tsx
+<button className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors">
+  Primary Action
+</button>
+```
+
+**Secondary Button:**
+```tsx
+<button className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white font-semibold rounded-lg border border-neutral-700 transition-colors">
+  Secondary Action
+</button>
+```
+
+**Ghost Button:**
+```tsx
+<button className="px-4 py-2 text-white hover:bg-white/10 font-semibold rounded-lg transition-colors">
+  Ghost Action
+</button>
+```
+
+**Danger Button:**
+```tsx
+<button className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors">
+  Dangerous Action
+</button>
+```
+
+---
+
+## Dark Mode & Theme Switching
+
+### Theme Context Pattern
+
+```tsx
+// src/components/providers/ThemeProvider.tsx
+"use client";
+
+import { createContext, useContext, useState } from "react";
+
+type Theme = "dark" | "light";
+
+const ThemeContext = createContext<{
+  theme: Theme;
+  toggleTheme: () => void;
+}>({ theme: "dark", toggleTheme: () => {} });
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<Theme>("dark");
+
+  const toggleTheme = () => {
+    setTheme(t => t === "dark" ? "light" : "dark");
+    document.documentElement.classList.toggle("light");
+  };
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+export function useTheme() {
+  return useContext(ThemeContext);
+}
+```
+
+### Theme Toggle Button
+
+```tsx
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "@/components/providers/ThemeProvider";
+
+export function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+
+  return (
+    <button
+      onClick={toggleTheme}
+      className="p-2 rounded-lg hover:bg-neutral-800 transition-colors"
+    >
+      {theme === "dark" ? (
+        <Sun className="h-5 w-5 text-yellow-400" />
+      ) : (
+        <Moon className="h-5 w-5 text-blue-400" />
+      )}
+    </button>
+  );
+}
+```
+
+### Light Mode Color Palette
+
+When dark mode is disabled, apply light theme:
+
+```css
+.light {
+  color-scheme: light;
+}
+
+.light {
+  background: #ffffff;
+  color: #0a0a0a;
+}
+
+.light body {
+  background: #ffffff;
+}
+
+.light .bg-neutral-950 {
+  background-color: #f5f5f5;
+}
+
+.light .bg-neutral-900 {
+  background-color: #fafafa;
+}
+
+.light .border-neutral-800 {
+  border-color: #e5e5e5;
+}
+
+.light .text-white {
+  color: #0a0a0a;
+}
+
+.light .text-neutral-500 {
+  color: #666666;
+}
+```
+
+---
+
+## Accessibility Guidelines
+
+### Color Contrast
+
+- Text on background: Minimum WCAG AA (4.5:1 for normal text, 3:1 for large text)
+- Use tools: WebAIM Contrast Checker
+- Test with: Chrome DevTools → Lighthouse Accessibility
+
+### Keyboard Navigation
+
+```tsx
+// Always support keyboard navigation
+<button
+  onKeyDown={(e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleClick();
+    }
+  }}
+  aria-label="Descriptive label"
+>
+  Button
+</button>
+```
+
+### ARIA Labels
+
+```tsx
+// Form inputs
+<label htmlFor="email" className="text-sm text-white">
+  Email Address
+</label>
+<input
+  id="email"
+  type="email"
+  aria-label="Email address input"
+  aria-required="true"
+/>
+
+// Interactive elements
+<button aria-label="Close dialog">×</button>
+
+// Status updates
+<div role="status" aria-live="polite" aria-atomic="true">
+  {statusMessage}
+</div>
+```
+
+### Focus States
+
+Always visible focus indicators:
+
+```tsx
+<button className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black">
+  Accessible Button
+</button>
+```
+
+### Text Readability
+
+- Line height: `leading-relaxed` (1.625) minimum
+- Font size: `text-sm` (14px) minimum for body text
+- Max line length: ~65 characters for optimal readability
+- Color contrast: 4.5:1 for normal text, 3:1 for large text
+
+---
+
+## Component Library Examples
+
+### Badge Component
+
+```tsx
+export function Badge({
+  children,
+  variant = "default",
+}: {
+  children: React.ReactNode;
+  variant?: "default" | "success" | "error" | "warning";
+}) {
+  const variants = {
+    default: "bg-blue-500/20 text-blue-300 border border-blue-500/30",
+    success: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30",
+    error: "bg-red-500/20 text-red-300 border border-red-500/30",
+    warning: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30",
+  };
+
+  return (
+    <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${variants[variant]}`}>
+      {children}
+    </span>
+  );
+}
+```
+
+### Alert Component
+
+```tsx
+export function Alert({
+  children,
+  type = "info",
+  title,
+}: {
+  children: React.ReactNode;
+  type?: "info" | "success" | "error" | "warning";
+  title?: string;
+}) {
+  const icons = {
+    info: "ℹ️",
+    success: "✓",
+    error: "⚠️",
+    warning: "⚡",
+  };
+
+  const colors = {
+    info: "bg-blue-500/10 border-blue-500/30 text-blue-300",
+    success: "bg-emerald-500/10 border-emerald-500/30 text-emerald-300",
+    error: "bg-red-500/10 border-red-500/30 text-red-300",
+    warning: "bg-yellow-500/10 border-yellow-500/30 text-yellow-300",
+  };
+
+  return (
+    <div className={`rounded-lg border p-4 ${colors[type]}`}>
+      {title && (
+        <div className="font-semibold mb-2">
+          {icons[type]} {title}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+```
+
+### Modal/Dialog
+
+```tsx
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+        onClick={onClose}
+      />
+      <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div className="bg-neutral-950 border border-neutral-800 rounded-xl shadow-xl max-w-lg w-full mx-4">
+          <div className="flex items-center justify-between p-6 border-b border-neutral-800">
+            <h2 className="text-lg font-bold text-white">{title}</h2>
+            <button
+              onClick={onClose}
+              className="text-neutral-500 hover:text-white transition"
+            >
+              ×
+            </button>
+          </div>
+          <div className="p-6">{children}</div>
+        </div>
+      </div>
+    </>
+  );
+}
+```
+
+### Tooltip
+
+```tsx
+export function Tooltip({
+  children,
+  content,
+}: {
+  children: React.ReactNode;
+  content: string;
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  return (
+    <div className="relative inline-block">
+      <div
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+      >
+        {children}
+      </div>
+      {isVisible && (
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-neutral-800 text-white text-xs rounded whitespace-nowrap">
+          {content}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-l-transparent border-r-transparent border-t-neutral-800" />
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## Implementation Checklist
+
+### Before Shipping a Component
+
+- [ ] Color contrast meets WCAG AA (4.5:1 min)
+- [ ] Keyboard navigation fully supported
+- [ ] ARIA labels present and accurate
+- [ ] Focus state clearly visible
+- [ ] Works on mobile (tested at 375px)
+- [ ] Works on tablet (tested at 768px)
+- [ ] Works on desktop (tested at 1440px)
+- [ ] Loading state handled
+- [ ] Error state handled
+- [ ] Empty state handled
+- [ ] Animations smooth (60fps)
+- [ ] No console warnings/errors
+- [ ] Accessibility audit passed
+- [ ] Component matches design system
+
+---
+
 ## References
 
 - [src/components/ui/Card.tsx](src/components/ui/Card.tsx) - Card component
@@ -497,4 +944,12 @@ When building new components:
 - [src/components/layout/](src/components/layout/) - Layout components
 - [src/components/shared/](src/components/shared/) - Reusable UI patterns
 - [CONFIGURATION_GUIDE.md](CONFIGURATION_GUIDE.md) - Instance configuration
+
+## External Resources
+
+- [Tailwind CSS Documentation](https://tailwindcss.com)
+- [Lucide React Icons](https://lucide.dev)
+- [Web Accessibility Guidelines (WCAG)](https://www.w3.org/WAI/WCAG21/quickref/)
+- [MDN Web Docs - Accessibility](https://developer.mozilla.org/en-US/docs/Web/Accessibility)
+- [Inclusive Components](https://inclusive-components.design/)
 
