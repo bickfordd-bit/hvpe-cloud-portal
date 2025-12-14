@@ -1,444 +1,489 @@
-# Deployment Guide
+# HVPE Cloud Portal — Deployment Guide
 
-Complete guide for deploying HVPE Cloud Portal across all environments.
-
----
+Complete guide for deploying HVPE Cloud Portal to various platforms.
 
 ## Quick Deploy
 
-### Local Development
 ```bash
-make dev              # Start dev server on port 3000
-make docker-dev       # Start with Docker Compose
+# Deploy everywhere with one command
+chmod +x scripts/deploy.sh
+./scripts/deploy.sh
 ```
 
-### Docker Registry (GitHub Container Registry)
+## Deployment Platforms
+
+### 1. Vercel (Recommended for Production)
+
+**Pros**: Zero config, automatic HTTPS, global CDN, serverless functions  
+**Best for**: Production web hosting
+
+#### Setup
+
+1. **Install Vercel CLI**:
 ```bash
-make docker-build     # Build image locally
-make docker-push      # Push to ghcr.io
-make docker-build-multi # Build & push multi-platform
+npm install -g vercel
 ```
 
-### Vercel Production
+2. **Login**:
 ```bash
-make deploy-vercel    # Deploy to Vercel production
+vercel login
 ```
 
-### Local Docker Production
+3. **Deploy**:
 ```bash
-make docker-compose-up    # Start with docker-compose.yml
-make docker-compose-down  # Stop containers
+# Preview deployment
+./scripts/deploy-vercel.sh
+
+# Production deployment
+./scripts/deploy-vercel.sh production
 ```
+
+#### Environment Variables
+
+Set these in Vercel Dashboard (Settings → Environment Variables):
+
+```bash
+HVPE_OPENAI_API_KEY=sk-proj-YOUR_KEY
+DATABASE_URL=postgresql://...
+NEXTAUTH_SECRET=generate-with-openssl-rand-base64-32
+ADMIN_DASH_TOKEN=your-secure-token
+STRIPE_SECRET_KEY=sk_test_YOUR_STRIPE_KEY
+```
+
+#### Custom Domain
+
+1. Add domain in Vercel dashboard
+2. Update DNS records (A/CNAME)
+3. Wait for SSL certificate provisioning
+
+**Cost**: Free tier available, Pro starts at $20/month
 
 ---
 
-## Deployment Options
+### 2. GitHub Container Registry (GHCR)
 
-### 1. **Vercel** (Recommended for Web)
-**Best for:** Fast global CDN, automatic deployments, preview URLs
+**Pros**: Free for public repos, integrated with GitHub Actions  
+**Best for**: Docker image hosting
 
+#### Setup
+
+1. **Create GitHub Personal Access Token**:
+   - Go to GitHub Settings → Developer settings → Personal access tokens
+   - Generate token with `write:packages` scope
+
+2. **Login**:
 ```bash
-# Manual deployment
-make deploy-vercel
-
-# Or using Vercel CLI
-vercel --prod
+export GITHUB_TOKEN=ghp_YOUR_TOKEN
+echo $GITHUB_TOKEN | docker login ghcr.io -u bickfordd-bit --password-stdin
 ```
 
-**Environment Variables Required:**
-- `DATABASE_URL` - PostgreSQL connection
-- `OPENAI_API_KEY` or `HVPE_OPENAI_API_KEY`
-- `STRIPE_SECRET_KEY` (optional)
-- `TWILIO_*` (optional for SMS)
-- `ADMIN_DASH_TOKEN` (for admin features)
-
-**Deployment Link:** vercel.json configured
-
----
-
-### 2. **Docker + GHCR** (GitHub Container Registry)
-**Best for:** Self-hosted, Kubernetes, scalable deployments
-
+3. **Deploy**:
 ```bash
-# Build for current platform
-make docker-build
-
-# Build for multiple platforms (requires buildx)
-make docker-build-multi
-
-# Push to registry
-make docker-push
-
-# Or build and push multi-platform in one command
-make docker-push-multi
+./scripts/deploy-ghcr.sh
 ```
 
-**Registry:** `ghcr.io/bickfordd-bit/hvpe-cloud-portal`
+#### Pull and Run
 
-**Pull and run:**
 ```bash
+# Pull latest image
 docker pull ghcr.io/bickfordd-bit/hvpe-cloud-portal:latest
-docker run -d -p 3000:3000 \
-  -e DATABASE_URL="..." \
-  -e OPENAI_API_KEY="..." \
+
+# Run container
+docker run -p 3000:3000 \
+  --env-file .env.local \
   ghcr.io/bickfordd-bit/hvpe-cloud-portal:latest
 ```
 
+**Cost**: Free for public repositories
+
 ---
 
-### 3. **Docker Compose** (Local/Production)
+### 3. Docker Hub
 
-#### Development with Hot Reload
+**Pros**: Most popular Docker registry, good for public images  
+**Best for**: Wide distribution
+
+#### Setup
+
+1. **Login**:
 ```bash
-make docker-dev           # Use docker-compose.dev.yml
-make docker-dev-build     # Rebuild images first
+docker login
 ```
 
-**File:** `docker-compose.dev.yml`
+2. **Deploy**:
+```bash
+./scripts/deploy-docker-hub.sh
+```
+
+#### Pull and Run
+
+```bash
+docker pull bickforddbit/hvpe-cloud-portal:latest
+docker run -p 3000:3000 --env-file .env.local bickforddbit/hvpe-cloud-portal:latest
+```
+
+**Cost**: Free for public images, paid plans for private images
+
+---
+
+### 4. Local Docker Compose
+
+**Pros**: Full control, easy local development/testing  
+**Best for**: Self-hosted deployments, development
+
+#### Development Mode (Hot Reload)
+
+```bash
+./scripts/deploy-local.sh
+# Select option 1 (Development)
+```
+
+Features:
 - Hot reload on code changes
-- Volume mounts for live editing
-- Database service (PostgreSQL optional)
+- Source code mounted as volume
+- Debugging enabled
 
-#### Production
+#### Production Mode
+
 ```bash
-make docker-compose-up      # Start all services
-make docker-compose-logs    # View logs
-make docker-compose-down    # Stop services
+./scripts/deploy-local.sh
+# Select option 2 (Production)
 ```
 
-**File:** `docker-compose.yml`
-- Production-optimized images
-- Health checks enabled
-- Restart policies configured
-- Environment-based secrets
+Features:
+- Optimized build
+- No source code mounting
+- Production-ready configuration
 
----
-
-### 4. **Direct Node.js** (Minimal)
+#### Manual Control
 
 ```bash
-# Build
-make build
+# Development
+docker-compose -f docker-compose.dev.yml up -d
 
-# Run
-make start
-```
-
-**Requirements:**
-- Node.js 18+
-- PostgreSQL (if using database)
-- Environment variables in `.env.local`
-
----
-
-## GitHub Actions Workflow
-
-**File:** `.github/workflows/docker-publish.yml`
-
-Automatically builds and pushes Docker images on:
-- Push to main/production branches
-- Manual workflow dispatch
-- Tagged releases
-
-**Workflow Steps:**
-1. Checkout code
-2. Setup Docker buildx
-3. Build multi-platform image
-4. Push to GHCR
-5. Update image metadata
-
----
-
-## Environment Setup
-
-### Required Variables
-```bash
-# Database
-DATABASE_URL="postgresql://user:password@host:5432/dbname"
-
-# AI/OpenAI
-OPENAI_API_KEY="sk-..."
-# or
-HVPE_OPENAI_API_KEY="sk-..."
-
-# Optional - Payments
-STRIPE_SECRET_KEY="sk_..."
-STRIPE_WEBHOOK_SECRET="whsec_..."
-
-# Optional - SMS
-TWILIO_ACCOUNT_SID="AC..."
-TWILIO_AUTH_TOKEN="..."
-TWILIO_PHONE_NUMBER="+1..."
-
-# Security
-ADMIN_DASH_TOKEN="secure-token-here"
-AI_WEBHOOK_SECRET="webhook-secret"
-SESSION_SECRET="random-string"
-```
-
-### Development (.env.local)
-```bash
-# Use for local development
-DATABASE_URL="postgresql://localhost/hvpe_dev"
-OPENAI_API_KEY="sk-..."
-NODE_ENV="development"
-```
-
-### Production (.env.production)
-```bash
-# Use for production deployments
-DATABASE_URL="postgresql://prod-host/hvpe"
-OPENAI_API_KEY="sk-prod-..."
-NODE_ENV="production"
-```
-
----
-
-## Deployment Checklist
-
-### Before Deploying
-
-**Code Quality:**
-- [ ] Tests pass locally: `npm test`
-- [ ] Linter passes: `npm run lint`
-- [ ] No console errors in dev
-- [ ] All environment variables set
-
-**Database:**
-- [ ] Migrations up to date: `npm run migrate:deploy`
-- [ ] Backup created (production)
-- [ ] Database connection verified
-
-**Security:**
-- [ ] Secrets not committed
-- [ ] ADMIN_DASH_TOKEN set
-- [ ] API keys rotated
-- [ ] HTTPS enabled (production)
-
-**Build:**
-- [ ] Production build succeeds: `npm run build`
-- [ ] Docker image builds: `make docker-build`
-- [ ] No warnings in build output
-
-**Testing:**
-- [ ] Unit tests pass
-- [ ] Integration tests pass (if available)
-- [ ] Manual smoke test in preview
-
----
-
-## Deployment Scenarios
-
-### Scenario 1: Deploy to Vercel Production
-
-```bash
-# Ensure changes are committed
-git add -A
-git commit -m "Ready for production deployment"
-git push origin main
-
-# Deploy to Vercel
-make deploy-vercel
-
-# Verify deployment
-curl https://hvpe-cloud-portal.vercel.app/api/health
-```
-
-### Scenario 2: Deploy Docker to Production Server
-
-```bash
-# Build multi-platform image
-make docker-build-multi
-
-# Push to registry
-make docker-push
-
-# On production server
-docker pull ghcr.io/bickfordd-bit/hvpe-cloud-portal:latest
+# Production
 docker-compose -f docker-compose.yml up -d
 
-# Check health
-curl http://localhost:3000/api/health
-```
-
-### Scenario 3: Deploy with Docker Compose Locally
-
-```bash
-# Start development environment
-make docker-dev-build
+# Stop
+docker-compose down
 
 # View logs
-make docker-compose-logs
+docker-compose logs -f
 
-# Stop when done
-make docker-compose-down
+# Rebuild
+docker-compose build --no-cache
+```
+
+**Cost**: Free (you provide infrastructure)
+
+---
+
+### 5. Kubernetes (Enterprise)
+
+**Pros**: High availability, auto-scaling, load balancing  
+**Best for**: Large-scale enterprise deployments
+
+#### Prerequisites
+
+- Kubernetes cluster (GKE, EKS, AKS, or self-hosted)
+- `kubectl` CLI installed
+- Cluster access configured
+
+#### Setup
+
+1. **Create secrets**:
+```bash
+# Copy example
+cp k8s/secrets.yaml.example k8s/secrets.yaml
+
+# Edit with your values
+nano k8s/secrets.yaml
+
+# Apply
+kubectl apply -f k8s/secrets.yaml
+```
+
+2. **Deploy**:
+```bash
+kubectl apply -f k8s/deployment.yaml
+```
+
+3. **Check status**:
+```bash
+kubectl get pods
+kubectl get services
+kubectl logs -f deployment/hvpe-cloud-portal
+```
+
+4. **Access**:
+```bash
+# Get external IP
+kubectl get service hvpe-cloud-portal
+
+# Port forward for testing
+kubectl port-forward service/hvpe-cloud-portal 3000:80
+```
+
+#### Scaling
+
+```bash
+# Manual scaling
+kubectl scale deployment hvpe-cloud-portal --replicas=5
+
+# Auto-scaling
+kubectl autoscale deployment hvpe-cloud-portal --min=3 --max=10 --cpu-percent=70
+```
+
+#### Ingress (HTTPS)
+
+The included ingress configuration uses:
+- **cert-manager** for automatic SSL certificates (Let's Encrypt)
+- **nginx-ingress** for load balancing
+
+Install prerequisites:
+```bash
+# cert-manager
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
+
+# nginx-ingress
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
+```
+
+**Cost**: Varies by cloud provider (GKE: ~$75/month minimum)
+
+---
+
+## CI/CD Automation
+
+### GitHub Actions Workflows
+
+Automatically deploy on push:
+
+#### Vercel
+`.github/workflows/deploy-vercel.yml` - Deploys on push to `main` or `ui-redesign-v1`
+
+#### Docker
+`.github/workflows/docker-publish.yml` - Builds and pushes Docker images on tag/release
+
+### Setup GitHub Secrets
+
+Add these secrets in GitHub repo settings:
+
+```
+VERCEL_TOKEN           # Vercel CLI token
+VERCEL_ORG_ID          # From .vercel/project.json
+VERCEL_PROJECT_ID      # From .vercel/project.json
+GITHUB_TOKEN           # Auto-provided by GitHub Actions
+DOCKER_USERNAME        # Docker Hub username
+DOCKER_PASSWORD        # Docker Hub password or token
 ```
 
 ---
 
-## Health Checks
+## Environment Variables Reference
 
-### API Health Endpoint
+### Required
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `HVPE_OPENAI_API_KEY` | OpenAI API key (preferred) | `sk-proj-...` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host:5432/db` |
+| `NEXTAUTH_SECRET` | Session encryption key | Generate with `openssl rand -base64 32` |
+
+### Optional
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OPENAI_API_KEY` | Fallback OpenAI key | - |
+| `ADMIN_DASH_TOKEN` | Admin UI password | - |
+| `STRIPE_SECRET_KEY` | Payment processing | - |
+| `TWILIO_*` | SMS notifications | - |
+| `AI_WEBHOOK_SECRET` | Voice-to-code auth | - |
+| `OPENAI_TPM_LIMIT` | Rate limit (tokens/min) | 90000 |
+| `OPENAI_RPM_LIMIT` | Rate limit (requests/min) | 3500 |
+
+---
+
+## Post-Deployment
+
+### Health Checks
+
 ```bash
-curl http://localhost:3000/api/health
+# API health
+curl https://your-domain.com/api/health
+
+# OpenAI key status (requires admin token)
+curl https://your-domain.com/api/admin/openai-status \
+  -H "x-admin-token: YOUR_ADMIN_TOKEN"
 ```
 
-**Response:**
-```json
+### Monitoring
+
+1. **Vercel**: Built-in analytics at vercel.com/dashboard
+2. **Docker**: Use `docker stats` or Prometheus
+3. **Kubernetes**: Use built-in dashboard or Grafana
+
+### Logs
+
+```bash
+# Vercel
+vercel logs
+
+# Docker
+docker logs <container-id>
+
+# Kubernetes
+kubectl logs -f deployment/hvpe-cloud-portal
+```
+
+### Database Migrations
+
+```bash
+# Development
+npx prisma migrate dev
+
+# Production
+npx prisma migrate deploy
+```
+
+---
+
+## Troubleshooting
+
+### Vercel Build Fails
+
+**Issue**: Build timeout or out of memory
+
+**Fix**:
+```bash
+# Increase build timeout in vercel.json
 {
-  "status": "healthy",
-  "timestamp": "2025-12-14T12:00:00Z",
-  "uptime": "23h45m",
-  "database": "connected",
-  "environment": "production"
+  "build": {
+    "env": {
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    }
+  }
 }
 ```
 
-### Manual Health Check
+### Docker Container Won't Start
+
+**Issue**: Missing environment variables
+
+**Fix**:
 ```bash
-make health-check
+# Check logs
+docker logs <container-id>
+
+# Ensure .env.local is mounted
+docker run -p 3000:3000 --env-file .env.local <image>
+```
+
+### Kubernetes Pods CrashLooping
+
+**Issue**: Health checks failing
+
+**Fix**:
+```bash
+# Check logs
+kubectl logs -f <pod-name>
+
+# Increase initialDelaySeconds in deployment.yaml
+livenessProbe:
+  initialDelaySeconds: 60  # Increase from 30
+```
+
+### OpenAI Rate Limits
+
+**Issue**: 429 Too Many Requests
+
+**Fix**:
+```bash
+# Upgrade OpenAI tier or adjust limits in .env.local
+OPENAI_TPM_LIMIT=200000  # Tier 2
+OPENAI_RPM_LIMIT=10000
 ```
 
 ---
 
 ## Rollback Procedures
 
-### Vercel Rollback
+### Vercel
+
 ```bash
-# View deployment history
+# List deployments
 vercel list
 
-# Promote previous deployment
-vercel --prod [deployment-url]
+# Rollback to specific deployment
+vercel rollback <deployment-url>
 ```
 
-### Docker Rollback
+### Docker
+
 ```bash
-# Stop current version
-docker-compose down
+# Pull previous version
+docker pull ghcr.io/bickfordd-bit/hvpe-cloud-portal:<previous-tag>
 
-# Pull previous image
-docker pull ghcr.io/bickfordd-bit/hvpe-cloud-portal:previous-tag
+# Restart with previous version
+docker-compose restart
+```
 
-# Start previous version
-docker-compose up -d
+### Kubernetes
+
+```bash
+# Rollback deployment
+kubectl rollout undo deployment/hvpe-cloud-portal
+
+# Rollback to specific revision
+kubectl rollout undo deployment/hvpe-cloud-portal --to-revision=2
 ```
 
 ---
 
-## Monitoring & Logs
+## Security Checklist
 
-### Local Development
-```bash
-make docker-compose-logs
-npm run dev  # Outputs to terminal
-```
-
-### Production Docker
-```bash
-make docker-logs
-make docker-compose-logs
-```
-
-### Vercel
-- Dashboard: https://vercel.com/dashboard
-- Real-time logs available
-- Performance analytics included
+- [ ] All secrets in environment variables (not hardcoded)
+- [ ] HTTPS enabled (Vercel auto, use ingress for K8s)
+- [ ] ADMIN_DASH_TOKEN set and secure
+- [ ] Database has SSL enabled
+- [ ] Rate limiting configured
+- [ ] CORS configured properly
+- [ ] CSP headers enabled
+- [ ] OpenAI key rotated monthly
 
 ---
 
-## Performance Optimization
+## Cost Estimates
 
-### Build Optimization
-- Next.js 16 Turbopack for fast builds
-- Bundle analysis: `npm run build -- --analyze`
-- Code splitting automatic
+### Small Deployment (Vercel + Managed DB)
+- Vercel Pro: $20/month
+- Neon Postgres: $19/month
+- OpenAI API: $50/month (estimated)
+- **Total**: ~$90/month
 
-### Runtime Optimization
-- Node.js memory: Adjust in docker-compose.yml
-- Database connection pooling
-- CDN caching (Vercel automatic)
+### Medium Deployment (Docker + VPS)
+- DigitalOcean Droplet (4GB): $24/month
+- Managed Postgres: $15/month
+- OpenAI API: $200/month
+- **Total**: ~$240/month
 
-### Database Optimization
-- Prisma query optimization
-- Index creation on frequently queried fields
-- Connection pooling: `DATABASE_URL` with `?schema=public`
-
----
-
-## Troubleshooting
-
-### Build Fails
-```bash
-# Clean and rebuild
-make clean
-npm install
-npm run build
-```
-
-### Docker Push Fails
-```bash
-# Check Docker login
-docker login ghcr.io
-
-# Verify credentials
-cat ~/.docker/config.json
-```
-
-### Vercel Deployment Fails
-```bash
-# Check build logs in Vercel dashboard
-# Verify environment variables are set
-# Check Node.js version compatibility
-```
-
-### Health Check Fails
-```bash
-# Check if app is running
-lsof -i :3000
-
-# View logs
-npm run dev  # with logging enabled
-make docker-compose-logs
-```
-
----
-
-## Cost Considerations
-
-**Vercel:** 
-- Free tier: Unlimited deployments, 12 serverless function hours/month
-- Pro: $20/month, more function hours
-- Pricing: https://vercel.com/pricing
-
-**Docker + Self-hosted:**
-- Server cost: ~$5-50/month (VPS)
-- GHCR: Free for public images
-- Database: $15-100+/month (PostgreSQL)
-
-**Hybrid (Vercel + Docker):**
-- Web app on Vercel (fast, cheap)
-- API on Docker (scalable, controlled)
-- Database separate (managed service)
-
----
-
-## Resources
-
-- [Vercel Documentation](https://vercel.com/docs)
-- [Docker Documentation](https://docs.docker.com)
-- [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
-- [Next.js Deployment](https://nextjs.org/docs/deployment)
-- [Docker Compose Reference](https://docs.docker.com/compose/reference/)
+### Enterprise Deployment (Kubernetes)
+- GKE Cluster: $75/month
+- Cloud SQL: $50/month
+- Load Balancer: $20/month
+- OpenAI API: $500/month
+- **Total**: ~$650/month
 
 ---
 
 ## Support
 
-For deployment issues:
-1. Check health endpoint: `/api/health`
-2. View logs: `make docker-logs` or Vercel dashboard
-3. Verify environment variables
-4. Check database connectivity
-5. Review build output for warnings
+- Documentation: `README.md`, `DOCKER.md`
+- Issues: https://github.com/bickfordd-bit/hvpe-cloud-portal/issues
+- Security: See `SECURITY.md`
+
+---
+
+**Last Updated**: 2025-12-14  
+**Version**: 1.0.0
 
