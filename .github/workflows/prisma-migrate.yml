@@ -13,6 +13,7 @@ concurrency:
 jobs:
   migrate:
     runs-on: ubuntu-latest
+    if: ${{ secrets.DATABASE_URL != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,5 +30,14 @@ jobs:
       - name: Run Prisma migrate deploy
         run: npm run migrate:deploy
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL || '' }}
-        continue-on-error: true
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  skip-migrate:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.DATABASE_URL == '' }}
+    steps:
+      - name: Skip migration (DATABASE_URL not configured)
+        run: |
+          echo "ℹ️  DATABASE_URL is not configured - skipping Prisma migrations"
+          echo "This is expected if you're running without a database (Bickford works fine without it)"
+          echo "To enable database features, add DATABASE_URL to repository secrets"
