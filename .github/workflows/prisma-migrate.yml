@@ -13,7 +13,6 @@ concurrency:
 jobs:
   migrate:
     runs-on: ubuntu-latest
-    if: ${{ secrets.DATABASE_URL != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,17 +26,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check if DATABASE_URL is configured
+        id: check_db
+        run: |
+          if [ -z "${{ secrets.DATABASE_URL }}" ]; then
+            echo "configured=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  DATABASE_URL is not configured - migrations will be skipped"
+          else
+            echo "configured=true" >> $GITHUB_OUTPUT
+            echo "✅ DATABASE_URL is configured - running migrations"
+          fi
+
       - name: Run Prisma migrate deploy
+        if: steps.check_db.outputs.configured == 'true'
         run: npm run migrate:deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-  skip-migrate:
-    runs-on: ubuntu-latest
-    if: ${{ secrets.DATABASE_URL == '' }}
-    steps:
-      - name: Skip migration (DATABASE_URL not configured)
+      - name: Skip migrations (no DATABASE_URL)
+        if: steps.check_db.outputs.configured == 'false'
         run: |
-          echo "ℹ️  DATABASE_URL is not configured - skipping Prisma migrations"
-          echo "This is expected if you're running without a database (Bickford works fine without it)"
-          echo "To enable database features, add DATABASE_URL to repository secrets"
+          echo "✅ Skipped migrations successfully"
+          echo "This is expected behavior - Bickford works without a database"
+          echo "Database features (AI logs, licenses) are optional"
