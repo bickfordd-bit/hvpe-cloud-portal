@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+const isDerekInstance = (process.env.INSTANCE_OWNER || "").toLowerCase() === "derek";
+
 export default function OPTRDashboard() {
   return (
     <div className="min-h-screen bg-black px-8 py-8 text-white">
@@ -23,6 +25,17 @@ export default function OPTRDashboard() {
             </p>
           </div>
         </Link>
+
+        {isDerekInstance && (
+          <Link href="/dashboard/optr/sam" className="block">
+            <div className="cursor-pointer rounded-xl border border-neutral-800 p-4 hover:bg-neutral-900">
+              <h2 className="text-xl font-medium">SAM.gov Search (Derek)</h2>
+              <p className="text-sm text-neutral-400">
+                Live SAM.gov search UI gated to the Derek instance. Requires SAM_API_KEY on the server.
+              </p>
+            </div>
+          </Link>
+        )}
       </div>
     </div>
   );

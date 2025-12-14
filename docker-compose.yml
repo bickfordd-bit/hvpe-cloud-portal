@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # HVPE Cloud Portal Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hvpe-portal
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - HVPE_OPENAI_API_KEY=${HVPE_OPENAI_API_KEY}
+      - OPTR_PASSCODE=${OPTR_PASSCODE:-billionaire}
+      - OPTR_ADMIN_EMAIL=${OPTR_ADMIN_EMAIL:-admin@example.com}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - ADMIN_DASH_TOKEN=${ADMIN_DASH_TOKEN}
+    depends_on:
+      - postgres
+    networks:
+      - hvpe-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: hvpe-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-hvpe}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-hvpe_secure_password}
+      - POSTGRES_DB=${POSTGRES_DB:-hvpe_portal}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./prisma/pgvector_setup.sql:/docker-entrypoint-initdb.d/pgvector_setup.sql
+    networks:
+      - hvpe-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hvpe}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache (optional, for future enhancements)
+  redis:
+    image: redis:7-alpine
+    container_name: hvpe-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - hvpe-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes
+
+networks:
+  hvpe-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

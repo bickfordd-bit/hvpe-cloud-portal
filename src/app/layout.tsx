@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { PersonaProvider } from "@/components/providers/PersonaProvider";
 import HvpeChatDock from "@/components/chat/HvpeChatDock";
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
+import "@/lib/envValidator"; // Run environment validation on startup
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,10 +21,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-black text-white">
       <body className={inter.className}>
-        <PersonaProvider>
-          {children}
-          <HvpeChatDock />
-        </PersonaProvider>
+        <ErrorBoundary>
+          <PersonaProvider>
+            {children}
+            <HvpeChatDock />
+          </PersonaProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

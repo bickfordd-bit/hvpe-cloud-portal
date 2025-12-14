@@ -2,14 +2,11 @@ export type Phase = "I" | "D" | "M" | "V" | "O" | "S" | "HALT";
 
 export type Blocker = { code: string; detail: string };
 
-export type OPTRState = {
-  phase: Phase;
-  blocked: boolean;
-  blockers: Blocker[];
-  coverage: number; // 0..1
-  win_prob: number; // 0..1
-  ecv: number; // $
-};
+export interface OPTRState {
+  stage: "idle" | "ingestion" | "embeddings" | "retrieval" | "scoring" | "completed" | "error";
+  progress: number;
+  message?: string;
+}
 
 export type DocumentRef = {
   id: string;
@@ -30,26 +27,44 @@ export type Opportunity = {
   documents: DocumentRef[];
 };
 
-export type Requirement = {
-  id: string;
-  section: string;
-  text: string;
-  kind: "shall" | "must" | "should" | "may";
-  priority: number;
-};
+export interface Trace {
+  timestamp: string;
+  stage: string;
+  status: "started" | "completed" | "failed";
+  message: string;
+  metadata?: Record<string, any>;
+}
 
-export type Trace = {
-  req_id: string;
-  response_id: string;
-  evidence_doc_ids: string[];
-  evidence_snippets?: string[];
-  confidence: number; // 0..1
-  gaps: string[];
-};
+export interface Requirement {
+  id: string;
+  text: string;
+  priority: "high" | "medium" | "low";
+}
+
+export interface ScoredRequirement extends Requirement {
+  score: number;
+  status: "met" | "partial" | "gap";
+  matchedDocuments: string[];
+  explanation?: string;
+}
 
 export type RunResult = {
-  state: OPTRState;
-  requirements: Requirement[];
+  success: boolean;
+  opportunityId: string;
   traces: Trace[];
-  package: { id: string; url: string; filename: string };
+  summary: {
+    totalRequirements: number;
+    averageScore: number;
+    coverage: number;
+    executionTimeMs: number;
+  };
+  requirements: ScoredRequirement[];
+  error?: string;
 };
+
+export interface ScoredDocument {
+  id: string;
+  text: string;
+  score: number;
+  metadata?: Record<string, any>;
+}

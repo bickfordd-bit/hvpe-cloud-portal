@@ -39,3 +39,5 @@ export async function runChat({
     latencyMs
   };
 }
+
+// Confirm this reads from process.env.HVPE_OPENAI_API_KEY or process.env.OPENAI_API_KEY

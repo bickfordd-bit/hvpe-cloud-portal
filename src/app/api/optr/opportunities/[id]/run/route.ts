@@ -1,27 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { RunResult, Requirement } from "@/lib/optr/types";
-import { getOpportunity } from "../../store";
-import { runOptr } from "@/lib/optr/processor";
+import { processOpportunity } from "@/lib/optr/processor";
+import { apiSuccess, apiError } from "@/lib/apiResponse";
+import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   const id = req.nextUrl.pathname.split("/").slice(-2, -1)[0] || "";
-  const oppty = getOpportunity(id);
-  if (!oppty) {
-    return NextResponse.json({ message: "Not found" }, { status: 404 });
-  }
-  // Route may accept optional requirements in the request body to be used
-  // during scoring. Otherwise processor will use defaults.
-  let body: { requirements?: Requirement[] } | null = null;
-  try {
-    body = await req.json().catch(() => null);
-  } catch {
-    body = null;
-  }
+  logger.info("OPTR run endpoint called", { opportunityId: id });
+
+  // Fetch opportunity state from database
+  // TODO: Implement actual DB query when schema is ready
+  const state = {
+    id,
+    status: "pending" as const,
+    requirements: [],
+  };
 
   try {
-    const result = await runOptr(oppty, body?.requirements);
-    return NextResponse.json(result);
-  } catch (err: any) {
-    return NextResponse.json({ message: err?.message || "Processing error" }, { status: 500 });
+    // Route may accept optional requirements in the request body to be used
+    // during scoring. Otherwise processor will use defaults.
+    let body: { requirements?: Requirement[] } | null = null;
+    try {
+      body = await req.json().catch(() => null);
+    } catch {
+      body = null;
+    }
+
+    // Process opportunity through OPTR pipeline
+    const result = await processOpportunity(id, body?.requirements as any);
+
+    logger.info("OPTR run endpoint completed", {
+      opportunityId: id,
+      success: result.success,
+      duration: result.metadata?.duration,
+    });
+
+    return NextResponse.json(apiSuccess(result));
+  } catch (error: any) {
+    logger.error("OPTR run endpoint failed", {
+      opportunityId: id,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    return NextResponse.json(apiError(error as Error), { status: 500 });
   }
 }

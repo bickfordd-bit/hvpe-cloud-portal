@@ -1,0 +1,81 @@
+# Dependencies
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Testing
+coverage
+*.lcov
+.nyc_output
+
+# Next.js
+.next/
+out/
+build
+dist
+
+# Production
+.vercel
+.netlify
+
+# Misc
+.DS_Store
+*.pem
+*.log
+
+# Debug
+.vscode
+.idea
+
+# Local env files
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation (not needed in container)
+*.md
+!README.md
+docs/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.circleci/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+*~
+
+# Database files (use external DB)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Prisma (we copy these explicitly)
+# prisma/migrations
+
+# Scripts (not needed in production)
+scripts/
+
+# Test files
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+__tests__/
+__mocks__/
+jest.config.ts

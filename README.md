@@ -57,6 +57,53 @@ curl -X POST https://your-domain/api/license/approve \
 - Dev server: `npm run dev`
 - Build: `npm run build`
 - Lint: `npm run lint`
+- Test: `npm test`
+
+## Docker Deployment 🐳
+
+### Quick Start with Docker Compose
+```bash
+# Development mode (with hot reload)
+docker-compose -f docker-compose.dev.yml up
+
+# Production mode
+docker-compose up -d
+```
+
+### Build & Push to GitHub Container Registry
+```bash
+# Login to GHCR
+echo $GITHUB_TOKEN | docker login ghcr.io -u bickfordd-bit --password-stdin
+
+# Build multi-arch image
+docker build -t ghcr.io/bickfordd-bit/hvpe-cloud-portal:latest .
+
+# Push to registry
+docker push ghcr.io/bickfordd-bit/hvpe-cloud-portal:latest
+
+# Or use automated GitHub Actions workflow (see .github/workflows/docker-publish.yml)
+```
+
+### Pull & Run from Registry
+```bash
+# Pull latest
+docker pull ghcr.io/bickfordd-bit/hvpe-cloud-portal:latest
+
+# Run with environment variables
+docker run -d \
+  -p 3000:3000 \
+  -e DATABASE_URL="postgresql://..." \
+  -e OPENAI_API_KEY="sk-..." \
+  --name hvpe-portal \
+  ghcr.io/bickfordd-bit/hvpe-cloud-portal:latest
+```
+
+**See [DOCKER.md](./DOCKER.md) for complete containerization guide** including:
+- Multi-arch builds (amd64, arm64)
+- Kubernetes deployment
+- Health checks & monitoring
+- Security best practices
+- CI/CD workflows
 
 ## Voice-to-code automatic deploy (AI assistant)
 
