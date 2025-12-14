@@ -8,6 +8,7 @@ import { OptrRunPanel } from "@/components/optr/OptrRunPanel";
 import { OptrStatusPanel } from "@/components/optr/OptrStatusPanel";
 import { OptrTraceTable } from "@/components/optr/OptrTraceTable";
 import { OptrRequirements } from "@/components/optr/OptrRequirements";
+import { OptrVoiceAssistant } from "@/components/optr/OptrVoiceAssistant";
 import { optrClient } from "@/lib/optr/client";
 import type { OPTRState, Requirement, Trace, RunResult } from "@/lib/optr/types";
 
@@ -48,10 +49,18 @@ export default function OptrOpportunityPage() {
     }
   }
 
+  function handleVoiceResult(result: any) {
+    if (result.state) setState(result.state);
+    if (result.requirements) setRequirements(result.requirements);
+    if (result.traces) setTraces(result.traces);
+    if (result.package?.url) setPackageUrl(result.package.url);
+  }
+
   return (
-    <OptrShell
-      title={`Opportunity: ${id}`}
-      subtitle="Run OPTR to compute coverage, blockers, and traceability."
+    <>
+      <OptrShell
+        title={`Opportunity: ${id}`}
+        subtitle="Run OPTR to compute coverage, blockers, and traceability. Use voice commands on mobile."
       right={
         <Link
           href="/optr"
@@ -77,5 +86,9 @@ export default function OptrOpportunityPage() {
         <OptrTraceTable traces={traces} />
       </div>
     </OptrShell>
+    
+    {/* Voice Assistant for Mobile */}
+    <OptrVoiceAssistant opportunityId={id} onResult={handleVoiceResult} />
+    </>
   );
 }
