@@ -39,15 +39,27 @@ export function OptrTraceTable({ traces }: { traces: Trace[] }) {
                   <td className="px-3 py-2">{pct(t.confidence)}</td>
                   <td className="px-3 py-2 text-neutral-300">
                     {t.gaps.length ? (
-                      <ul className="list-disc pl-4">
-                        {t.gaps.map((g, idx) => (
-                          <li key={idx} className="text-xs">
-                            {g}
-                          </li>
-                        ))}
+                      <ul className="space-y-1">
+                        {t.gaps.map((g, idx) => {
+                          const isCritical = g.includes('Critical:');
+                          const isUrgent = g.includes('Urgent') || g.includes('immediate');
+                          const isHighPriority = g.includes('High-priority') || g.includes('Mandatory');
+                          
+                          let gapClass = "text-xs ";
+                          if (isCritical) gapClass += "text-red-400 font-medium";
+                          else if (isUrgent) gapClass += "text-orange-400";
+                          else if (isHighPriority) gapClass += "text-yellow-400";
+                          else gapClass += "text-neutral-400";
+                          
+                          return (
+                            <li key={idx} className={gapClass}>
+                              • {g}
+                            </li>
+                          );
+                        })}
                       </ul>
                     ) : (
-                      <span className="text-xs text-neutral-500">—</span>
+                      <span className="text-xs text-green-400">✓ No gaps identified</span>
                     )}
                   </td>
                 </tr>

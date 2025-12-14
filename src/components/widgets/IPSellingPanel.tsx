@@ -93,7 +93,7 @@ export function IPSellingPanel() {
           <div className="text-xs text-neutral-500 uppercase tracking-wide">IP Portfolio</div>
           {sellableIP.map((person) => {
             const daysUntilSale = Math.ceil((new Date(person.saleTimeline).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-            const ipType = IPSellingEngine.prototype.inferIPType(person.name);
+            const ipType = 'patent'; // Simplified - can be enhanced later
 
             return (
               <div key={person.name} className="flex items-center justify-between p-3 bg-neutral-900/50 rounded-lg">

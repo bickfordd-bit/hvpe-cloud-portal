@@ -25,7 +25,9 @@ export type BillionairePerson = {
   name: string;
   ipCreated: boolean;
   ipValue: number;
+  projectedValue?: number;
   saleTimeline: string; // ISO date string for expected sale
+  saleDate?: string; // Alternative field name for sale date
   status: 'created' | 'in-development' | 'ready-to-sell' | 'sold';
 };
 

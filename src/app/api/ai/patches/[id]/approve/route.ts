@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const id = params.id;
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const secret = process.env.ADMIN_DASH_TOKEN || process.env.ADMIN_APPLY_SECRET;
   if (secret) {
     const h = req.headers.get("x-admin-secret");

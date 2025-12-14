@@ -47,6 +47,46 @@ function calculateBillionairePath(totalValue: number, years: number): {
   };
 }
 
+function calculateProjectedWealth(people: BillionairePerson[]): {
+  totalValue: number;
+  timelineYears: number;
+} {
+  // Calculate total projected value from IP portfolio
+  const totalValue = people.reduce((sum, person) => {
+    // Estimate value based on status and sale dates
+    let value = 0;
+    switch (person.status) {
+      case 'sold':
+        value = person.projectedValue || 0;
+        break;
+      case 'ready-to-sell':
+        value = (person.projectedValue || 0) * 0.9; // 90% probability
+        break;
+      case 'created':
+        value = (person.projectedValue || 0) * 0.7; // 70% probability
+        break;
+      case 'in-development':
+        value = (person.projectedValue || 0) * 0.4; // 40% probability
+        break;
+      default:
+        value = 0;
+    }
+    return sum + value;
+  }, 0);
+
+  // Calculate timeline based on earliest sale date
+  const saleDates = people
+    .filter(p => p.saleDate)
+    .map(p => new Date(p.saleDate!))
+    .sort((a, b) => a.getTime() - b.getTime());
+
+  const timelineYears = saleDates.length > 0
+    ? Math.max(1, (saleDates[0].getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 365))
+    : 3; // Default 3 years if no dates
+
+  return { totalValue, timelineYears };
+}
+
 function getStatusColor(status: BillionairePerson['status']): string {
   switch (status) {
     case 'sold': return 'text-emerald-400';

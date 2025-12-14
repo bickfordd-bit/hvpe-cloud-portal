@@ -151,29 +151,9 @@ export class IPSellingEngine {
    */
   private static async persistIPOpportunity(opportunity: IPSaleOpportunity): Promise<void> {
     try {
-      // Store base opportunity data
-      await prisma.opportunity.upsert({
-        where: { id: opportunity.id },
-        update: {
-          title: opportunity.title,
-          agency: opportunity.agency,
-          deadline_iso: opportunity.deadline_iso,
-          links: opportunity.links,
-          documents: opportunity.documents as JsonValue
-        },
-        create: {
-          id: opportunity.id,
-          source: opportunity.source,
-          title: opportunity.title,
-          agency: opportunity.agency,
-          deadline_iso: opportunity.deadline_iso,
-          links: opportunity.links,
-          documents: opportunity.documents as JsonValue
-        }
-      });
-
-      // Store IP-specific metadata (would need to extend schema)
+      // Store IP-specific metadata (opportunity table not yet in schema - log for now)
       console.log(`IP Opportunity created: ${opportunity.id} - ${opportunity.title}`);
+      // TODO: Add opportunity table to schema when ready
     } catch (error) {
       console.error('Failed to persist IP opportunity:', error);
     }

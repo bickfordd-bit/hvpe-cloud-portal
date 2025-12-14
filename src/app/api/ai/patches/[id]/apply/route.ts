@@ -4,8 +4,8 @@ import path from "path";
 import { execSync } from "child_process";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const id = params.id;
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const patchLog = await prisma.aIPatchLog.findUnique({ where: { id } });
   if (!patchLog) return NextResponse.json({ error: "not found" }, { status: 404 });
 
@@ -35,7 +35,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       if (process.env.GITHUB_TOKEN) {
         const title = `AI: ${patchLog.instruction.slice(0, 80)}`;
         const bodyMsg = `Approved AI patch: ${patchLog.instruction}`;
-        const out = execSync(`gh pr create --title "${title.replace(/\"/g, "'\")}" --body "${bodyMsg.replace(/\"/g, "'\")}" --head ${branch}`, { encoding: "utf-8" });
+        const out = execSync(`gh pr create --title "${title.replace(/"/g, "'")}" --body "${bodyMsg.replace(/"/g, "'")}" --head ${branch}`, { encoding: "utf-8" });
         prUrl = out;
       }
     } catch (e) {}

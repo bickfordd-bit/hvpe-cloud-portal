@@ -1,8 +1,25 @@
 import { prisma } from "@/lib/prisma";
 import ApprovePatchButton from "@/components/AI/ApprovePatchButton";
 
+export const dynamic = 'force-dynamic';
+
 export default async function Page() {
-  const patches = await prisma.aIPatchLog.findMany({ orderBy: { createdAt: "desc" }, take: 50 });
+  let patches: any[] = [];
+  
+  try {
+    patches = await prisma.aIPatchLog.findMany({ orderBy: { createdAt: "desc" }, take: 50 });
+  } catch (error) {
+    console.warn('Database not configured:', error);
+  }
+
+  if (patches.length === 0) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">AI-generated patches</h1>
+        <p className="text-gray-600">No patches found. Database may not be configured.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

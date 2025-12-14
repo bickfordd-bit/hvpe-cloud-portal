@@ -1,14 +1,17 @@
 {
-  "name": "hvpe-cloud-portal",
-  "version": "0.1.0",
+  "name": "bickford-app",
+  "version": "1.0.0",
+  "description": "Bickford - Intent to Reality Instantly",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "migrate:deploy": "prisma migrate deploy",
-    "postinstall": "prisma generate"
+    "deploy": "npm run build && npm run start",
+    "deploy:vercel": "vercel --prod",
+    "migrate:deploy": "test -n \"$DATABASE_URL\" && prisma migrate deploy || echo 'Skipping migrations - DATABASE_URL not set'",
+    "postinstall": "test -n \"$DATABASE_URL\" && prisma generate || prisma generate --schema=prisma/schema.prisma || true"
   },
   "dependencies": {
     "@prisma/client": "^6.3.1",

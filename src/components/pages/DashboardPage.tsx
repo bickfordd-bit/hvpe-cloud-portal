@@ -6,6 +6,7 @@ import { EngineStatusPanel } from "@/components/widgets/EngineStatusPanel";
 import { BillionaireTracker } from "@/components/widgets/BillionaireTracker";
 import { IPSellingPanel } from "@/components/widgets/IPSellingPanel";
 import { ValuationPanel } from "@/components/widgets/ValuationPanel";
+import { IntentToRealityPanel } from "@/components/widgets/IntentToRealityPanel";
 import { MoneyVelocityGauge } from "@/components/widgets/MoneyVelocityGauge";
 import { SupraHeatmap } from "@/components/widgets/SupraHeatmap";
 import { MetricMiniGrid } from "@/components/widgets/MetricMiniGrid";
@@ -37,6 +38,9 @@ export function DashboardPage() {
 
         {/* Middle row: Metrics */}
         <MetricMiniGrid metrics={data.metricTiles} />
+
+        {/* Intent to Reality Panel */}
+        <IntentToRealityPanel />
 
         {/* Bottom row: Billionaire tracker + IP selling + valuation + supra heatmap */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">

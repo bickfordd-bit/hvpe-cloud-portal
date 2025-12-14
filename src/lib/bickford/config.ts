@@ -1,0 +1,259 @@
+// Bickford UI Configuration System
+// Total control over all UI elements per instance
+
+export interface BickfordUIConfig {
+  // Branding
+  branding: {
+    appName: string;
+    tagline: string;
+    logo?: string;
+    favicon?: string;
+    primaryColor: string;
+    accentColor: string;
+  };
+
+  // Header Configuration
+  header: {
+    show: boolean;
+    title: string;
+    subtitle?: string;
+    showPoweredBy: boolean;
+    customHTML?: string;
+  };
+
+  // Chat Interface
+  chat: {
+    placeholder: string;
+    welcomeMessage: string;
+    buttonText: string;
+    showTimestamps: boolean;
+    maxMessageLength: number;
+    enableVoice: boolean;
+    enableFileUpload: boolean;
+  };
+
+  // Features
+  features: {
+    enableOPTR: boolean;
+    enableIntentToReality: boolean;
+    enableIPProtection: boolean;
+    showMetrics: boolean;
+    showFormulaVersion: boolean;
+  };
+
+  // Privacy & Security
+  privacy: {
+    collectAnalytics: boolean;
+    storeConversations: boolean;
+    dataRetentionDays: number;
+    showPrivacyNotice: boolean;
+    allowDataExport: boolean;
+    allowDataDeletion: boolean;
+    encryptData: boolean;
+  };
+
+  // Footer
+  footer: {
+    show: boolean;
+    copyright: string;
+    links?: Array<{ text: string; url: string }>;
+    customHTML?: string;
+  };
+
+  // Advanced
+  advanced: {
+    customCSS?: string;
+    customJS?: string;
+    apiEndpoint?: string;
+    rateLimit?: number;
+    enableDebug: boolean;
+  };
+}
+
+// Default Configuration
+export const DEFAULT_CONFIG: BickfordUIConfig = {
+  branding: {
+    appName: "Bickford",
+    tagline: "Intent to Reality Instantly",
+    primaryColor: "#9333ea", // purple-600
+    accentColor: "#ec4899", // pink-500
+  },
+
+  header: {
+    show: true,
+    title: "Bickford",
+    subtitle: "Intent to Reality Instantly",
+    showPoweredBy: true,
+  },
+
+  chat: {
+    placeholder: "Describe your intention... (Press Enter to manifest)",
+    welcomeMessage: "Welcome to Bickford. I transform your intentions into reality instantly. What would you like to manifest today?",
+    buttonText: "Manifest",
+    showTimestamps: true,
+    maxMessageLength: 2000,
+    enableVoice: false,
+    enableFileUpload: false,
+  },
+
+  features: {
+    enableOPTR: true,
+    enableIntentToReality: true,
+    enableIPProtection: true,
+    showMetrics: true,
+    showFormulaVersion: false, // Keep formula details private
+  },
+
+  privacy: {
+    collectAnalytics: false,
+    storeConversations: false,
+    dataRetentionDays: 30,
+    showPrivacyNotice: true,
+    allowDataExport: true,
+    allowDataDeletion: true,
+    encryptData: true,
+  },
+
+  footer: {
+    show: true,
+    copyright: "© 2025 Bickford Technologies LLC. All Rights Reserved. Patent Pending.",
+    links: [
+      { text: "Privacy Policy", url: "/privacy-policy" },
+      { text: "Terms of Service", url: "/terms" },
+    ],
+  },
+
+  advanced: {
+    enableDebug: false,
+  },
+};
+
+// Enterprise Configuration Example
+export const ENTERPRISE_CONFIG: BickfordUIConfig = {
+  branding: {
+    appName: "Enterprise AI Assistant",
+    tagline: "Powered by Bickford Technology",
+    primaryColor: "#0f172a", // Enterprise dark
+    accentColor: "#3b82f6", // Enterprise blue
+  },
+
+  header: {
+    show: true,
+    title: "Your Company AI",
+    subtitle: "Intelligent Business Solutions",
+    showPoweredBy: false, // White-label
+  },
+
+  chat: {
+    placeholder: "How can I help your business today?",
+    welcomeMessage: "Welcome to your enterprise AI assistant. I can help analyze opportunities, process documents, and accelerate your business decisions.",
+    buttonText: "Send",
+    showTimestamps: true,
+    maxMessageLength: 5000,
+    enableVoice: true,
+    enableFileUpload: true,
+  },
+
+  features: {
+    enableOPTR: true,
+    enableIntentToReality: true,
+    enableIPProtection: true,
+    showMetrics: true,
+    showFormulaVersion: false,
+  },
+
+  privacy: {
+    collectAnalytics: true, // With consent
+    storeConversations: true, // Enterprise compliance
+    dataRetentionDays: 365,
+    showPrivacyNotice: true,
+    allowDataExport: true,
+    allowDataDeletion: true,
+    encryptData: true,
+  },
+
+  footer: {
+    show: true,
+    copyright: "© 2025 Your Company. Powered by Bickford Technologies.",
+    links: [
+      { text: "Privacy", url: "/privacy" },
+      { text: "Security", url: "/security" },
+      { text: "Support", url: "/support" },
+    ],
+  },
+
+  advanced: {
+    rateLimit: 1000, // Higher for enterprise
+    enableDebug: false,
+  },
+};
+
+// Configuration Management
+export class ConfigManager {
+  private static config: BickfordUIConfig = DEFAULT_CONFIG;
+
+  static getConfig(): BickfordUIConfig {
+    // Load from environment or database
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('bickford-config');
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch (e) {
+          console.warn('Failed to parse config:', e);
+        }
+      }
+    }
+    return this.config;
+  }
+
+  static setConfig(config: Partial<BickfordUIConfig>) {
+    this.config = { ...this.config, ...config };
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bickford-config', JSON.stringify(this.config));
+    }
+  }
+
+  static resetConfig() {
+    this.config = DEFAULT_CONFIG;
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('bickford-config');
+    }
+  }
+
+  static validateConfig(config: Partial<BickfordUIConfig>): boolean {
+    // Validate configuration
+    if (config.privacy?.dataRetentionDays && config.privacy.dataRetentionDays < 1) {
+      return false;
+    }
+    if (config.chat?.maxMessageLength && config.chat.maxMessageLength > 10000) {
+      return false;
+    }
+    return true;
+  }
+}
+
+// Privacy Compliance Helpers
+export class PrivacyManager {
+  static shouldCollectData(config: BickfordUIConfig): boolean {
+    return config.privacy.collectAnalytics && config.privacy.storeConversations;
+  }
+
+  static getRetentionPeriod(config: BickfordUIConfig): number {
+    return config.privacy.dataRetentionDays;
+  }
+
+  static canExportData(config: BickfordUIConfig): boolean {
+    return config.privacy.allowDataExport;
+  }
+
+  static canDeleteData(config: BickfordUIConfig): boolean {
+    return config.privacy.allowDataDeletion;
+  }
+
+  static shouldEncrypt(config: BickfordUIConfig): boolean {
+    return config.privacy.encryptData;
+  }
+}
+
+export default ConfigManager;

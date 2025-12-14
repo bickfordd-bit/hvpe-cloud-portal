@@ -65,7 +65,7 @@ export async function runOptr(oppty: Opportunity, requirements?: Requirement[]):
           data: {
             docId: doc.id,
             optrId: oppty.id,
-            vector: vec as JsonValue,
+            vector: vec as any,
             snippet: (doc.text || "").slice(0, 1000)
           }
         });
