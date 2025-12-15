@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { apiLogger } from './logger';
+import { logger } from './logger';
 
 export interface APIResponse<T = any> {
   success: boolean;
@@ -70,7 +70,8 @@ export function createErrorResponse(
     message = error;
   }
 
-  apiLogger.error(`API Error: ${errorCode}`, error instanceof Error ? error : undefined, {
+  logger.error(`API Error: ${errorCode}`, {
+    error: error instanceof Error ? error : undefined,
     code: errorCode,
     status: statusCode
   });

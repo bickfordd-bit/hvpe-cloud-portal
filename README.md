@@ -150,6 +150,114 @@ CI: A GitHub Actions workflow is provided at `.github/workflows/ci-deploy.yml`. 
   - `generic` (provide your own `messages`)
 - Logs usage to `AiUsageLog` (Prisma)
 
+## OPTR Trade Trigger API
+
+Execute trades via Alpaca integration.
+
+### API Endpoint
+```bash
+POST /api/optr/trade
+```
+
+**Headers:**
+- `x-optr-admin-key`: Required authentication key (matches `OPTR_ADMIN_KEY` env var)
+- `x-request-id`: Optional request tracking ID
+
+**Payload:**
+```json
+{
+  "symbol": "AAPL",
+  "side": "buy",
+  "mode": "dollars",
+  "dollars": 10,
+  "shares": 0,
+  "min_dollars": 1
+}
+```
+
+**Parameters:**
+- `symbol` (required): Stock ticker, 1-10 chars, auto-uppercased
+- `side` (optional): `buy` or `sell` (default: `buy`)
+- `mode` (optional): `auto`, `dollars`, or `shares` (default: `auto`)
+- `dollars` (optional): Dollar amount for notional orders (default: 0)
+- `shares` (optional): Number of shares for quantity orders (default: 0)
+- `min_dollars` (optional): Minimum dollar threshold (default: 1)
+
+**Example:**
+```bash
+curl -X POST https://your-domain/api/optr/trade \
+  -H "Content-Type: application/json" \
+  -H "x-optr-admin-key: your-secret-key" \
+  -d '{
+    "symbol": "AAPL",
+    "side": "buy",
+    "mode": "dollars",
+    "dollars": 10
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "success": true,
+    "symbol": "AAPL",
+    "side": "buy",
+    "mode": "dollars",
+    "shares_executed": 0.05,
+    "dollars_executed": 10.00,
+    "order_id": "abc123",
+    "filled_price": 200.00
+  },
+  "rid": "req-uuid-here",
+  "metadata": {
+    "timestamp": "2024-01-01T00:00:00.000Z",
+    "duration": 1234,
+    "remaining": 29
+  }
+}
+```
+
+### Python Worker Setup
+
+The trade endpoint forwards requests to a Python worker that executes trades via Alpaca.
+
+**Install dependencies:**
+```bash
+cd scripts/optr
+pip install -r requirements.txt
+```
+
+**Environment variables (worker):**
+- `OPTR_ADMIN_KEY` (required): Shared secret with API endpoint
+- `ALPACA_API_KEY` (required): Alpaca API key
+- `ALPACA_API_SECRET` (required): Alpaca API secret
+- `ALPACA_BASE_URL` (optional): Default `https://paper-api.alpaca.markets` (paper trading)
+- `OPTR_WORKER_PORT` (optional): HTTP server port (default: 8787)
+
+**Run the worker:**
+```bash
+cd scripts/optr
+export OPTR_ADMIN_KEY="your-secret-key"
+export ALPACA_API_KEY="your-alpaca-key"
+export ALPACA_API_SECRET="your-alpaca-secret"
+python3 worker_http.py
+```
+
+**CLI testing (bypasses HTTP server):**
+```bash
+cd scripts/optr
+python3 run_trade.py --symbol AAPL --side buy --mode dollars --dollars 10
+```
+
+### Environment Variables (Portal)
+- `OPTR_ADMIN_KEY` (required): Authentication key for trade endpoint
+- `OPTR_WORKER_URL` (required): URL of Python worker (e.g., `http://localhost:8787`)
+- `OPTR_MAX_NOTIONAL` (optional): Max dollar amount for non-shares orders (default: 50)
+
+**Rate Limiting:** 30 requests per minute per IP (in-memory, best-effort)
+
 ## Admin
 - AI usage logs: `/admin/ai-logs`
 - Protected by middleware; set `ADMIN_DASH_TOKEN` (use Bearer token or `?token=` query)
