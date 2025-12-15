@@ -42,10 +42,14 @@ class AlpacaExecutor:
                 "environment variables or pass them to the constructor."
             )
         
-        # Determine if using paper trading
+        # Determine if using paper trading based on base_url
+        # The 'paper' parameter must match the base_url type
         self.is_paper = 'paper' in self.base_url.lower()
         
         try:
+            # Note: paper=True uses paper-api.alpaca.markets
+            # paper=False uses api.alpaca.markets
+            # The paper parameter should match the base_url configuration
             self.client = TradingClient(
                 api_key=self.api_key,
                 secret_key=self.api_secret,
@@ -120,6 +124,8 @@ class AlpacaExecutor:
                     }
             
             # Check account buying power (for buy orders)
+            # Note: For high-frequency scenarios, consider caching account info
+            # with a reasonable TTL to reduce Alpaca API calls
             if side == 'buy':
                 account = self.client.get_account()
                 buying_power = float(account.buying_power)

@@ -21,9 +21,10 @@ class OPTRWorkerHandler(BaseHTTPRequestHandler):
         """Send JSON response"""
         self.send_response(status_code)
         self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, x-optr-admin-key')
+        # Note: CORS not needed for server-to-server API calls
+        # If cross-origin access is required, restrict to specific origins:
+        # allowed_origin = os.getenv('ALLOWED_ORIGIN', 'http://localhost:3000')
+        # self.send_header('Access-Control-Allow-Origin', allowed_origin)
         self.end_headers()
         self.wfile.write(json.dumps(data).encode('utf-8'))
     
@@ -38,8 +39,10 @@ class OPTRWorkerHandler(BaseHTTPRequestHandler):
         print(json.dumps(log_data), file=sys.stderr)
     
     def do_OPTIONS(self):
-        """Handle CORS preflight"""
-        self._send_json_response({}, 204)
+        """Handle OPTIONS requests (removed CORS - server-to-server only)"""
+        self.send_response(204)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
     
     def do_POST(self):
         """Handle POST requests"""

@@ -125,43 +125,56 @@ export async function POST(req: NextRequest) {
       workerUrl
     });
 
-    const workerResponse = await fetch(workerUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-optr-admin-key': adminKey
-      },
-      body: JSON.stringify({
+    // Create abort controller for request timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+    try {
+      const workerResponse = await fetch(workerUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-optr-admin-key': adminKey
+        },
+        body: JSON.stringify({
+          symbol,
+          side,
+          mode,
+          dollars,
+          shares,
+          min_dollars
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      const workerData = await workerResponse.json() as TradeResponse;
+
+      if (!workerResponse.ok) {
+        logger.error('Worker returned error', {
+          status: workerResponse.status,
+          data: workerData
+        });
+        return createErrorResponse(
+          workerData.error || workerData.message || 'Worker execution failed',
+          workerResponse.status,
+          ErrorCodes.EXTERNAL_SERVICE_ERROR
+        );
+      }
+
+      logger.info('Trade executed successfully', {
         symbol,
         side,
-        mode,
-        dollars,
-        shares,
-        min_dollars
-      })
-    });
-
-    const workerData = await workerResponse.json() as TradeResponse;
-
-    if (!workerResponse.ok) {
-      logger.error('Worker returned error', {
-        status: workerResponse.status,
-        data: workerData
+        order_id: workerData.order_id
       });
-      return createErrorResponse(
-        workerData.error || workerData.message || 'Worker execution failed',
-        workerResponse.status,
-        ErrorCodes.EXTERNAL_SERVICE_ERROR
-      );
+
+      return createSuccessResponse(workerData, 200);
+
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      throw fetchError;
     }
-
-    logger.info('Trade executed successfully', {
-      symbol,
-      side,
-      order_id: workerData.order_id
-    });
-
-    return createSuccessResponse(workerData, 200);
 
   } catch (error: any) {
     logger.error('Trade API error', error, {
@@ -169,7 +182,15 @@ export async function POST(req: NextRequest) {
       stack: error.stack
     });
 
-    if (error.name === 'AbortError' || error.code === 'ECONNREFUSED') {
+    if (error.name === 'AbortError') {
+      return createErrorResponse(
+        'Worker request timeout - no response within 30 seconds',
+        504,
+        ErrorCodes.EXTERNAL_SERVICE_ERROR
+      );
+    }
+
+    if (error.code === 'ECONNREFUSED') {
       return createErrorResponse(
         'Unable to connect to execution worker',
         503,
