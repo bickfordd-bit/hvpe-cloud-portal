@@ -52,6 +52,63 @@ curl -X POST https://your-domain/api/license/approve \
   -d '{ "requestId": "..." }'
 ```
 
+## BICK CLI (Default Operating System)
+
+This repository operates in **BICK mode** by default. BICK measures value delivery velocity with moat strength and cognitive load:
+
+```
+BICK_planner = ( Σ(Value(w) * EC(w)) / Σ(T2V(w)) ) * DS * (1 / C)
+```
+
+### Quick Start
+
+```bash
+# Install dependencies (includes BICK CLI workspace)
+npm install
+
+# Initialize BICK ledger
+node tools/bick-cli/dist/index.js init
+
+# Compute BICK score
+node tools/bick-cli/dist/index.js score
+
+# Generate human-readable report
+node tools/bick-cli/dist/index.js report
+
+# Get next-best-actions for improvement
+node tools/bick-cli/dist/index.js tick
+```
+
+### Optional: Link globally
+
+```bash
+npm link --workspace @bickford/bick-cli
+# Now you can run: bick score, bick report, etc.
+```
+
+### What BICK measures
+
+- **Value × EC**: Work items delivered with quality gates (tests, reviews)
+- **T2V**: Time-to-value (issue creation → merge)
+- **DS**: Defensibility snapshot (data exclusivity, workflow lock-in, automation, switching cost)
+- **C**: Cognitive load (open decisions, untriaged issues, blocked items)
+
+### GitHub Actions
+
+BICK runs automatically on:
+- Every PR (see `.github/workflows/bick.yml`)
+- Daily at 9:00 UTC
+- Manual workflow dispatch
+
+Reports and snapshots uploaded as artifacts.
+
+### Documentation
+
+- **Canonical formula**: `docs/bick/CANON.md`
+- **Agent contract**: `AGENTS.md`
+- **Configuration**: `bick.config.json`
+- **CLI README**: `tools/bick-cli/README.md`
+
 ## Dev commands
 - Install deps: `npm install`
 - Dev server: `npm run dev`
