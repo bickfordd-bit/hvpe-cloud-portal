@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { createSuccessResponse, createErrorResponse, ErrorCodes } from '@/lib/apiResponse';
+import { createErrorResponse, ErrorCodes } from '@/lib/apiResponse';
 import { randomUUID } from 'crypto';
 
 // In-memory rate limiter (resets on server restart)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const RATE_LIMIT_MAX = 30;
-
-interface TradePayload {
-  symbol?: string;
-  side?: 'buy' | 'sell';
-  mode?: 'auto' | 'dollars' | 'shares';
-  dollars?: number;
-  shares?: number;
-  min_dollars?: number;
-}
 
 interface TradeRequest {
   symbol: string;
@@ -59,7 +50,7 @@ function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
   return { allowed: true, remaining: RATE_LIMIT_MAX - record.count };
 }
 
-function validatePayload(body: any, headerRequestId?: string): { valid: boolean; error?: string; data?: TradeRequest; requestId: string } {
+function validatePayload(body: unknown, headerRequestId?: string): { valid: boolean; error?: string; data?: TradeRequest; requestId: string } {
   const requestId = headerRequestId || body.request_id || randomUUID();
 
   // Validate symbol
@@ -248,23 +239,25 @@ export async function POST(req: NextRequest) {
         }
       });
 
-    } catch (workerError: any) {
+    } catch (workerError) {
       logger.error('Failed to reach worker', {
         requestId,
-        error: workerError.message,
+        error: workerError instanceof Error ? workerError.message : String(workerError),
         workerUrl
       });
       return createErrorResponse('Worker unreachable', 503, 'worker_unreachable');
     }
 
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Trade endpoint error', {
       requestId,
-      error: error.message,
-      stack: error.stack
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
     });
     return createErrorResponse(
-      process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+      process.env.NODE_ENV === 'development' 
+        ? (error instanceof Error ? error.message : 'Internal server error')
+        : 'Internal server error',
       500,
       ErrorCodes.INTERNAL_ERROR
     );
