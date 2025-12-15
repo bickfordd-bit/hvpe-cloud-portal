@@ -43,3 +43,12 @@ next-env.d.ts
 .vscode/
 .vercel
 .env*.local
+
+# Branch-specific temporary files
+/tmp/branch-*
+*.branch.tmp
+*-branch-notes.md
+
+# Branch-specific build artifacts
+/dist-*/
+/build-*/

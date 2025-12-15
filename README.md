@@ -1,5 +1,27 @@
 HVPE Cloud Portal – Next.js (App Router) with Stripe and Prisma-backed licensing.
 
+## 🌿 Repository Architecture
+
+**This repository uses a multi-branch architecture** where different products, features, and team workspaces exist as dedicated branches rather than separate repositories. 
+
+📖 **See [BRANCH_ARCHITECTURE.md](./BRANCH_ARCHITECTURE.md)** for complete details on:
+- Branch purposes and ownership
+- Development workflows
+- Deployment strategies
+- Migration guidelines
+
+### Active Branches
+
+- **main**: Production portal with core features (OPTR, Bickford, Trading, Licenses)
+- **bickford-mobile**: Mobile app version
+- **bickford**: Core AI features
+- **hvpetrader**: Advanced trading platform
+- **bickford-for-defense**: DoD/defense sector version
+- **penelope**: AI content generation
+- **Personal branches**: dad, derek-and-jenna, xavier, naomi
+
+🔧 **Quick branch setup**: Run `./scripts/create-branches.sh`
+
 ## Environment
 Set these in `.env.local` (and in Vercel Project Settings → Environment Variables):
 
