@@ -21,10 +21,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const where: any = { accountId };
-    if (engagementId) {
-      where.engagementId = engagementId;
-    }
+    const where = {
+      accountId,
+      ...(engagementId && { engagementId }),
+    };
 
     const deltas = await prisma.t2VDelta.findMany({
       where,

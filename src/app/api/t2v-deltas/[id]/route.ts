@@ -43,7 +43,14 @@ export async function PATCH(
     }
 
     // Build update data
-    const updateData: any = {};
+    const updateData: {
+      improvedValue?: number | null;
+      improvedAt?: Date;
+      unit?: string | null;
+      source?: string | null;
+      confidence?: number | null;
+      notes?: string | null;
+    } = {};
     
     if (body.improvedValue !== undefined) {
       updateData.improvedValue = body.improvedValue;

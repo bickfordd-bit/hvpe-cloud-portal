@@ -25,6 +25,7 @@ export default function T2VDashboardPage() {
   useEffect(() => {
     async function loadDeltas() {
       try {
+        // TODO: Replace 'demo' with actual user accountId from session/context
         const res = await fetch('/api/t2v-deltas?accountId=demo');
         if (!res.ok) {
           console.error('Failed to fetch T2V deltas:', res.status, res.statusText);

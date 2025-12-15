@@ -21,10 +21,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const where: any = { accountId };
-    if (stream) {
-      where.stream = stream;
-    }
+    const where = {
+      accountId,
+      ...(stream && { stream }),
+    };
 
     const snapshots = await prisma.defensibilitySnapshot.findMany({
       where,
