@@ -4,9 +4,10 @@ import { t2vStore } from "@/lib/t2v/store";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const id = params.id;
     const body = await req.json().catch(() => null);
 
