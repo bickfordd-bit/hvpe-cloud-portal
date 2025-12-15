@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { runChat } from "@/lib/ai/openaiClient";
+import { requireMobileKey } from "@/lib/auth/mobileKey";
 
 type Mode =
   | "optr-gap-analysis"
@@ -110,8 +111,14 @@ function buildPrompt(mode: Mode, payload: any) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    // Check mobile API key if configured
+    const authError = requireMobileKey(req);
+    if (authError) {
+      return authError;
+    }
+
     const body = await req.json().catch(() => null);
     const mode: Mode = body?.mode || "generic";
     const payload = body?.payload || {};

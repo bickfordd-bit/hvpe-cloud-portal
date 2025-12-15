@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { apiLogger } from './logger';
+import { logger as apiLogger } from './logger';
 
 export interface APIResponse<T = any> {
   success: boolean;
