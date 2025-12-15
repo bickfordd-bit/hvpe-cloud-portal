@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Bickford - Intent to Reality Instantly",
   "private": true,
+  "workspaces": [
+    "tools/bick-cli"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",

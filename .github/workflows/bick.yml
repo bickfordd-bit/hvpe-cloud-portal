@@ -1,0 +1,34 @@
+name: BICK Score
+
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 9 * * *"   # daily 9:00 UTC
+
+jobs:
+  bick:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Build BICK CLI
+        run: npm run -w @bickford/bick-cli build
+      - name: Generate BICK report
+        run: node tools/bick-cli/dist/index.js report || node tools/bick-cli/dist/index.js score
+      - name: Upload BICK report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bick-report
+          path: .bick/BICK_REPORT.md
+        if: always()
+      - name: Upload BICK snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: bick-snapshot
+          path: .bick/snapshot-*.json
+        if: always()

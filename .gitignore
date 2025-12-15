@@ -43,3 +43,8 @@ next-env.d.ts
 .vscode/
 .vercel
 .env*.local
+
+# BICK CLI snapshots (generated, not tracked)
+.bick/snapshot-*.json
+.bick/BICK_REPORT.md
+.bick/NEXT_BEST_ACTIONS.json

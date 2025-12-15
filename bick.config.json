@@ -1,0 +1,28 @@
+{
+  "weights": {
+    "alpha_value": 1.0,
+    "beta_ec": 1.0,
+    "gamma_t2v": 1.0,
+    "lambda_cognitive_load": 1.0,
+    "ds_power": 1.0
+  },
+  "thresholds": {
+    "max_untriaged": 10,
+    "max_blocked": 5
+  },
+  "defensibility_snapshot": {
+    "dataExclusivity": 2,
+    "workflowLockIn": 3,
+    "autonomousExecution": 3,
+    "switchingCost": 2
+  },
+  "value_model": {
+    "default_value_per_item": 100,
+    "priority_multiplier": {
+      "P0": 3.0,
+      "P1": 2.0,
+      "P2": 1.0,
+      "UNKNOWN": 1.0
+    }
+  }
+}
