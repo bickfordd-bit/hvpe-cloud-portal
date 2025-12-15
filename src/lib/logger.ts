@@ -22,6 +22,9 @@ export const logger = winston.createLogger({
   ],
 });
 
+// Alias for API logging
+export const apiLogger = logger;
+
 if (process.env.NODE_ENV === 'production') {
   logger.add(
     new winston.transports.File({

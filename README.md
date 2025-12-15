@@ -135,6 +135,114 @@ Security note: The `/api/ai/code` endpoint runs `git` commands on the host. Do n
 
 CI: A GitHub Actions workflow is provided at `.github/workflows/ci-deploy.yml`. It builds the app on push/PR to `ui-redesign-v1` and attempts to deploy to Vercel when Vercel secrets are configured.
 
+## OPTR Trade Trigger API
+
+Execute trades via Alpaca with admin-safe authentication and explicit failure reasons.
+
+### Portal API Endpoint
+**Endpoint**: `POST /api/optr/trade`
+
+**Headers**:
+- `x-optr-admin-key`: Required admin key for authentication
+- `Content-Type`: application/json
+
+**Request Body**:
+```json
+{
+  "symbol": "AAPL",
+  "side": "buy",
+  "mode": "auto",
+  "dollars": 100,
+  "min_dollars": 10
+}
+```
+
+**Parameters**:
+- `symbol` (string, required): Stock symbol (e.g., "AAPL", "TSLA")
+- `side` (string, required): Order side - "buy" or "sell"
+- `mode` (string, required): Execution mode - "auto", "dollars", or "shares"
+- `dollars` (number, optional): Dollar amount for fractional orders (required for "dollars" and "auto" modes)
+- `shares` (number, optional): Number of shares (required for "shares" mode)
+- `min_dollars` (number, optional): Minimum order size for auto mode (default: 1.0)
+
+**Example**:
+```bash
+curl -X POST https://your-domain/api/optr/trade \
+  -H "Content-Type: application/json" \
+  -H "x-optr-admin-key: your-secret-key" \
+  -d '{
+    "symbol": "AAPL",
+    "side": "buy",
+    "mode": "dollars",
+    "dollars": 100
+  }'
+```
+
+### Python Execution Worker
+
+The Python worker handles actual order execution with Alpaca.
+
+**Installation**:
+```bash
+cd scripts/optr
+pip install -r requirements.txt
+```
+
+**Environment Variables**:
+```bash
+# Required
+export OPTR_ADMIN_KEY="your-secret-key"
+export ALPACA_API_KEY="your-alpaca-key"
+export ALPACA_API_SECRET="your-alpaca-secret"
+
+# Optional
+export OPTR_WORKER_PORT=8787  # Default: 8787
+export ALPACA_BASE_URL="https://paper-api.alpaca.markets"  # Paper trading (default)
+# For live trading: https://api.alpaca.markets
+```
+
+**Portal Environment Variables**:
+```bash
+export OPTR_ADMIN_KEY="your-secret-key"
+export OPTR_WORKER_URL="http://localhost:8787"
+```
+
+**Start HTTP Worker**:
+```bash
+cd scripts/optr
+python3 worker_http.py
+# Or specify port:
+python3 worker_http.py 9000
+```
+
+**CLI Usage**:
+```bash
+cd scripts/optr
+
+# Buy $100 of AAPL in auto mode
+python3 run_trade.py AAPL buy auto --dollars 100
+
+# Buy 10 shares of TSLA
+python3 run_trade.py TSLA buy shares --shares 10
+
+# Sell $50 of NVDA with minimum $10
+python3 run_trade.py NVDA sell auto --dollars 50 --min-dollars 10
+```
+
+**Direct Execution**:
+```python
+from optr_alpaca_execute import AlpacaExecutor
+
+executor = AlpacaExecutor()
+result = executor.execute_trade(
+    symbol="AAPL",
+    side="buy",
+    mode="dollars",
+    dollars=100
+)
+print(result)
+```
+
 ## HVPE chat dock
 - API: `POST /api/hvpe-chat` (requires `OPENAI_API_KEY`)
 - UI: floating chat button/dock on all pages via `HvpeChatDock`

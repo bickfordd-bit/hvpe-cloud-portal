@@ -1,0 +1,2 @@
+# OPTR Alpaca Execution Worker Dependencies
+alpaca-py>=0.30.0

@@ -77,6 +77,18 @@ const envVars: EnvConfig[] = [
     name: 'ADMIN_DASH_TOKEN',
     required: false,
     description: 'Admin dashboard authentication token'
+  },
+  
+  // OPTR Trading (optional)
+  {
+    name: 'OPTR_ADMIN_KEY',
+    required: false,
+    description: 'Admin key for OPTR trade trigger API'
+  },
+  {
+    name: 'OPTR_WORKER_URL',
+    required: false,
+    description: 'URL of OPTR execution worker (e.g., http://localhost:8787)'
   }
 ];
 
