@@ -7,6 +7,9 @@ This directory contains architectural documentation, guides, and reference mater
 ### Branch Architecture
 - **[BRANCH_DIAGRAM.md](./BRANCH_DIAGRAM.md)** - Visual diagrams and architecture illustrations
 
+### Agent Architecture
+- **[AGENT_ARCHITECTURE.md](./AGENT_ARCHITECTURE.md)** - Complete guide to building AI agents
+
 ### Root Documentation
 Navigate to the root directory for main documentation:
 
@@ -35,6 +38,7 @@ Navigate to `.github/` for workflow documentation:
 ```
 docs/
 ├── README.md (this file)
+├── AGENT_ARCHITECTURE.md (agent building guide)
 ├── BRANCH_DIAGRAM.md (branch architecture visuals)
 ├── DOD_*.md (Defense/OPTR documentation)
 └── OPTR_*.md (OPTR framework docs)
@@ -70,6 +74,11 @@ Root/
 1. Follow [MIGRATION_GUIDE.md](../MIGRATION_GUIDE.md) step-by-step
 2. Use [scripts/create-branches.sh](../scripts/create-branches.sh) for setup
 3. Reference [BRANCH_IMPLEMENTATION_SUMMARY.md](../BRANCH_IMPLEMENTATION_SUMMARY.md) for details
+
+### For Building Agents
+1. Start with [AGENT_ARCHITECTURE.md](./AGENT_ARCHITECTURE.md) for complete guide
+2. Review existing agents in `src/lib/optr/processor.ts` (OPTR)
+3. Check `src/lib/ai/openaiClient.ts` for AI integration patterns
 
 ### For OPTR Work
 1. See [OPTR_MATHEMATICAL_FRAMEWORK.md](./OPTR_MATHEMATICAL_FRAMEWORK.md) for core concepts
@@ -142,6 +151,7 @@ grep -r "pattern" docs/
 | GitHub workflows | .github/BRANCH_*.md |
 | Environment vars | .env.example |
 | Migration | MIGRATION_GUIDE.md |
+| Agent building | docs/AGENT_ARCHITECTURE.md |
 | OPTR | docs/OPTR_*.md, docs/DOD_*.md |
 | Architecture | BRANCH_DIAGRAM.md, BRANCH_ARCHITECTURE.md |
 
