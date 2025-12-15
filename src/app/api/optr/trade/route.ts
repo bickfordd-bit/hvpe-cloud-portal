@@ -84,6 +84,24 @@ function checkDailyNotional(key: string, amount: number, maxDaily: number | unde
 }
 
 /**
+ * Create trade-specific error response with rid
+ */
+function createTradeErrorResponse(rid: string, reason: string, message?: string, metadata?: Record<string, any>) {
+  return NextResponse.json(
+    {
+      success: false,
+      reason,
+      rid,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        ...metadata
+      }
+    },
+    { status: 400 }
+  );
+}
+
+/**
  * Get client IP from request
  */
 function getClientIP(req: NextRequest): string {
@@ -130,7 +148,7 @@ function calculateNotional(trade: TradeRequest): number | null {
  * Execute a trade via Alpaca worker with safety guards
  */
 export async function POST(req: NextRequest) {
-  const rid = req.headers.get('x-request-id') || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const rid = req.headers.get('x-request-id') || `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   
   try {
     // 1. Check rate limit (best effort)
@@ -213,18 +231,14 @@ export async function POST(req: NextRequest) {
     const symbolCheck = validateSymbol(body.symbol, allowlist);
     if (!symbolCheck.ok) {
       logger.warn('Symbol not in allowlist', { symbol: body.symbol, allowlist, rid });
-      return NextResponse.json(
+      return createTradeErrorResponse(
+        rid,
+        symbolCheck.reason!,
+        undefined,
         {
-          success: false,
-          reason: symbolCheck.reason,
-          rid,
-          metadata: {
-            timestamp: new Date().toISOString(),
-            symbol: body.symbol,
-            allowlist: allowlist || []
-          }
-        },
-        { status: 400 }
+          symbol: body.symbol,
+          allowlist: allowlist || []
+        }
       );
     }
 
@@ -234,18 +248,14 @@ export async function POST(req: NextRequest) {
     
     if (notional !== null && notional > maxNotional) {
       logger.warn('Notional exceeds max', { notional, maxNotional, rid });
-      return NextResponse.json(
+      return createTradeErrorResponse(
+        rid,
+        'exceeds_max_notional',
+        undefined,
         {
-          success: false,
-          reason: 'exceeds_max_notional',
-          rid,
-          metadata: {
-            timestamp: new Date().toISOString(),
-            requested: notional,
-            max: maxNotional
-          }
-        },
-        { status: 400 }
+          requested: notional,
+          max: maxNotional
+        }
       );
     }
 
@@ -262,19 +272,15 @@ export async function POST(req: NextRequest) {
           maxDaily,
           rid 
         });
-        return NextResponse.json(
+        return createTradeErrorResponse(
+          rid,
+          'exceeds_daily_notional',
+          undefined,
           {
-            success: false,
-            reason: 'exceeds_daily_notional',
-            rid,
-            metadata: {
-              timestamp: new Date().toISOString(),
-              current: dailyCheck.current,
-              requested: notional,
-              max: maxDaily
-            }
-          },
-          { status: 400 }
+            current: dailyCheck.current,
+            requested: notional,
+            max: maxDaily
+          }
         );
       }
     }

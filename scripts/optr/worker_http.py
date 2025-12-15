@@ -8,6 +8,8 @@ Runs on port 8787 by default.
 import os
 import sys
 import json
+import time
+import random
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from typing import Optional
 
@@ -51,8 +53,13 @@ class TradeHandler(BaseHTTPRequestHandler):
     
     def do_POST(self):
         """Handle POST requests"""
-        # Extract request ID
-        self.request_id = self.headers.get('x-request-id', f'worker_{os.getpid()}_{id(self)}')
+        # Extract request ID (generate unique ID if not provided)
+        if self.headers.get('x-request-id'):
+            self.request_id = self.headers.get('x-request-id')
+        else:
+            timestamp = int(time.time() * 1000)
+            rand_str = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=8))
+            self.request_id = f'worker_{timestamp}_{rand_str}'
         
         # Only accept /trade endpoint
         if self.path not in ['/trade', '/']:
