@@ -112,6 +112,17 @@ function buildPrompt(mode: Mode, payload: any) {
 
 export async function POST(req: Request) {
   try {
+    // Mobile API guard: require x-optr-mobile-key header
+    const mobileKey = req.headers.get("x-optr-mobile-key");
+    const expectedKey = process.env.MOBILE_API_KEY;
+    
+    if (expectedKey && mobileKey !== expectedKey) {
+      return NextResponse.json(
+        { error: "Unauthorized: Invalid or missing mobile API key" },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json().catch(() => null);
     const mode: Mode = body?.mode || "generic";
     const payload = body?.payload || {};
