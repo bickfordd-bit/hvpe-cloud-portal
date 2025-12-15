@@ -1,9 +1,20 @@
 HVPE Cloud Portal – Next.js (App Router) with Stripe and Prisma-backed licensing.
 
+## BICK API
+
+The BICK API provides endpoints for calculating BICK (Business Impact Conversion Key) values based on the T2V workflow. See [BICK_API.md](./BICK_API.md) for complete documentation and [BICK_API_EXAMPLES.md](./BICK_API_EXAMPLES.md) for usage examples.
+
+**Quick Start:**
+- `POST /api/bick` - Calculate BICK values (requires `x-bick-key` header)
+- `GET /api/version` - Get API version
+- `GET /api/health` - Check system health
+
 ## Environment
 Set these in `.env.local` (and in Vercel Project Settings → Environment Variables):
 
 - `DATABASE_URL` (Postgres)
+- `BICK_API_KEY` (required for BICK API authentication)
+- `BICK_VERSION` (optional, defaults to "v1")
 - Other app-specific vars you already use (`STRIPE_SECRET_KEY`, webhook secrets, mail creds, etc.)
 - `OPENAI_API_KEY` (for the in-portal HVPE chat dock)
 - `HVPE_OPENAI_API_KEY` (preferred alias for AI Core; falls back to `OPENAI_API_KEY`)
