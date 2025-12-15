@@ -8,6 +8,17 @@ Set these in `.env.local` (and in Vercel Project Settings → Environment Variab
 - `OPENAI_API_KEY` (for the in-portal HVPE chat dock)
 - `HVPE_OPENAI_API_KEY` (preferred alias for AI Core; falls back to `OPENAI_API_KEY`)
 
+**OPTR Trade API (optional, for Alpaca trading):**
+- `OPTR_ADMIN_KEY` - API authentication key
+- `OPTR_WORKER_URL` - Python worker endpoint (e.g., `http://localhost:8787`)
+- `ALPACA_API_KEY` - Alpaca API key
+- `ALPACA_SECRET_KEY` - Alpaca secret key
+- `ALPACA_BASE_URL` - Alpaca API URL (paper or live)
+- `OPTR_SYMBOL_ALLOWLIST` - Comma-separated allowed symbols (optional)
+- `OPTR_MAX_NOTIONAL` - Max dollars per order (default: 50)
+- `OPTR_MAX_NOTIONAL_PER_DAY` - Max total dollars per day (optional)
+- `OPTR_ALLOW_LIVE` - Allow live trading (default: false)
+
 ## Prisma setup (Postgres)
 1) Generate client (requires `DATABASE_URL` set):
 ```bash
@@ -149,6 +160,160 @@ CI: A GitHub Actions workflow is provided at `.github/workflows/ci-deploy.yml`. 
   - `bic-risk-summary` (risk + mitigations)
   - `generic` (provide your own `messages`)
 - Logs usage to `AiUsageLog` (Prisma)
+
+## OPTR Trade API (Alpaca Integration)
+
+The OPTR trade API enables automated trade execution via Alpaca with comprehensive safety guards.
+
+### API Endpoint
+- **POST** `/api/optr/trade`
+- **Authentication**: `x-optr-admin-key` header (matches `OPTR_ADMIN_KEY` env var)
+- **Rate Limit**: 30 requests per minute per IP (best effort)
+
+### Request Format
+```json
+{
+  "symbol": "AAPL",
+  "side": "buy",
+  "notional": 50,
+  "type": "market",
+  "time_in_force": "day"
+}
+```
+
+Fields:
+- `symbol` (required): Stock symbol
+- `side` (required): "buy" or "sell"
+- `qty` (optional): Number of shares (use qty OR notional, not both)
+- `notional` (optional): Dollar amount (for fractional shares)
+- `type` (optional): "market" or "limit" (default: market)
+- `limit_price` (optional): Required for limit orders
+- `time_in_force` (optional): "day", "gtc", "ioc", "fok" (default: day)
+
+### Response Format
+```json
+{
+  "success": true,
+  "order_id": "abc-123",
+  "status": "filled",
+  "filled_qty": 10.0,
+  "filled_avg_price": 150.25,
+  "rid": "req_1234567890_abc"
+}
+```
+
+### Safety Guards
+
+**Symbol Allowlist** (`OPTR_SYMBOL_ALLOWLIST`)
+- Comma-separated list of allowed symbols (e.g., "AAPL,MSFT,GOOGL")
+- If set, requests for other symbols are rejected with `reason: "symbol_not_allowed"`
+
+**Per-Order Notional Cap** (`OPTR_MAX_NOTIONAL`, default: 50)
+- Maximum dollar amount per order
+- Requests exceeding this limit are rejected with `reason: "exceeds_max_notional"`
+
+**Daily Notional Cap** (`OPTR_MAX_NOTIONAL_PER_DAY`)
+- Maximum total dollar amount per day (tracked per admin key)
+- Best effort, in-memory tracking (resets at UTC midnight)
+- Requests exceeding daily limit are rejected with `reason: "exceeds_daily_notional"`
+
+**Paper-Only Enforcement** (`OPTR_ALLOW_LIVE`, default: false)
+- By default, live trading is blocked unless `OPTR_ALLOW_LIVE=true`
+- If `ALPACA_BASE_URL` doesn't contain "paper" and `OPTR_ALLOW_LIVE` is not true, trades are rejected with `reason: "live_trading_blocked"`
+
+### Environment Variables
+
+**Required:**
+- `OPTR_ADMIN_KEY` - API authentication key
+- `OPTR_WORKER_URL` - Python worker endpoint (e.g., `http://localhost:8787`)
+- `ALPACA_API_KEY` - Alpaca API key
+- `ALPACA_SECRET_KEY` - Alpaca secret key
+- `ALPACA_BASE_URL` - Alpaca API URL (use paper URL for testing: `https://paper-api.alpaca.markets`)
+
+**Optional (Safety Guards):**
+- `OPTR_SYMBOL_ALLOWLIST` - Comma-separated allowed symbols (default: all symbols allowed)
+- `OPTR_MAX_NOTIONAL` - Max dollars per order (default: 50)
+- `OPTR_MAX_NOTIONAL_PER_DAY` - Max total dollars per day (default: unlimited)
+- `OPTR_ALLOW_LIVE` - Allow live trading (default: false, paper only)
+
+### Python Worker Setup
+
+The trade executor runs as a separate Python service that must be started before the Next.js app can execute trades.
+
+**Install dependencies:**
+```bash
+cd scripts/optr
+pip install -r requirements.txt
+```
+
+**Start the worker:**
+```bash
+# Set environment variables
+export OPTR_ADMIN_KEY="your-secret-key"
+export ALPACA_API_KEY="your-alpaca-key"
+export ALPACA_SECRET_KEY="your-alpaca-secret"
+export ALPACA_BASE_URL="https://paper-api.alpaca.markets"  # Paper trading
+export OPTR_SYMBOL_ALLOWLIST="AAPL,MSFT,GOOGL"  # Optional
+export OPTR_MAX_NOTIONAL="100"  # Optional
+export OPTR_ALLOW_LIVE="false"  # Safety: block live trading
+
+# Start HTTP worker on port 8787
+cd scripts/optr
+python3 worker_http.py
+```
+
+**CLI usage (direct execution):**
+```bash
+# Market buy $50 of AAPL
+python3 scripts/optr/run_trade.py --symbol AAPL --side buy --notional 50
+
+# Buy 10 shares at market price
+python3 scripts/optr/run_trade.py --symbol AAPL --side buy --qty 10
+
+# Limit buy 10 shares at $150
+python3 scripts/optr/run_trade.py --symbol AAPL --side buy --qty 10 --type limit --limit-price 150.00
+```
+
+### Testing
+
+**Example curl request:**
+```bash
+curl -X POST http://localhost:3000/api/optr/trade \
+  -H "Content-Type: application/json" \
+  -H "x-optr-admin-key: your-secret-key" \
+  -d '{
+    "symbol": "AAPL",
+    "side": "buy",
+    "notional": 50
+  }'
+```
+
+### Error Responses
+
+All errors include `rid` (request ID) for tracking:
+
+```json
+{
+  "success": false,
+  "reason": "symbol_not_allowed",
+  "rid": "req_1234567890_abc",
+  "metadata": {
+    "timestamp": "2025-12-15T19:00:00.000Z",
+    "symbol": "TSLA",
+    "allowlist": ["AAPL", "MSFT", "GOOGL"]
+  }
+}
+```
+
+Common error reasons:
+- `unauthorized` - Missing or invalid admin key
+- `symbol_not_allowed` - Symbol not in allowlist
+- `exceeds_max_notional` - Order exceeds per-order cap
+- `exceeds_daily_notional` - Daily limit reached
+- `live_trading_blocked` - Live trading not allowed
+- `insufficient_funds` - Insufficient buying power
+- `market_closed` - Market is closed
+- `symbol_not_found` - Invalid symbol
 
 ## Admin
 - AI usage logs: `/admin/ai-logs`

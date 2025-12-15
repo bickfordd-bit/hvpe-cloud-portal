@@ -1,0 +1,5 @@
+# Alpaca SDK for trade execution
+alpaca-py>=0.8.0
+
+# Required for market data and trading
+requests>=2.31.0
