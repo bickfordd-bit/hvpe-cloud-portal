@@ -4,7 +4,20 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   const startTime = Date.now();
   
-  const health = {
+  type HealthCheck = { status: string; message?: string };
+  
+  const health: {
+    status: string;
+    timestamp: string;
+    uptime: number;
+    checks: {
+      api: HealthCheck;
+      database: HealthCheck;
+      openai: HealthCheck;
+    };
+    version: string;
+    environment: string;
+  } = {
     status: "healthy",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),

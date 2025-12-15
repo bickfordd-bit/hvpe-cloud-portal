@@ -6,7 +6,7 @@ import type {
 } from './types';
 import { DEFeaturesParser } from './parser';
 import { logger } from '@/lib/logger';
-import { generateEmbeddings } from '@/lib/optr/embeddings';
+import { generateEmbeddingsBatch } from '@/lib/optr/embeddings';
 import { keyManager } from '@/lib/ai/keyManager';
 
 /**
@@ -56,7 +56,7 @@ export class DEFeaturesMatcher {
     }
     
     // Generate embeddings in batch
-    const embeddings = await generateEmbeddings(textsToEmbed, apiKey);
+    const embeddings = await generateEmbeddingsBatch(textsToEmbed, apiKey);
     
     // Track usage
     const tokensUsed = textsToEmbed.reduce((sum, text) => sum + Math.ceil(text.length / 4), 0);
@@ -95,7 +95,7 @@ export class DEFeaturesMatcher {
     }
 
     // Generate embeddings for requirements
-    const reqEmbeddings = await generateEmbeddings(requirements, apiKey);
+    const reqEmbeddings = await generateEmbeddingsBatch(requirements, apiKey);
 
     // Track usage
     const tokensUsed = requirements.reduce((sum, req) => sum + Math.ceil(req.length / 4), 0);
@@ -203,7 +203,7 @@ export class DEFeaturesMatcher {
     requirements: string[],
     apiKey: string
   ): Promise<DEFeatureAnalysisResult> {
-    const matchedFeatures = await this.matchRequirements(requirements, apiKey, 10);
+    const matchedFeatures = await this.matchRequirements(requirements, 10);
     
     // Calculate coverage score (% of requirements with good matches)
     const wellMatched = matchedFeatures.filter(m => m.relevanceScore > 0.7).length;

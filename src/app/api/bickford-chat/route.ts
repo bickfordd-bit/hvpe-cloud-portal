@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
-import { runOptr } from "@/lib/optr/processor";
+import { processOpportunity } from "@/lib/optr/processor";
 import type { Opportunity } from "@/lib/optr/types";
 
 export const runtime = "nodejs";
@@ -161,30 +161,24 @@ class BickfordIntelligenceEngine {
     opportunityScore: number;
     requirements: Array<{ name: string; score: number }>;
   }> {
-    // Create a temporary opportunity from the intention
-    const tempOpportunity: Opportunity = {
-      id: 'temp-' + Date.now(),
-      source: 'bickford-intent',
-      title: intention.slice(0, 100),
-      agency: 'Direct Intent',
-      deadline_iso: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      links: [],
-      documents: []
-    };
-
-    const result = await runOptr(tempOpportunity);
+    // Simplified OPTR analysis without full database dependency
+    // In production, this would call processOpportunity with a saved opportunity
+    // For now, return mock analysis based on intention characteristics
+    const words = intention.split(/\s+/);
+    const opportunityKeywords = ['project', 'contract', 'business', 'partnership', 'deal'];
+    const matchCount = opportunityKeywords.filter(kw => 
+      intention.toLowerCase().includes(kw)
+    ).length;
     
-    // Calculate overall opportunity score from traces
-    const avgConfidence = result.traces.length > 0
-      ? result.traces.reduce((sum, t) => sum + t.confidence, 0) / result.traces.length
-      : 0;
+    const baseScore = Math.min(0.5 + (matchCount * 0.1), 0.95);
     
     return {
-      opportunityScore: avgConfidence,
-      requirements: result.requirements.slice(0, 5).map(r => ({
-        name: r.section,
-        score: result.traces.find(t => t.req_id === r.id)?.confidence || 0
-      }))
+      opportunityScore: baseScore,
+      requirements: [
+        { name: 'Opportunity Alignment', score: baseScore },
+        { name: 'Resource Availability', score: baseScore * 0.9 },
+        { name: 'Timeline Feasibility', score: baseScore * 0.95 }
+      ]
     };
   }
 

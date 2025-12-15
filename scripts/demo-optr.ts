@@ -4,7 +4,7 @@
  * Run: npx tsx scripts/demo-optr.ts
  */
 
-import { runOptr } from '../src/lib/optr/processor';
+import { processOpportunity } from '../src/lib/optr/processor';
 import type { Opportunity, Requirement } from '../src/lib/optr/types';
 
 console.log('\n🎯 OPTR Live Demo - Department of Defense Contract\n');
@@ -25,55 +25,43 @@ const opportunity: Opportunity = {
     {
       id: 'doc-001',
       filename: 'Statement of Work.pdf',
-      type: 'solicitation',
+      type: 'pdf',
       sha256: 'abc123...'
     }
   ]
 };
 
-// Requirements with varying priorities (1-5 scale)
+// Requirements (note: actual Requirement type only supports "high" | "medium" | "low" for priority)
 const requirements: Requirement[] = [
   {
     id: 'REQ-001',
-    kind: 'shall',
-    priority: 5, // Critical
+    priority: 'high',
     text: 'The system shall provide 24/7 security monitoring and threat detection capabilities with real-time alerting',
-    source: 'SOW Section 3.1'
   },
   {
     id: 'REQ-002',
-    kind: 'shall',
-    priority: 5, // Critical
+    priority: 'high',
     text: 'The solution shall comply with NIST 800-53 security controls and FedRAMP High authorization',
-    source: 'SOW Section 2.4'
   },
   {
     id: 'REQ-003',
-    kind: 'shall',
-    priority: 4, // High
+    priority: 'high',
     text: 'The system shall integrate with existing SIEM platforms including Splunk and QRadar',
-    source: 'SOW Section 3.2'
   },
   {
     id: 'REQ-004',
-    kind: 'should',
-    priority: 3, // Medium
+    priority: 'medium',
     text: 'The solution should provide automated incident response playbooks and orchestration',
-    source: 'SOW Section 4.1'
   },
   {
     id: 'REQ-005',
-    kind: 'should',
-    priority: 2, // Low
+    priority: 'low',
     text: 'The system should include AI-powered threat intelligence and predictive analytics',
-    source: 'SOW Section 4.3'
   },
   {
     id: 'REQ-006',
-    kind: 'shall',
-    priority: 4, // High
+    priority: 'high',
     text: 'The contractor shall maintain active Secret facility clearance and employ cleared personnel',
-    source: 'SOW Section 1.2'
   }
 ];
 
@@ -86,8 +74,10 @@ console.log(`   Documents: ${opportunity.links?.length || 0} links, ${opportunit
 
 console.log(`\n📝 Requirements (${requirements.length} total):`);
 requirements.forEach(req => {
-  const priority = '★'.repeat(req.priority) + '☆'.repeat(5 - req.priority);
-  console.log(`   ${req.id}: [${req.kind.toUpperCase()}] ${priority}`);
+  const priorityMap = { high: 5, medium: 3, low: 2 };
+  const priorityNum = priorityMap[req.priority];
+  const priority = '★'.repeat(priorityNum) + '☆'.repeat(5 - priorityNum);
+  console.log(`   ${req.id}: [${req.priority.toUpperCase()}] ${priority}`);
   console.log(`      ${req.text.slice(0, 80)}...`);
 });
 
@@ -97,8 +87,12 @@ async function runDemo() {
   try {
     const startTime = Date.now();
     
-    // Run OPTR analysis
-    const result = await runOptr(opportunity, requirements);
+    // Run OPTR analysis (requires opportunity to be in database)
+    // For demo purposes, this would need the opportunity ID to be saved first
+    console.log('⚠️  Note: This demo requires database setup and opportunity to be saved');
+    console.log('Use demo-optr-mock.ts for a standalone demo without database dependency\n');
+    
+    const result = await processOpportunity(opportunity.id);
     
     const duration = Date.now() - startTime;
     
@@ -107,62 +101,31 @@ async function runDemo() {
     
     // Display results
     console.log('📊 RESULTS:');
-    console.log(`   Phase: ${result.state.phase}`);
-    console.log(`   Coverage: ${(result.state.coverage * 100).toFixed(1)}% (simple count)`);
-    console.log(`   Win Probability: ${(result.state.win_prob * 100).toFixed(1)}%`);
-    console.log(`   Expected Contract Value: $${result.state.ecv.toLocaleString()}`);
-    console.log(`   Blocked: ${result.state.blocked ? 'Yes' : 'No'}`);
+    console.log(`   Success: ${result.success ? 'Yes' : 'No'}`);
+    console.log(`   Total Requirements: ${result.summary.totalRequirements}`);
+    console.log(`   Average Score: ${result.summary.averageScore}%`);
+    console.log(`   Coverage: ${result.summary.coverage}%`);
+    console.log(`   Execution Time: ${result.summary.executionTimeMs}ms`);
     
     console.log('\n🔍 Requirement Traces:');
     result.traces.forEach((trace, idx) => {
-      const req = requirements[idx];
-      const confidence = (trace.confidence * 100).toFixed(1);
-      const status = trace.confidence >= 0.7 ? '✓' : trace.confidence >= 0.5 ? '⚠' : '✗';
-      
-      console.log(`\n   ${status} ${req.id} (Priority ${req.priority}, ${req.kind}): ${confidence}% confidence`);
-      console.log(`      Evidence: ${trace.evidence_doc_ids[0]}`);
-      
-      if (trace.evidence_snippets[0]) {
-        const snippet = trace.evidence_snippets[0].slice(0, 100).replace(/\s+/g, ' ');
-        console.log(`      Snippet: "${snippet}..."`);
-      }
-      
-      if (trace.gaps.length > 0) {
-        console.log(`      Gaps:`);
-        trace.gaps.forEach(gap => console.log(`         - ${gap}`));
-      }
+      console.log(`\n   ${idx + 1}. ${trace.stage}: ${trace.status}`);
+      console.log(`      Message: ${trace.message}`);
+      console.log(`      Time: ${trace.timestamp}`);
     });
-    
-    console.log('\n\n📦 Deliverable Package:');
-    console.log(`   Package ID: ${result.package.id}`);
-    console.log(`   Filename: ${result.package.filename}`);
-    console.log(`   URL: ${result.package.url}`);
     
     console.log(`\n⏱️  Processing Time: ${duration}ms`);
     
-    // Analysis breakdown
-    console.log('\n\n📈 SCORING BREAKDOWN:');
-    const totalPriority = requirements.reduce((sum, r) => sum + r.priority, 0);
-    const weightedCovered = result.traces.reduce((sum, t, i) => {
-      const req = requirements[i];
-      return sum + (t.confidence >= 0.5 ? req.priority : 0);
-    }, 0);
-    const weightedCoverage = weightedCovered / totalPriority;
-    const avgConfidence = result.traces.reduce((sum, t) => sum + t.confidence, 0) / result.traces.length;
-    
-    console.log(`   Total Priority Weight: ${totalPriority}`);
-    console.log(`   Weighted Coverage: ${(weightedCoverage * 100).toFixed(1)}%`);
-    console.log(`   Average Confidence: ${(avgConfidence * 100).toFixed(1)}%`);
-    
-    const shallReqs = requirements.filter(r => r.kind === 'shall');
-    const shallMet = result.traces.filter((t, i) => 
-      requirements[i].kind === 'shall' && t.confidence >= 0.7
-    );
-    console.log(`   Mandatory Compliance: ${shallMet.length}/${shallReqs.length} "shall" requirements met`);
-    
-    console.log('\n   Formula: coverage^0.8 × confidence^0.2 × shallPenalty × agencyMultiplier(1.3)');
-    console.log(`   Result: ${Math.pow(weightedCoverage, 0.8).toFixed(3)} × ${Math.pow(avgConfidence, 0.2).toFixed(3)} × ${(shallMet.length / shallReqs.length).toFixed(3)} × 1.3`);
-    console.log(`   = ${(result.state.win_prob * 100).toFixed(1)}% win probability`);
+    if (result.requirements && result.requirements.length > 0) {
+      console.log('\n\n📋 Scored Requirements:');
+      result.requirements.forEach((req) => {
+        console.log(`\n   ${req.id}: ${req.score}% - ${req.status}`);
+        console.log(`      ${req.text.slice(0, 80)}...`);
+        if (req.explanation) {
+          console.log(`      Explanation: ${req.explanation}`);
+        }
+      });
+    }
     
     console.log('\n' + '═'.repeat(80));
     console.log('🎉 Demo Complete!\n');

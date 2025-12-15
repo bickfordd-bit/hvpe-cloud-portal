@@ -40,20 +40,32 @@ export default function OptrOpportunityPage() {
     setErr(null);
     try {
       const rr: RunResult = await optrClient.run(id);
-      setState(rr.state);
+      // Convert RunResult to OPTRState format for UI
+      setState({
+        stage: rr.success ? "completed" : "error",
+        progress: rr.success ? 100 : 0,
+        message: rr.success ? "Analysis complete" : (rr.error || "Analysis failed")
+      });
       setRequirements(rr.requirements || []);
       setTraces(rr.traces || []);
-      setPackageUrl(rr.package?.url || null);
+      // packageUrl not available in current RunResult
+      setPackageUrl(null);
     } catch (e: any) {
       setErr(e.message || "OPTR run failed.");
     }
   }
 
   function handleVoiceResult(result: any) {
-    if (result.state) setState(result.state);
+    // Handle voice assistant results if needed
+    if (result.summary) {
+      setState({
+        stage: "completed",
+        progress: 100,
+        message: "Voice analysis complete"
+      });
+    }
     if (result.requirements) setRequirements(result.requirements);
     if (result.traces) setTraces(result.traces);
-    if (result.package?.url) setPackageUrl(result.package.url);
   }
 
   return (

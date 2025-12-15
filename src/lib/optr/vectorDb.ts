@@ -37,7 +37,7 @@ export class InMemoryVectorStore implements VectorStore {
         id,
         score,
         text: (data.metadata as { text?: string }).text || '',
-        metadata: data.metadata,
+        metadata: data.metadata as Record<string, unknown>,
       });
     }
 

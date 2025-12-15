@@ -19,54 +19,69 @@ const opportunity = {
   estimatedValue: 1_000_000
 };
 
-// Requirements with varying priorities (1-5 scale)
-const requirements: Requirement[] = [
+// Requirements with varying priorities
+const requirements: (Requirement & { kind: string; source: string; priorityNum: number })[] = [
   {
     id: 'REQ-001',
     kind: 'shall',
-    priority: 5, // Critical
+    priority: 'high', // Critical
+    priorityNum: 5,
     text: 'The system shall provide 24/7 security monitoring and threat detection capabilities',
     source: 'SOW Section 3.1'
   },
   {
     id: 'REQ-002',
     kind: 'shall',
-    priority: 5, // Critical
+    priority: 'high', // Critical
+    priorityNum: 5,
     text: 'The solution shall comply with NIST 800-53 security controls and FedRAMP High',
     source: 'SOW Section 2.4'
   },
   {
     id: 'REQ-003',
     kind: 'shall',
-    priority: 4, // High
+    priority: 'high',
+    priorityNum: 4,
     text: 'The system shall integrate with existing SIEM platforms including Splunk',
     source: 'SOW Section 3.2'
   },
   {
     id: 'REQ-004',
     kind: 'should',
-    priority: 3, // Medium
+    priority: 'medium',
+    priorityNum: 3,
     text: 'The solution should provide automated incident response playbooks',
     source: 'SOW Section 4.1'
   },
   {
     id: 'REQ-005',
     kind: 'should',
-    priority: 2, // Low
+    priority: 'low',
+    priorityNum: 2,
     text: 'The system should include AI-powered threat intelligence',
     source: 'SOW Section 4.3'
   },
   {
     id: 'REQ-006',
     kind: 'shall',
-    priority: 4, // High
+    priority: 'high',
+    priorityNum: 4,
     text: 'The contractor shall maintain active Secret facility clearance',
     source: 'SOW Section 1.2'
   }
 ];
 
-// Simulated traces (what OPTR would generate)
-const traces: Trace[] = [
+// Simulated traces (what OPTR would generate) - using custom type for demo
+type DemoTrace = {
+  req_id: string;
+  response_id: string;
+  evidence_doc_ids: string[];
+  evidence_snippets: string[];
+  confidence: number;
+  gaps: string[];
+};
+
+const traces: DemoTrace[] = [
   {
     req_id: 'REQ-001',
     response_id: 'RESP-1',
@@ -125,7 +140,7 @@ console.log(`   Base Value: $${opportunity.estimatedValue.toLocaleString()}`);
 
 console.log(`\n📝 Requirements (${requirements.length} total):`);
 requirements.forEach(req => {
-  const priority = '★'.repeat(req.priority) + '☆'.repeat(5 - req.priority);
+  const priority = '★'.repeat(req.priorityNum) + '☆'.repeat(5 - req.priorityNum);
   console.log(`   ${req.id}: [${req.kind.toUpperCase()}] ${priority}`);
   console.log(`      ${req.text.slice(0, 70)}...`);
 });
@@ -133,10 +148,10 @@ requirements.forEach(req => {
 console.log('\n\n⚙️  Processing with OPTR Weighted Scoring Engine...\n');
 
 // Calculate weighted coverage
-const totalPriority = requirements.reduce((sum, r) => sum + r.priority, 0);
+const totalPriority = requirements.reduce((sum, r) => sum + r.priorityNum, 0);
 const weightedCovered = traces.reduce((sum, t, i) => {
   const req = requirements[i];
-  const weight = req.priority;
+  const weight = req.priorityNum;
   return sum + (t.confidence >= 0.5 ? weight : 0);
 }, 0);
 const weightedCoverage = weightedCovered / totalPriority;
@@ -179,7 +194,7 @@ traces.forEach((trace, idx) => {
   const req = requirements[idx];
   const confidence = (trace.confidence * 100).toFixed(1);
   const status = trace.confidence >= 0.7 ? '✓' : trace.confidence >= 0.5 ? '⚠' : '✗';
-  const priorityStars = '★'.repeat(req.priority);
+  const priorityStars = '★'.repeat(req.priorityNum);
   
   console.log(`\n   ${status} ${req.id} [${req.kind.toUpperCase()}] Priority ${priorityStars}: ${confidence}% confidence`);
   
@@ -205,8 +220,8 @@ console.log(`      \n      Calculation:`);
 requirements.forEach((req, i) => {
   const trace = traces[i];
   const met = trace.confidence >= 0.5 ? '✓' : '✗';
-  const points = trace.confidence >= 0.5 ? req.priority : 0;
-  console.log(`         ${met} ${req.id} (Priority ${req.priority}): ${points} points`);
+  const points = trace.confidence >= 0.5 ? req.priorityNum : 0;
+  console.log(`         ${met} ${req.id} (Priority ${req.priorityNum}): ${points} points`);
 });
 
 console.log(`\n   2️⃣  Average Confidence: ${(avgConfidence * 100).toFixed(1)}%`);
