@@ -22,7 +22,7 @@ export const logger = winston.createLogger({
   ],
 });
 
-// Alias for API logging
+// Alias for backward compatibility with existing apiResponse.ts imports
 export const apiLogger = logger;
 
 if (process.env.NODE_ENV === 'production') {

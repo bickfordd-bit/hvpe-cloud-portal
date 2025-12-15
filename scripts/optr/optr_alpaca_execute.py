@@ -110,23 +110,23 @@ class AlpacaExecutor:
                     "error": f"dollars parameter required when mode is '{mode}'"
                 }
             
+            # Minimum amount validation (applies to all modes with dollar amounts)
+            if mode in ['auto', 'dollars'] and dollars:
+                min_amount = min_dollars or 1.0
+                if dollars < min_amount:
+                    return {
+                        "success": False,
+                        "error": f"Order size ${dollars:.2f} below minimum ${min_amount:.2f}"
+                    }
+            
             # Check account buying power (for buy orders)
             if side == 'buy':
                 account = self.client.get_account()
                 buying_power = float(account.buying_power)
                 
-                # Calculate required buying power
-                required_power = shares if mode == 'shares' else dollars or 0
-                
-                if mode == 'auto':
-                    # Auto mode: use min_dollars or default minimum
-                    min_amount = min_dollars or 1.0
-                    if dollars and dollars < min_amount:
-                        return {
-                            "success": False,
-                            "error": f"Order size ${dollars:.2f} below minimum ${min_amount:.2f}"
-                        }
-                
+                # Validate buying power for dollar-based orders
+                # Note: For share-based orders, we rely on Alpaca's validation
+                # since we'd need real-time price data to calculate dollar value
                 if mode in ['dollars', 'auto'] and dollars:
                     if dollars > buying_power:
                         return {

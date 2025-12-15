@@ -68,7 +68,7 @@ class OPTRWorkerHandler(BaseHTTPRequestHandler):
                 self._log_request("Unauthorized request", has_key=bool(admin_key))
                 self._send_json_response({
                     "success": False,
-                    "error": "Unauthorized - Invalid or missing x-optr-admin-key"
+                    "error": "Unauthorized access"
                 }, 401)
                 return
             
