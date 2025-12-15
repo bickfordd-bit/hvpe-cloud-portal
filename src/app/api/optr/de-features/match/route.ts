@@ -3,11 +3,11 @@ import { apiSuccess, apiError } from '@/lib/apiResponse';
 import { logger } from '@/lib/logger';
 import { DEFeaturesParser } from '@/lib/optr/deFeatures/parser';
 import { DEFeaturesMatcher } from '@/lib/optr/deFeatures/matcher';
-import { validateEnv } from '@/lib/envValidator';
 import fs from 'fs/promises';
 import path from 'path';
 
-const env = validateEnv(['HVPE_OPENAI_API_KEY']);
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // TODO: Replace with database lookup
 // For now, load from a cached file

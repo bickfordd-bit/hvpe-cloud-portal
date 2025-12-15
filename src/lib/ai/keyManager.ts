@@ -241,5 +241,19 @@ export class OpenAIKeyManager {
   }
 }
 
-// Export singleton instance
-export const keyManager = OpenAIKeyManager.getInstance();
+// Export lazy singleton getter to avoid errors during build
+let _keyManagerInstance: OpenAIKeyManager | null = null;
+
+export function getKeyManager(): OpenAIKeyManager {
+  if (!_keyManagerInstance) {
+    _keyManagerInstance = OpenAIKeyManager.getInstance();
+  }
+  return _keyManagerInstance;
+}
+
+// Backwards compatibility - lazy getter that returns the instance
+export const keyManager = new Proxy({} as OpenAIKeyManager, {
+  get(_target, prop) {
+    return (getKeyManager() as any)[prop];
+  }
+});

@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { apiSuccess, apiError } from '@/lib/apiResponse';
 import { logger } from '@/lib/logger';
 import { DEFeaturesParser } from '@/lib/optr/deFeatures/parser';
-import { validateEnv } from '@/lib/envValidator';
 
-const env = validateEnv(['HVPE_OPENAI_API_KEY']);
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {

@@ -3,6 +3,10 @@ import { apiSuccess, apiError } from '@/lib/apiResponse';
 import { logger } from '@/lib/logger';
 import { keyManager, OpenAIKeyManager } from '@/lib/ai/keyManager';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 /**
  * Admin endpoint to check OpenAI key status
  * Requires ADMIN_DASH_TOKEN header
