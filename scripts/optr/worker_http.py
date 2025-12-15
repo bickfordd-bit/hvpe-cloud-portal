@@ -118,21 +118,21 @@ class OPTRWorkerHandler(BaseHTTPRequestHandler):
             self._log_request("Invalid JSON", error=str(e))
             self._send_json_response({
                 "success": False,
-                "error": f"Invalid JSON: {str(e)}"
+                "error": "Invalid request format"
             }, 400)
         
         except ValueError as e:
             self._log_request("Configuration error", error=str(e))
             self._send_json_response({
                 "success": False,
-                "error": str(e)
+                "error": "Service configuration error"
             }, 500)
         
         except Exception as e:
             self._log_request("Unexpected error", error=str(e))
             self._send_json_response({
                 "success": False,
-                "error": f"Internal server error: {str(e)}"
+                "error": "Internal server error"
             }, 500)
     
     def log_message(self, format, *args):
