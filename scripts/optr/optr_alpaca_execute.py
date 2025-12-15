@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 from typing import Optional, Dict, Any, Tuple
 
 # Daily notional tracker (in-memory, resets at midnight UTC)
+# Note: This is best-effort tracking. For single-threaded worker_http.py usage, no locking needed.
+# If using in a multi-threaded context, add threading.Lock() around access.
 daily_notional = {"total": 0.0, "date": ""}
 
 
@@ -269,15 +271,35 @@ def execute_trade(trade_request: Dict[str, Any]) -> Dict[str, Any]:
         if notional is not None:
             update_daily_notional(notional)
         
+        # Safely extract order data with type checking
+        try:
+            filled_qty = float(order.filled_qty) if order.filled_qty else 0.0
+        except (ValueError, TypeError):
+            filled_qty = 0.0
+        
+        try:
+            filled_avg_price = float(order.filled_avg_price) if order.filled_avg_price else None
+        except (ValueError, TypeError):
+            filled_avg_price = None
+        
+        # Handle submitted_at which could be datetime or string
+        if order.submitted_at:
+            if hasattr(order.submitted_at, 'isoformat'):
+                submitted_at = order.submitted_at.isoformat()
+            else:
+                submitted_at = str(order.submitted_at)
+        else:
+            submitted_at = None
+        
         return {
             "success": True,
             "order_id": str(order.id),
             "status": str(order.status),
-            "filled_qty": float(order.filled_qty) if order.filled_qty else 0.0,
-            "filled_avg_price": float(order.filled_avg_price) if order.filled_avg_price else None,
+            "filled_qty": filled_qty,
+            "filled_avg_price": filled_avg_price,
             "symbol": symbol,
             "side": trade_request["side"],
-            "submitted_at": order.submitted_at.isoformat() if order.submitted_at else None
+            "submitted_at": submitted_at
         }
         
     except Exception as e:
