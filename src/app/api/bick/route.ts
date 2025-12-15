@@ -81,13 +81,10 @@ function getCorsHeaders(origin: string | null): HeadersInit {
 // Handle CORS preflight
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get("origin");
-  return NextResponse.json(
-    {},
-    {
-      status: 204,
-      headers: getCorsHeaders(origin),
-    }
-  );
+  return new NextResponse(null, {
+    status: 204,
+    headers: getCorsHeaders(origin),
+  });
 }
 
 export async function POST(request: NextRequest) {
