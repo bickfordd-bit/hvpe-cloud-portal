@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 interface T2VDelta {
   id: string;
@@ -15,29 +18,36 @@ interface T2VDelta {
   updatedAt: string;
 }
 
-async function fetchT2VDeltas(): Promise<T2VDelta[]> {
-  try {
-    // Use relative URL for server-side fetch (Next.js will resolve it)
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/t2v-deltas?accountId=demo`, {
-      cache: 'no-store',
-    });
+export default function T2VDashboardPage() {
+  const [deltas, setDeltas] = useState<T2VDelta[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    if (!res.ok) {
-      console.error('Failed to fetch T2V deltas:', res.status, res.statusText);
-      return [];
+  useEffect(() => {
+    async function loadDeltas() {
+      try {
+        const res = await fetch('/api/t2v-deltas?accountId=demo');
+        if (!res.ok) {
+          console.error('Failed to fetch T2V deltas:', res.status, res.statusText);
+          return;
+        }
+        const data = await res.json();
+        setDeltas(data.data || []);
+      } catch (error) {
+        console.error('Error fetching T2V deltas:', error);
+      } finally {
+        setLoading(false);
+      }
     }
+    loadDeltas();
+  }, []);
 
-    const data = await res.json();
-    return data.data || [];
-  } catch (error) {
-    console.error('Error fetching T2V deltas:', error);
-    return [];
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black px-8 py-8 text-white">
+        <p>Loading T2V deltas...</p>
+      </div>
+    );
   }
-}
-
-export default async function T2VDashboardPage() {
-  const deltas = await fetchT2VDeltas();
 
   return (
     <div className="min-h-screen bg-black px-8 py-8 text-white">

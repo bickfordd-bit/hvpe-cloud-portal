@@ -43,3 +43,6 @@ next-env.d.ts
 .vscode/
 .vercel
 .env*.local
+
+# test files
+test-t2v-apis.js

@@ -8,23 +8,23 @@ datasource db {
 }
 
 model LicenseRequest {
-  id         String                @id @default(cuid())
+  id         String               @id @default(cuid())
   email      String
   name       String?
   reason     String?
-  status     LicenseRequestStatus  @default(PENDING)
-  createdAt  DateTime              @default(now())
+  status     LicenseRequestStatus @default(PENDING)
+  createdAt  DateTime             @default(now())
   approvedAt DateTime?
   licenseId  String?
-  license    License?              @relation(fields: [licenseId], references: [id])
+  license    License?             @relation(fields: [licenseId], references: [id])
 }
 
 model License {
-  id          String        @id @default(cuid())
-  key         String        @unique
+  id          String           @id @default(cuid())
+  key         String           @unique
   email       String
-  status      LicenseStatus @default(ACTIVE)
-  createdAt   DateTime      @default(now())
+  status      LicenseStatus    @default(ACTIVE)
+  createdAt   DateTime         @default(now())
   activatedAt DateTime?
   requests    LicenseRequest[]
 }
@@ -55,53 +55,53 @@ model Embedding {
 }
 
 model AIPatchLog {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  userId    String?
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  userId      String?
   instruction String
-  patch     String
-  applied   Boolean  @default(false)
-  branch    String?
-  prUrl     String?
-  approvedBy String?
-  approvedAt DateTime?
+  patch       String
+  applied     Boolean   @default(false)
+  branch      String?
+  prUrl       String?
+  approvedBy  String?
+  approvedAt  DateTime?
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  passwordHash  String
-  name          String?
-  role          UserRole  @default(USER)
-  status        UserStatus @default(ACTIVE)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  lastLoginAt   DateTime?
-  apiKeys       APIKey[]
-  auditLogs     AuditLog[]
-  
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  name         String?
+  role         UserRole   @default(USER)
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  lastLoginAt  DateTime?
+  apiKeys      APIKey[]
+  auditLogs    AuditLog[]
+
   @@index([email])
 }
 
 model APIKey {
-  id          String   @id @default(cuid())
-  userId      String
-  name        String
-  keyHash     String   @unique
-  scopes      String[] // e.g. ["bickford:chat", "optr:run"]
-  status      APIKeyStatus @default(ACTIVE)
-  createdAt   DateTime @default(now())
-  lastUsedAt  DateTime?
-  expiresAt   DateTime?
-  
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id         String       @id @default(cuid())
+  userId     String
+  name       String
+  keyHash    String       @unique
+  scopes     String[] // e.g. ["bickford:chat", "optr:run"]
+  status     APIKeyStatus @default(ACTIVE)
+  createdAt  DateTime     @default(now())
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([keyHash])
 }
 
 model Opportunity {
-  id          String   @id
+  id          String            @id
   source      String
   title       String
   agency      String
@@ -109,66 +109,66 @@ model Opportunity {
   psc         String?
   deadlineIso String
   links       String[] // Array of URLs
-  metadata    Json?    // Store additional data
+  metadata    Json? // Store additional data
   status      OpportunityStatus @default(ACTIVE)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  documents   OpportunityDocument[]
-  runs        OpportunityRun[]
-  
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  documents OpportunityDocument[]
+  runs      OpportunityRun[]
+
   @@index([agency])
   @@index([deadlineIso])
   @@index([status])
 }
 
 model OpportunityDocument {
-  id            String       @id @default(cuid())
+  id            String   @id @default(cuid())
   opportunityId String
-  type          String       // pdf, docx, html, text
+  type          String // pdf, docx, html, text
   sha256        String
   filename      String
-  content       String?      @db.Text
+  content       String?  @db.Text
   url           String?
-  createdAt     DateTime     @default(now())
-  
-  opportunity   Opportunity  @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-  
+  createdAt     DateTime @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
   @@index([opportunityId])
   @@index([sha256])
 }
 
 model OpportunityRun {
-  id            String       @id @default(cuid())
+  id            String   @id @default(cuid())
   opportunityId String
-  phase         String       // I, D, M, V, O, S, HALT
+  phase         String // I, D, M, V, O, S, HALT
   blocked       Boolean
   coverage      Float
   winProb       Float
   ecv           Int
-  traces        Json         // Store full trace array
-  metadata      Json?        // Store requirements and other data
-  createdAt     DateTime     @default(now())
-  
-  opportunity   Opportunity  @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-  
+  traces        Json // Store full trace array
+  metadata      Json? // Store requirements and other data
+  createdAt     DateTime @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
   @@index([opportunityId])
   @@index([createdAt])
 }
 
 model AuditLog {
-  id          String   @id @default(cuid())
-  userId      String?
-  action      String   // e.g. "login", "optr.run", "api.call"
-  resource    String?  // e.g. "opportunity:123"
-  metadata    Json?    // Additional context
-  ipAddress   String?
-  userAgent   String?
-  status      String   // "success", "failure"
-  createdAt   DateTime @default(now())
-  
-  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String // e.g. "login", "optr.run", "api.call"
+  resource  String? // e.g. "opportunity:123"
+  metadata  Json? // Additional context
+  ipAddress String?
+  userAgent String?
+  status    String // "success", "failure"
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   @@index([userId])
   @@index([action])
   @@index([createdAt])
@@ -210,37 +210,37 @@ enum OpportunityStatus {
 }
 
 model T2VDelta {
-  id              String   @id @default(cuid())
-  accountId       String
-  engagementId    String?
-  baselineValue   Float
-  improvedValue   Float?
-  improvedAt      DateTime?
-  unit            String?
-  source          String?
-  confidence      Float?
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  id            String    @id @default(cuid())
+  accountId     String
+  engagementId  String?
+  baselineValue Float
+  improvedValue Float?
+  improvedAt    DateTime?
+  unit          String?
+  source        String?
+  confidence    Float?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
   @@index([accountId])
   @@index([engagementId])
   @@index([updatedAt])
 }
 
 model DefensibilitySnapshot {
-  id              String   @id @default(cuid())
-  accountId       String
-  stream          String?
-  durabilityLever Float
-  wildcardLever   Float
-  alignmentLever  Float
+  id               String   @id @default(cuid())
+  accountId        String
+  stream           String?
+  durabilityLever  Float
+  wildcardLever    Float
+  alignmentLever   Float
   scalabilityLever Float
-  score           Float
-  multiple        Float
-  notes           String?
-  createdAt       DateTime @default(now())
-  
+  score            Float
+  multiple         Float
+  notes            String?
+  createdAt        DateTime @default(now())
+
   @@index([accountId])
   @@index([stream])
   @@index([createdAt])
