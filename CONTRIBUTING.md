@@ -11,9 +11,13 @@ following terms and must comply with the contribution process below.
   rights to use and license contributions.
 
 2) How to contribute
-- Open an issue describing the change you propose.
-- Fork the repository and create a branch for your change.
-- Submit a pull request and reference the issue.
+- Review our [Branch Architecture](./BRANCH_ARCHITECTURE.md) to understand the repository structure
+- Open an issue describing the change you propose
+- Choose the appropriate branch for your contribution (see [BRANCH_QUICK_START.md](./BRANCH_QUICK_START.md))
+- Create a feature branch from the target product/personal branch
+- Submit a pull request to the appropriate branch (not directly to main) and reference the issue
+- For product branches: Request review from branch owner
+- For main branch: Requires approval from core team
 
 3) IP & Licensing
 - By submitting a pull request, you warrant that you have the right to submit

@@ -35,13 +35,30 @@ if ! git rev-parse --git-dir > /dev/null 2>&1; then
     exit 1
 fi
 
-# Ensure we're on main and up to date
-print_status "Ensuring main branch is up to date..."
-git checkout main
-git fetch origin
-git pull origin main
+# Determine the base branch (prefer main, fall back to current)
+BASE_BRANCH="main"
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-print_success "Main branch updated"
+if ! git show-ref --verify --quiet "refs/heads/$BASE_BRANCH"; then
+    # Main branch doesn't exist locally, try to get it from remote
+    if git ls-remote --exit-code --heads origin "$BASE_BRANCH" > /dev/null 2>&1; then
+        print_status "Fetching main branch from remote..."
+        git fetch origin "$BASE_BRANCH:$BASE_BRANCH"
+    else
+        print_warning "Main branch not found. Using current branch '$CURRENT_BRANCH' as base."
+        BASE_BRANCH="$CURRENT_BRANCH"
+    fi
+fi
+
+# Ensure we're on the base branch and up to date
+print_status "Ensuring $BASE_BRANCH branch is up to date..."
+git checkout "$BASE_BRANCH"
+git fetch origin
+if git ls-remote --exit-code --heads origin "$BASE_BRANCH" > /dev/null 2>&1; then
+    git pull origin "$BASE_BRANCH" || print_warning "Could not pull from origin/$BASE_BRANCH"
+fi
+
+print_success "$BASE_BRANCH branch ready"
 
 # Define branches to create with their descriptions
 declare -A BRANCHES
@@ -190,8 +207,8 @@ See BRANCH_ARCHITECTURE.md for more information."
     print_success "Created and pushed branch: $branch"
     ((CREATED++))
     
-    # Return to main
-    git checkout main
+    # Return to base branch
+    git checkout "$BASE_BRANCH"
 done
 
 echo ""
