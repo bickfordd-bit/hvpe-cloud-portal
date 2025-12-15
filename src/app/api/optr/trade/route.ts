@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { createSuccessResponse, createErrorResponse, ErrorCodes } from '@/lib/apiResponse';
-import { logger } from '@/lib/logger';
+import { apiLogger as logger } from '@/lib/logger';
 
 /**
  * OPTR Trade Trigger API

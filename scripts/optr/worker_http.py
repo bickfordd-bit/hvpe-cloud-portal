@@ -146,7 +146,8 @@ def run_server(port: int = 8787):
     server_address = ('', port)
     httpd = HTTPServer(server_address, OPTRWorkerHandler)
     
-    # Check configuration
+    # Check configuration at startup (early warning)
+    # Note: AlpacaExecutor also validates credentials at execution time
     if not os.getenv('OPTR_ADMIN_KEY'):
         print(json.dumps({
             "level": "warning",

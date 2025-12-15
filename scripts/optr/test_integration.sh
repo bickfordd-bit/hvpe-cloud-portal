@@ -1,5 +1,6 @@
 #!/bin/bash
 # Integration test for OPTR trade components
+# Usage: chmod +x test_integration.sh && ./test_integration.sh
 
 set -e
 
