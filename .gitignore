@@ -43,3 +43,8 @@ next-env.d.ts
 .vscode/
 .vercel
 .env*.local
+
+# Bickford runtime (keep .bick/README.md tracked)
+.bick/ledger/
+.bick/runs/
+.bick/canon/

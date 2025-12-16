@@ -254,3 +254,52 @@ See `src/lib/envValidator.ts` for complete list with validation logic.
 ---
 
 **Need help?** Check `README.md`, `SETUP.md`, `DOCKER.md` for deployment guides. For OPTR pipeline details, see `docs/OPTR_MATHEMATICAL_FRAMEWORK.md`.
+
+## Bickford Constitution
+
+### Governance Layer
+The Bickford agent system operates under a unified governance framework that ensures all operations are:
+- **Traceable:** Every action is logged to an append-only ledger
+- **Verifiable:** All executions provide cryptographic proof
+- **Deterministic:** Same intent + same state = same outcome
+
+### Prime Directive
+**"If it can't be proven, it doesn't exist."**
+
+All agent invocations must follow the five-stage contract:
+1. **Intent** - Clear statement of what is requested
+2. **Execution Contract** - Deterministic plan with verification gates
+3. **Proof** - Verifiable artifacts for each step
+4. **Result** - Summary of outcome with metrics
+5. **Ledger** - Permanent append-only record at `.bick/ledger/`
+
+### Fail-Closed Verification
+All agents operate in fail-closed mode:
+- Pre-flight checks before execution
+- Verification gates after critical steps
+- Immediate halt on verification failure
+- Non-zero exit code for all failures
+- Complete ledger entry even for failures
+
+### Integration Points
+- **OPTR Pipeline:** Trace opportunities from intent to reality with full provenance
+- **T2V Framework:** Convert natural language to executable actions with proof
+- **Bickford Runtime:** Single entrypoint via `npm run bick:run -- "<intent>"`
+- **GitHub Actions:** Dispatch via `bickford` workflow for CI/CD integration
+
+### Key Documentation
+- **Agent Contract:** `AGENTS.md` (repository root)
+- **Canonical Framework:** `docs/bick/CANON.md`
+- **Runtime Implementation:** `scripts/bick-runner.mjs`
+- **Ledger Structure:** `.bick/README.md`
+
+### Usage
+```bash
+# Local invocation
+npm run bick:run -- "Your intent here"
+
+# GitHub Actions dispatch
+# Go to Actions → bickford → Run workflow → Enter intent
+```
+
+All invocations create ledger entries at `.bick/ledger/YYYY-MM-DD/<id>.json` with complete proof and traceability.

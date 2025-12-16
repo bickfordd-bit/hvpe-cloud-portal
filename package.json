@@ -19,7 +19,8 @@
     "db:seed": "prisma db seed",
     "postinstall": "test -n \"$DATABASE_URL\" && prisma generate || prisma generate --schema=prisma/schema.prisma || true",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "bick:run": "node scripts/bick-runner.mjs run"
   },
   "dependencies": {
     "@prisma/client": "^6.3.1",

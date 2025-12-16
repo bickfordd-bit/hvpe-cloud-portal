@@ -1,0 +1,51 @@
+name: Bickford Agent Runtime
+
+on:
+  workflow_dispatch:
+    inputs:
+      intent:
+        description: 'Intent to execute (e.g., "Build mobile app for iOS")'
+        required: true
+        type: string
+
+jobs:
+  execute:
+    name: Execute Bickford Agent
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run Bickford agent
+        id: bickford
+        run: |
+          echo "Running Bickford with intent: ${{ inputs.intent }}"
+          npm run bick:run -- "${{ inputs.intent }}"
+        continue-on-error: true
+      
+      - name: Upload ledger artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bickford-ledger-${{ github.run_id }}
+          path: .bick/ledger/
+          retention-days: 90
+          if-no-files-found: warn
+      
+      - name: Check execution status
+        if: steps.bickford.outcome == 'failure'
+        run: |
+          echo "❌ Bickford execution failed. Check the logs above for details."
+          exit 1
