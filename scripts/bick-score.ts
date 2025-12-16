@@ -27,8 +27,9 @@ async function main() {
     console.error(`   .bick/canon/bcs-latest.json`);
     console.error(`   .bick/canon/bcs-history.jsonl (appended)`);
     
-  } catch (error: any) {
-    console.error('❌ Error computing BCS:', error.message);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('❌ Error computing BCS:', message);
     process.exit(1);
   }
 }

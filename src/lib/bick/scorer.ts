@@ -23,11 +23,10 @@ import {
   OutcomeVerifiedEvent,
   BurdenReportedEvent,
   ArtifactShippedEvent,
-  MilestoneExternalEvent,
   RevenueReceivedEvent,
   EventType,
 } from './types';
-import { readAllEvents, getLedgerMetadata } from './ledger';
+import { readAllEvents } from './ledger';
 
 const SCORER_VERSION = '1.0.0';
 const CANON_ROOT = path.join(process.cwd(), '.bick', 'canon');
