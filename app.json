@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Bickford App",
+    "slug": "bickford-app",
+    "owner": "bickfordd",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "ios": {
+      "bundleIdentifier": "com.bickford.app"
+    },
+    "android": {
+      "package": "com.bickford.app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f8ef5b75-4700-4b90-b8fe-6e659f272d86"
+      }
+    }
+  }
+}
