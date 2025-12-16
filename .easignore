@@ -1,0 +1,19 @@
+# Exclude Next.js API routes from EAS/Expo builds
+# These are server-side only and use Node.js modules
+
+src/app/api/**/*
+middleware.ts
+
+# Exclude infrastructure and tooling
+infra/**/*
+tools/**/*
+scripts/**/*
+
+# Exclude docs
+docs/**/*
+*.md
+
+# Exclude configuration files
+.github/**/*
+prisma/**/*
+k8s/**/*
