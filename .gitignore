@@ -43,3 +43,17 @@ next-env.d.ts
 .vscode/
 .vercel
 .env*.local
+
+# bick-sales runtime data (keep READMEs, ignore runtime artifacts)
+/bick-sales/state/*.json
+!/bick-sales/state/README.md
+/bick-sales/leads/*.json
+!/bick-sales/leads/README.md
+/bick-sales/deals/*.json
+!/bick-sales/deals/README.md
+/bick-sales/offers/*.json
+!/bick-sales/offers/README.md
+/bick-sales/artifacts/**/*
+!/bick-sales/artifacts/README.md
+/bick-sales/ledger/*.jsonl
+!/bick-sales/ledger/README.md
