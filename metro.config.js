@@ -13,6 +13,9 @@ config.resolver.blockList = [
   /src\/app\/api\/.*/,
   // Exclude middleware (server-only)
   /middleware\.ts$/,
+  // Exclude Prisma client (Node.js only, uses fs module)
+  /src\/lib\/prisma\.ts$/,
+  /\/prisma\/.*/,
 ];
 
 // Prioritize React Native resolution over Node.js modules
@@ -28,6 +31,8 @@ config.resolver.extraNodeModules = {
   child_process: false,
   net: false,
   tls: false,
+  // Block @prisma/client from being resolved in RN
+  '@prisma/client': false,
 };
 
 module.exports = config;

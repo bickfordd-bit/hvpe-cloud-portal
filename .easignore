@@ -4,6 +4,10 @@
 src/app/api/**/*
 middleware.ts
 
+# Exclude Prisma (server-side database client)
+src/lib/prisma.ts
+prisma/**/*
+
 # Exclude infrastructure and tooling
 infra/**/*
 tools/**/*
