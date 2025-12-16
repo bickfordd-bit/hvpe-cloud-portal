@@ -223,7 +223,12 @@ function computeBCSModel(vectors: ESCLTVectors, weights: ESCLTWeights): number {
   const safeL = Math.max(0.01, L);
   const safeT = Math.max(0.01, T);
   
-  const model = Math.pow(safeE, wE) * Math.pow(safeS, wS) * Math.pow(safeC, wC) * Math.pow(safeL, wL) * Math.pow(safeT, wT);
+  const model = 
+    Math.pow(safeE, wE) * 
+    Math.pow(safeS, wS) * 
+    Math.pow(safeC, wC) * 
+    Math.pow(safeL, wL) * 
+    Math.pow(safeT, wT);
   
   return clamp01(model);
 }

@@ -13,6 +13,9 @@ jobs:
     name: Compute BCS Score
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: read
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -45,7 +48,8 @@ jobs:
           if [ -f .bick/canon/bcs-latest.json ]; then
             echo "## BCS Score Summary" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
-            cat .bick/canon/bcs-latest.json | jq '{BCS, BCS_model, EvidenceWeight, evidenceLevel: .evidenceBreakdown.level, totalEvents}' >> $GITHUB_STEP_SUMMARY
+            # Extract key fields without jq dependency
+            cat .bick/canon/bcs-latest.json >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ No BCS score generated (empty ledger or error)" >> $GITHUB_STEP_SUMMARY
