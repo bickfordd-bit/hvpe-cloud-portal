@@ -254,3 +254,12 @@ See `src/lib/envValidator.ts` for complete list with validation logic.
 ---
 
 **Need help?** Check `README.md`, `SETUP.md`, `DOCKER.md` for deployment guides. For OPTR pipeline details, see `docs/OPTR_MATHEMATICAL_FRAMEWORK.md`.
+
+## Specialist Agent Contract
+
+All specialist agents (code, infra, mobile, docs, security) operate under the formal contract defined in [`AGENTS.md`](../AGENTS.md) at the repository root. This contract establishes:
+- Prime directive: "If it can't be proven, it doesn't exist"
+- Required output format (Intent → Execution Contract → Proof → Result → Ledger)
+- Fail-closed behavior when proof cannot be produced
+
+Refer to `AGENTS.md` for the complete contract that governs all specialist agent operations.
