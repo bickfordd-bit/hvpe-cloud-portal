@@ -6,8 +6,8 @@ import twilio from "twilio";
 
 const accountSid = "ACb0a4821ebd89c68cdbee5b1f7dfb446a";
 const authToken = "74435130590eec2f3f8cc6ac28758936";
-const fromNumber = "+18555528521"; // Your Twilio number
-const toNumber = "+16107178182"; // Kathy's number
+const fromNumber = "+12765985129"; // Bickford SMS Number (verified local)
+const toNumber = "+12152057238"; // Target number
 
 const message = `Hi Kathy! 🎉
 
