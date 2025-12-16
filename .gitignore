@@ -43,3 +43,7 @@ next-env.d.ts
 .vscode/
 .vercel
 .env*.local
+
+# Bickford scoring system
+.bick/ledger/
+.bick/canon/
