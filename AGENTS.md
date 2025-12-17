@@ -39,6 +39,7 @@ All Bickford agents must adhere to this contract:
   - `ΔValue(a) ≥ 0` (Does not decrease expected value)
   - `Proofable(a) = true` (Has complete proof package)
   - `Compliance(a) = pass` (Meets legal/ethical standards)
+  - `CustomerBurden(a) ≤ threshold` (For sales agents: minimizes buyer friction)
 - If gate fails, action is **blocked** or **escalated** to human
 
 ### 5. Log to Ledger

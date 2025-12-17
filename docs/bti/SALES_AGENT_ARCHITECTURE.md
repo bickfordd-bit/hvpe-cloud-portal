@@ -8,9 +8,9 @@
 
 ## Executive Summary
 
-The **BTI Automated Sales Agent** is a proof-gated, multi-specialist AI system that accelerates enterprise sales cycles by ensuring **no sales action executes unless it increases close probability** and is **demonstrably provable**.
+The **BTI Automated Sales Agent** is a proof-gated, multi-specialist AI system that accelerates enterprise sales cycles by ensuring **no sales action executes unless it increases close probability**, is **demonstrably provable**, and **minimizes customer burden**.
 
-This is not a CRM automation tool. It is an **execution-grade sales intelligence system** governed by the same OPTR-T2V framework that drives mission-critical operations.
+This is not a CRM automation tool. It is an **execution-grade sales intelligence system** governed by the same OPTR-T2V framework that drives mission-critical operations, with a **customer-first philosophy** that prioritizes buyer experience over sales volume.
 
 ---
 
@@ -22,9 +22,12 @@ This is not a CRM automation tool. It is an **execution-grade sales intelligence
 NO sales action a executes unless:
   1. ΔClose(a) ≥ 0  (Does not decrease close probability)
   2. Proofable(a) = true  (Has verifiable evidence trail)
+  3. CustomerBurden(a) ≤ threshold  (Minimizes buyer friction and time)
 ```
 
-**Corollary**: All outreach, offers, and commitments must be **traceable to proof artifacts** that justify the action.
+**Corollary**: All outreach, offers, and commitments must be **traceable to proof artifacts** that justify the action and **minimize unnecessary burden on the customer**.
+
+**Customer-First Principle**: Every action optimizes for buyer experience—no spam, no manipulation, no wasted time. We earn attention through relevance, not volume.
 
 ### 1.2 Enforcement
 
@@ -108,10 +111,12 @@ The BTI Sales Agent is composed of **specialist sub-agents**, each with a define
 - Follow-up sequences (Day 3, Day 7, Day 14)
 
 **Proof Contract**: Every message must:
-- Reference specific buyer pain or trigger event
-- Align with ICP intelligence
-- Include clear CTA with low friction
+- Reference specific buyer pain or trigger event (earn attention through relevance)
+- Align with ICP intelligence (right person, right time, right message)
+- Include clear CTA with minimal friction (1-click > form > meeting request)
 - Be tested against historical conversion data
+- **Minimize CustomerBurden**: <3 min read time, immediate value visible, no jargon
+- **Respect buyer context**: Async-first (email/LinkedIn), never cold call without research
 
 ### 2.4 Proof & Offer Agent
 
@@ -384,41 +389,75 @@ Where:
 
 **Objective**: Maximize T2V by selecting actions with highest **value acceleration per unit time**.
 
-### 5.2 Sales Burden
+### 5.2 Sales Burden & Customer Burden
 
-Every action has a **sales burden** (time cost):
+Every action has both a **sales burden** (internal time) and a **customer burden** (buyer friction):
 
+**Sales Burden (Internal Cost)**:
 ```
-dt = t_prep + t_execute + t_follow_up + t_deal_friction
+dt_sales = t_prep + t_execute + t_follow_up + t_deal_friction
 ```
+
+**Customer Burden (Buyer Friction)**:
+```
+CustomerBurden(a) = t_buyer_time + friction_complexity + intrusion_score
+```
+
+Where:
+- **t_buyer_time**: Minutes required from buyer (read email: 2min, call: 30min, demo: 60min)
+- **friction_complexity**: Cognitive load (simple CTA: 1, multi-step form: 5, custom requirements: 10)
+- **intrusion_score**: Interruption level (async email: 1, scheduled call: 3, cold call: 8)
 
 **Examples**:
-- **Cold email**: dt = 15 min (prep + send + track)
-- **Discovery call**: dt = 90 min (prep + call + notes + follow-up)
-- **Pilot proposal**: dt = 4 hours (scoping + pricing + legal review)
-- **Custom demo**: dt = 8 hours (build + rehearse + deliver + follow-up)
+- **Relevant cold email with 1-click CTA**: CustomerBurden = 2 + 1 + 1 = 4 (LOW)
+- **Discovery call (scheduled)**: CustomerBurden = 30 + 2 + 3 = 35 (MEDIUM)
+- **Custom demo with pre-work**: CustomerBurden = 60 + 5 + 3 = 68 (HIGH)
+- **Cold call during business hours**: CustomerBurden = 10 + 3 + 8 = 21 (MEDIUM-HIGH)
+
+**Threshold**: Actions with CustomerBurden > 50 require strong proof and high ΔClose (≥15%) to justify.
 
 ### 5.3 Action Priority Formula
 
 ```
-Priority(a) = ΔClose(a) × Deal_Value / dt
+Priority(a) = [ΔClose(a) × Deal_Value] / [dt_sales + λ × CustomerBurden(a)]
 ```
 
-**Interpretation**: Prioritize actions with highest **expected value per unit time**.
+Where:
+- **λ** (lambda) = Customer burden weight factor (default: 2.0)
+  - λ = 2.0 means 1 minute of buyer time costs 2 minutes of sales time
+  - Reflects customer-first philosophy: minimize buyer friction
+
+**Interpretation**: Prioritize actions with highest **expected value per unit time**, while **penalizing actions that burden the customer**. High-value deals can justify higher customer burden, but only with strong proof.
 
 ### 5.4 Example Calculation
 
 **Scenario**: $500K ARR deal at 60% close probability
 
-**Action**: Share case study + schedule reference call
+**Action A**: Share case study + schedule reference call
+
+**Costs**:
+- **dt_sales**: 1 hour (find case study + schedule call)
+- **CustomerBurden**: 35 (30min call + low complexity + scheduled)
+- **Total cost**: 1 hour + (2.0 × 35 / 60) = 1 + 1.17 = 2.17 hours
 
 **Impact**:
 - **ΔClose(a)**: +10% (60% → 70%)
-- **dt**: 1 hour (find case study + schedule call)
 - **Expected value gain**: $500K × 0.10 = $50K
-- **T2V**: $50K / 1 hour = $50K/hour
+- **Priority**: $50K / 2.17 hours = **$23K/hour**
 
-**Conclusion**: High-priority action.
+**Action B**: Send generic mass email blast (200 recipients)
+
+**Costs**:
+- **dt_sales**: 2 hours (write + send + track)
+- **CustomerBurden**: 4 per recipient × 200 = 800 total
+- **Total cost**: 2 hours + (2.0 × 800 / 60) = 2 + 26.7 = 28.7 hours
+
+**Impact**:
+- **ΔClose(a)**: +2% per deal (avg), 4 deals = +8% aggregate
+- **Expected value**: $500K × 0.08 = $40K
+- **Priority**: $40K / 28.7 hours = **$1.4K/hour**
+
+**Conclusion**: Action A (targeted, low-burden) is 16× more efficient than Action B (mass, high-burden), even though mass email reaches more people. **Quality > Quantity. Relevance > Volume.**
 
 ---
 
@@ -686,10 +725,18 @@ The BTI Sales Agent operates under the same **proof-gated contract** as OPTR mis
 
 ### 11.3 Ethical AI Guardrails
 
+**Customer-First Principles**:
+- **Minimal intrusion**: Respect buyer time—async > scheduled > cold contact
+- **Maximum relevance**: Every outreach must be personalized and valuable to recipient
+- **No spam**: Max 3 touches per 30 days; respect opt-outs immediately
+- **No wasted time**: Never request info that's publicly available or already shared
+- **Transparent intent**: Always clear about who we are, what we want, and why now
+
+**Operational Guardrails**:
 - **No deceptive practices**: Agent cannot impersonate humans or fabricate credentials
-- **No spam**: Agent respects opt-outs and frequency caps (max 3 touches per 30 days)
 - **No manipulation**: Agent cannot use dark patterns or exploit cognitive biases
-- **Human oversight**: High-risk actions require human approval
+- **Human oversight**: High-burden actions (CustomerBurden > 50) require human approval
+- **Buyer control**: Every communication includes easy opt-out mechanism
 
 ---
 
@@ -702,19 +749,32 @@ The BTI Sales Agent operates under the same **proof-gated contract** as OPTR mis
 - **Proof Quality**: % of actions with complete proof packages
 - **Compliance Rate**: % of actions passing compliance checks on first try
 
-### 12.2 Business Outcomes
+### 12.2 Customer Experience (Buyer-Side Metrics)
+
+- **Avg CustomerBurden per deal**: Total buyer time invested from first touch → close
+- **Relevance Score**: Buyer-rated relevance of outreach (1-5 survey after first contact)
+- **Time-to-Value for Buyer**: Days from first contact → first valuable insight delivered
+- **Opt-Out Rate**: % of contacts who unsubscribe (target: <1%)
+- **Response Rate**: % of outreach that generates buyer reply (target: >30%)
+- **Net Promoter Score**: Buyer satisfaction with sales process (target: >50)
+
+### 12.3 Business Outcomes
 
 - **Pipeline Velocity**: Days to move from Stage 0 → Stage 6
 - **Win Rate**: % of qualified leads → closed deals
 - **ASP**: Average selling price (by segment, industry)
 - **CAC**: Customer acquisition cost (including AI + human time)
+- **Buyer Efficiency Ratio**: Revenue per unit of CustomerBurden (maximize)
 
-### 12.3 Target Benchmarks
+### 12.4 Target Benchmarks
 
 - **ΔClose Accuracy**: ≥80% within ±10% tolerance
 - **T2V Efficiency**: ≥2x faster than manual sales process
 - **Win Rate**: ≥25% for enterprise, ≥40% for mid-market
 - **CAC**: ≤20% of first-year ACV
+- **Avg CustomerBurden**: <3 hours per closed deal (vs. industry avg 8-12 hours)
+- **Relevance Score**: ≥4.0 / 5.0
+- **Opt-Out Rate**: <1%
 
 ---
 
@@ -790,8 +850,11 @@ The BTI Automated Sales Agent is **not a replacement for human sales professiona
 - **Amplifies high-value work** (relationship building, strategic negotiation, executive alignment)
 - **Ensures every action is backed by proof** (no gut-feel, no wishful thinking)
 - **Accelerates pipeline velocity** (optimize T2V at every stage)
+- **Minimizes customer burden** (earn attention through relevance, not volume)
 
-**Result**: Sales teams close **faster**, with **higher win rates**, and **lower CAC**.
+**Result**: Sales teams close **faster**, with **higher win rates**, **lower CAC**, and **happier buyers** who experience a respectful, efficient sales process.
+
+**Philosophy**: We win by making buying **easy**, not by making selling **aggressive**.
 
 ---
 

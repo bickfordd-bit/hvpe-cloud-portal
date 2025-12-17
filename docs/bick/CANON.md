@@ -22,12 +22,13 @@ All Bickford systems operate under a **proof-gated contract**:
 Action a is executable if and only if:
   1. Proofable(a) = true  (Verifiable evidence exists)
   2. ΔValue(a) ≥ 0        (Does not decrease expected value)
+  3. CustomerBurden(a) ≤ threshold  (For sales: minimizes buyer friction)
 ```
 
 This applies to:
 - **Intent-to-Reality transformations**: User intent → Manifestation plan requires proof of feasibility
 - **OPTR opportunity analysis**: Opportunity scoring → Decision requires proof artifacts (documents, intel, scoring trace)
-- **BTI Sales Agent**: Sales action → Execution requires proof of positive impact on close probability
+- **BTI Sales Agent**: Sales action → Execution requires proof of positive impact on close probability **and minimal customer burden**
 
 ---
 
@@ -53,18 +54,20 @@ Where:
 For sales actions, T2V translates to:
 
 ```
-T2V_sales(a) = (CloseProb_after × Deal_Value - CloseProb_before × Deal_Value) / dt
-              = ΔClose(a) × Deal_Value / dt
+T2V_sales(a) = [ΔClose(a) × Deal_Value] / [dt_sales + λ × CustomerBurden(a)]
 ```
+
+Where **λ** (lambda) = customer burden weight factor (default: 2.0), reflecting that 1 minute of buyer time costs 2 minutes of sales time.
 
 **Example**:
 - **Deal**: $500K ARR at 60% close probability
-- **Action**: Share case study (dt = 1 hour)
+- **Action**: Share case study (dt_sales = 1 hour, CustomerBurden = 35)
 - **Impact**: ΔClose = +10% (60% → 70%)
 - **Value gain**: $500K × 0.10 = $50K
-- **T2V**: $50K / 1 hour = **$50K per hour**
+- **Total cost**: 1 hour + (2.0 × 35/60) = 2.17 hours
+- **T2V**: $50K / 2.17 hours = **$23K per hour**
 
-**Rule**: Sales agents prioritize actions with highest T2V, subject to proof-gating constraints.
+**Rule**: Sales agents prioritize actions with highest T2V, **penalizing actions that burden customers**. Quality over quantity. Relevance over volume.
 
 ---
 
