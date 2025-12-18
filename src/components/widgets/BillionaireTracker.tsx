@@ -90,6 +90,60 @@ function calculateProjectedWealth(people: BillionairePerson[]): {
   return { totalValue, timelineYears };
 }
 
+const STATUS_CONFIDENCE_WEIGHT: Record<BillionairePerson["status"], number> = {
+  "sold": 1,
+  "ready-to-sell": 0.85,
+  "created": 0.65,
+  "in-development": 0.4,
+};
+
+function calculateConfidenceScore(
+  people: BillionairePerson[],
+  projection: { totalValue: number; timelineYears: number },
+  billionairePath: { isAchievable: boolean }
+): { score: number; label: string; color: string; commentary: string } {
+  const target = 1_000_000_000;
+  const coverage = Math.min(projection.totalValue / target, 1); // value progress
+  const readiness =
+    people.length > 0
+      ? people.reduce((sum, person) => sum + STATUS_CONFIDENCE_WEIGHT[person.status], 0) /
+        people.length
+      : 0;
+  const timelineFactor = Math.max(0, Math.min(1, 1 - (projection.timelineYears - 3) / 7));
+  const achievabilityBoost = billionairePath.isAchievable ? 0.08 : 0;
+
+  const normalizedScore = Math.min(
+    1,
+    coverage * 0.5 + readiness * 0.3 + timelineFactor * 0.2 + achievabilityBoost
+  );
+  const score = Math.round(normalizedScore * 100);
+
+  if (score >= 75) {
+    return {
+      score,
+      label: "High Confidence",
+      color: "text-emerald-400",
+      commentary: "Track passes proof gate thresholds.",
+    };
+  }
+
+  if (score >= 45) {
+    return {
+      score,
+      label: "Operational Confidence",
+      color: "text-yellow-300",
+      commentary: "Momentum is good but requires acceleration.",
+    };
+  }
+
+  return {
+    score,
+    label: "Experimental Confidence",
+    color: "text-orange-400",
+    commentary: "Scale IP creation + readiness before compounding.",
+  };
+}
+
 function getStatusColor(status: BillionairePerson['status']): string {
   switch (status) {
     case 'sold': return 'text-emerald-400';
@@ -117,6 +171,7 @@ export function BillionaireTracker({
   
   const projection = calculateProjectedWealth(people);
   const billionairePath = calculateBillionairePath(projection.totalValue, projection.timelineYears);
+  const confidence = calculateConfidenceScore(people, projection, billionairePath);
   
   return (
     <Card>
@@ -136,6 +191,15 @@ export function BillionaireTracker({
               ${billionairePath.projectedValue.toLocaleString("en-US")} 
               {billionairePath.isAchievable ? ' ✓' : ' (needs acceleration)'}
             </span>
+          </div>
+          <div className="text-[11px] text-neutral-400">
+            Billionaire Confidence:{" "}
+            <span className={`font-semibold ${confidence.color}`}>
+              {confidence.score}% – {confidence.label}
+            </span>
+          </div>
+          <div className="text-[10px] text-neutral-500">
+            {confidence.commentary}
           </div>
         </div>
         <div className="text-[11px] text-neutral-500 text-right">

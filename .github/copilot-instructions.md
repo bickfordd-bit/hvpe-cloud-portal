@@ -6,7 +6,7 @@ Next.js 16 (App Router) + TypeScript full-stack app with AI-powered processing p
 ## Architecture & Data Flow
 
 ### Directory Structure
-```
+````
 src/
 ├── app/              # Next.js App Router pages + API routes
 │   ├── api/          # Backend API endpoints (route.ts files)
@@ -254,3 +254,34 @@ See `src/lib/envValidator.ts` for complete list with validation logic.
 ---
 
 **Need help?** Check `README.md`, `SETUP.md`, `DOCKER.md` for deployment guides. For OPTR pipeline details, see `docs/OPTR_MATHEMATICAL_FRAMEWORK.md`.
+
+# Bickford Agent Constitution (Repo-Authoritative)
+
+## Prime Directive
+If it can't be proven, it doesn't exist.
+
+## Every invocation MUST output these sections (in this order)
+1) Intent:
+2) Execution Contract:
+   - Scope:
+   - Plan (steps):
+   - Risk:
+   - Rollback:
+3) Proof:
+   - Artifact(s): (commit/PR link, build log, test output, diff)
+   - Verification Commands: (exact commands)
+4) Result:
+   - What changed:
+   - What remains:
+5) Ledger Entry:
+   - Write a JSON entry to `.bick/ledger/YYYY-MM-DD/<id>.json`
+
+## Fail-Closed Behavior
+- If proof cannot be produced, stop and return:
+  - "FAIL-CLOSED: missing proof" + what proof is missing
+- Never claim completion without proof.
+
+## OPTR/T2V Enforcement
+- Prefer the next action that maximizes T2V (effort removed per unit time).
+- If an idea requires new user behavior, reject it by default (90% rule).
+

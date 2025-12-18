@@ -1,5 +1,13 @@
 HVPE Cloud Portal – Next.js (App Router) with Stripe and Prisma-backed licensing.
 
+## Canon + Sale Architecture
+- **Executable canon** lives in [`src/lib/btiCanon.ts`](./src/lib/btiCanon.ts) and drives the proof-gated $1B sale plan.
+- Human-readable mirror: [`docs/BICKFORD_CANON.md`](./docs/BICKFORD_CANON.md).
+- Update the TypeScript source first; regenerate the doc afterward to keep parity.
+- Microsoft assets:
+  - Pilot commitment email template — [`docs/MICROSOFT_PILOT_EMAIL.md`](./docs/MICROSOFT_PILOT_EMAIL.md)
+  - Pilot scope doc (to be co-signed) — [`docs/MICROSOFT_PILOT_SCOPE.md`](./docs/MICROSOFT_PILOT_SCOPE.md)
+
 ## Environment
 Set these in `.env.local` (and in Vercel Project Settings → Environment Variables):
 

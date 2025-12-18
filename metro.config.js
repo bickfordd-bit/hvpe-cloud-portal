@@ -14,10 +14,22 @@ const makeBlockList = (patterns) =>
 
 const config = getDefaultConfig(__dirname);
 
-// Block server-only code (API routes, Prisma, Node stdlib usage) from the RN bundle
+// Block server-only code (API routes, Prisma, Node stdlib usage) from the RN/Shell bundle
+const serverOnlyDirs = [
+  path.join(__dirname, "src", "app", "api"),
+  path.join(__dirname, "build", "src", "app", "api"),
+  path.join(__dirname, "src", "lib", "prisma"),
+  path.join(__dirname, "build", "src", "lib", "prisma"),
+];
+
+const dirPattern = (dir) =>
+  dir
+    .split(path.sep)
+    .map((segment) => escapeStringForRegex(segment))
+    .join("[/\\\\]");
+
 config.resolver.blockList = makeBlockList([
-  /src\/app\/api\/.*/, // API/Next routes with fs/path/child_process/prisma
-  /src\/lib\/prisma\/.*/, // Prisma client/server-only code
+  ...serverOnlyDirs.map((dir) => new RegExp(`${dirPattern(dir)}([\\\\/].*)?$`)),
 ]);
 
 module.exports = config;

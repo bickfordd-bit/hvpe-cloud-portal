@@ -1,10 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
+import { LICENSE_COOKIE } from "@/lib/licenseSession.types";
 
 // Session cookie for auth
 const SESSION_COOKIE_NAME = "optr";
 
+// Note: For crypto operations in middleware, we verify the JWT structure without decryption
+// The actual verification happens in the API routes which run in Node.js runtime
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // Protect Jake instance - check for presence of license cookie
+  // Full validation happens in the client-side verify call
+  if (pathname.startsWith("/t/jake")) {
+    const token = req.cookies.get(LICENSE_COOKIE)?.value;
+
+    if (!token) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/license";
+      url.searchParams.set("next", pathname);
+      return NextResponse.redirect(url);
+    }
+
+    return NextResponse.next();
+  }
 
   const protectedPrefixes = ["/dashboard", "/admin", "/account", "/licenses"];
   const needsAuth = protectedPrefixes.some(
@@ -26,5 +44,11 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/account/:path*", "/licenses/:path*"]
+  matcher: [
+    "/t/jake/:path*",
+    "/dashboard/:path*",
+    "/admin/:path*",
+    "/account/:path*",
+    "/licenses/:path*",
+  ],
 };

@@ -5,6 +5,7 @@
     "owner": "bickfordd",
     "version": "1.0.0",
     "orientation": "portrait",
+    "newArchEnabled": false,
     "ios": {
       "bundleIdentifier": "com.bickford.app"
     },
@@ -15,6 +16,10 @@
       "eas": {
         "projectId": "f8ef5b75-4700-4b90-b8fe-6e659f272d86"
       }
+    },
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/f8ef5b75-4700-4b90-b8fe-6e659f272d86"
     }
   }
 }

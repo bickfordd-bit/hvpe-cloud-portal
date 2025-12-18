@@ -1,0 +1,116 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+import datetime
+import hashlib
+import json
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+LEDGER_DIR = ROOT / ".bick" / "ledger"
+
+
+def sid(obj) -> str:
+    s = json.dumps(obj, sort_keys=True).encode("utf-8")
+    return hashlib.sha256(s).hexdigest()[:12]
+
+
+def run(cmd: str) -> tuple[int, str]:
+    proc = subprocess.run(
+        cmd,
+        shell=True,
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+    )
+    out = (proc.stdout or "") + (("\n" + proc.stderr) if proc.stderr else "")
+    return proc.returncode, out.strip()
+
+
+def classify(intent: str) -> str:
+    s = intent.lower()
+    if any(k in s for k in ["ios", "xcode", "testflight", "app store", "build", "ipa"]):
+        return "mobile"
+    if any(k in s for k in ["ci", "github action", "workflow", "deploy", "infra", "vercel", "cloudflare", "aws"]):
+        return "infra"
+    if any(k in s for k in ["doc", "agreement", "pilot", "legal", "terms", "privacy"]):
+        return "docs"
+    if any(k in s for k in ["secret", "token", "vuln", "scan", "security"]):
+        return "security"
+    return "code"
+
+
+def proof_commands(kind: str) -> list[str]:
+    if kind == "code":
+        return ["npm test", "npm run lint"]
+    if kind == "infra":
+        return ["npm run lint"]
+    if kind == "mobile":
+        return ["echo 'mobile proof: attach build logs or CI run link'"]
+    if kind == "docs":
+        return ["echo 'docs proof: diff + spellcheck (optional)'"]
+    if kind == "security":
+        return ["echo 'security proof: scan output'"]
+    return ["echo 'no proof commands configured'"]
+
+
+def write_ledger(entry: dict) -> Path:
+    day = datetime.datetime.now().strftime("%Y-%m-%d")
+    outdir = LEDGER_DIR / day
+    outdir.mkdir(parents=True, exist_ok=True)
+    entry_id = sid(entry)
+    path = outdir / f"{entry_id}.json"
+    path.write_text(json.dumps(entry, indent=2))
+    return path
+
+
+def main() -> None:
+    if len(sys.argv) < 3 or sys.argv[1] != "run":
+        print("Usage: bick run <intent text...>")
+        sys.exit(2)
+
+    intent = " ".join(sys.argv[2:]).strip()
+    kind = classify(intent)
+
+    entry = {
+        "ts": time.time(),
+        "intent": intent,
+        "classified_as": kind,
+        "execution_contract": {
+            "scope": "auto",
+            "plan": [],
+            "risk": "unknown",
+            "rollback": "git revert <commit> or restore previous artifact",
+        },
+        "proof": {
+            "verification_commands": proof_commands(kind),
+            "results": [],
+            "artifacts": [],
+        },
+        "result": {},
+        "fail_closed": False,
+    }
+
+    for cmd in entry["proof"]["verification_commands"]:
+        rc, out = run(cmd)
+        entry["proof"]["results"].append({"cmd": cmd, "rc": rc, "out": out[:4000]})
+        placeholder = "echo '" in cmd and cmd.endswith("'")
+        if rc != 0 and not placeholder:
+            entry["fail_closed"] = True
+
+    if entry["fail_closed"]:
+        entry["result"] = {"status": "FAIL-CLOSED", "reason": "verification failed"}
+    else:
+        entry["result"] = {"status": "OK", "note": "proof commands executed (or placeholders emitted)"}
+
+    path = write_ledger(entry)
+    print(f"LEDGER: {path}")
+    print(json.dumps(entry["result"], indent=2))
+
+    sys.exit(1 if entry["fail_closed"] else 0)
+
+
+if __name__ == "__main__":
+    main()

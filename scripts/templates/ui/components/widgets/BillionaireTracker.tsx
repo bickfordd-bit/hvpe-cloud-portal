@@ -21,7 +21,27 @@ function percent(p: Person) {
   return (p.current / p.target) * 100;
 }
 
+function calculateConfidenceScore(people: Person[]) {
+  const aggregateCurrent = people.reduce((sum, p) => sum + p.current, 0);
+  const aggregateVelocity = people.reduce((sum, p) => sum + p.dailyVelocity, 0);
+
+  const coverage = Math.min(aggregateCurrent / (people.length * 1_000_000_000), 1);
+  const velocityFactor = Math.min(aggregateVelocity / 10_000, 1);
+  const normalized = Math.min(1, coverage * 0.6 + velocityFactor * 0.4);
+  const score = Math.round(normalized * 100);
+
+  if (score >= 75) {
+    return { score, label: "High Confidence", color: "text-emerald-400" };
+  }
+  if (score >= 45) {
+    return { score, label: "Operational Confidence", color: "text-yellow-300" };
+  }
+  return { score, label: "Experimental Confidence", color: "text-orange-400" };
+}
+
 export function BillionaireTracker() {
+  const confidence = calculateConfidenceScore(PEOPLE);
+
   return (
     <Card>
       <div className="flex items-center justify-between mb-3">
@@ -33,6 +53,12 @@ export function BillionaireTracker() {
             Target per person:{" "}
             <span className="text-neutral-100 font-semibold">
               $1,000,000,000
+            </span>
+          </div>
+          <div className="text-[11px] text-neutral-400">
+            Billionaire Confidence:{" "}
+            <span className={`font-semibold ${confidence.color}`}>
+              {confidence.score}% – {confidence.label}
             </span>
           </div>
         </div>

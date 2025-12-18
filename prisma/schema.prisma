@@ -23,9 +23,15 @@ model License {
   id          String        @id @default(cuid())
   key         String        @unique
   email       String
+  role        String?       // e.g., "JAKE", "TRADER", "FOUNDER"
+  mode        String?       // e.g., "JAKE_BUILD", "TRADING_ENGINE"
+  tenant      String?       // e.g., "jake"
+  tier        String?       // e.g., "LIFETIME", "ANNUAL"
   status      LicenseStatus @default(ACTIVE)
+  readOnly    Boolean       @default(true)
   createdAt   DateTime      @default(now())
   activatedAt DateTime?
+  updatedAt   DateTime      @updatedAt
   requests    LicenseRequest[]
 }
 

@@ -1,7 +1,4 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-import { execSync } from "child_process";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -18,6 +15,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const h = req.headers.get("x-admin-secret");
     if (h !== secret) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+
+  const [{ default: fs }, { default: path }, { execSync }] = await Promise.all([
+    import("fs"),
+    import("path"),
+    import("child_process"),
+  ]);
 
   const tmp = path.join(process.cwd(), `tmp_ai_patch_${id}.diff`);
   fs.writeFileSync(tmp, patchLog.patch, "utf-8");

@@ -426,7 +426,7 @@ Custom theming per instance via `bickford.config.json`:
 ### Widget Layer
 - **IntentToRealityPanel** - Valuation engine display
 - **EngineStatusPanel** - System metrics
-- **BillionaireTracker** - Net worth tracking
+- **BillionaireTracker** - Net worth & billionaire confidence tracking
 - **MoneyVelocityGauge** - Rate gauge
 - **SupraHeatmap** - 3x3 signal grid
 - **MetricMiniGrid** - KPI tiles
@@ -952,4 +952,3 @@ export function Tooltip({
 - [Web Accessibility Guidelines (WCAG)](https://www.w3.org/WAI/WCAG21/quickref/)
 - [MDN Web Docs - Accessibility](https://developer.mozilla.org/en-US/docs/Web/Accessibility)
 - [Inclusive Components](https://inclusive-components.design/)
-
