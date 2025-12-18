@@ -22,6 +22,9 @@ export const logger = winston.createLogger({
   ],
 });
 
+// Alias for backwards compatibility
+export const apiLogger = logger;
+
 if (process.env.NODE_ENV === 'production') {
   logger.add(
     new winston.transports.File({

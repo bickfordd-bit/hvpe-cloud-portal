@@ -165,3 +165,6 @@ function createTrace(stage: string, status: 'started' | 'completed' | 'failed', 
     message,
   };
 }
+
+// Alias for backwards compatibility
+export const runOptr = processOpportunity;
