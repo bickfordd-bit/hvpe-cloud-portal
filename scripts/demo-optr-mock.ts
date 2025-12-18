@@ -148,15 +148,10 @@ console.log(`      Final P(win): ${baseWinProb.toFixed(3)} × ${shallPenalty.toF
 
 console.log(`\n   5️⃣  Expected Contract Value:`);
 console.log(`      P(win) × Base Value × Agency Multiplier`);
-console.log(`      Penalty factor: ${shallPenalty.toFixed(3)}`);
-shallReqs.forEach((req, i) => {
-  const traceIdx = requirements.findIndex(r => r.id === req.id);
-  const trace = traces[traceIdx];
-  const met = trace.confidence >= 0.7 ? '✓' : '✗';
-  console.log(`         ${met} ${req.id}: ${(trace.confidence * 100).toFixed(1)}% (needs ≥70%)`);
-});
+console.log(`      ${win_prob.toFixed(3)} × $${opportunity.estimatedValue.toLocaleString()} × ${agencyMultiplier}`);
+console.log(`      = $${ecv.toLocaleString()}`);
 
-console.log(`\n   5️⃣  Agency Multiplier:`);
+console.log(`\n   6️⃣  Agency Multiplier:`);
 console.log(`      ${opportunity.agency}: ${agencyMultiplier}x`);
 
 console.log(`\n   6️⃣  Final Calculation:`);
