@@ -159,25 +159,7 @@ console.log(`      Win Probability = ${baseWinProb.toFixed(3)} × ${shallPenalty
 console.log(`      ECV = ${win_prob.toFixed(3)} × $${opportunity.estimatedValue.toLocaleString()} × ${agencyMultiplier}`);
 console.log(`      ECV = $${ecv.toLocaleString()}`);
 
-console.log('\n\n🎯 COMPARISON: Old vs New Algorithm');
-console.log('═'.repeat(80));
-
-// Old algorithm (linear)
-const oldWinProb = 0.25 + (simpleCoverage * 0.5);
-const oldECV = Math.floor(oldWinProb * opportunity.estimatedValue);
-
-console.log(`\n   OLD Algorithm (Linear):`);
-console.log(`      Win Prob = 0.25 + (coverage × 0.5)`);
-console.log(`      Win Prob = 0.25 + (${simpleCoverage.toFixed(2)} × 0.5) = ${oldWinProb.toFixed(3)}`);
-console.log(`      ECV = $${oldECV.toLocaleString()}`);
-
-console.log(`\n   NEW Algorithm (Weighted + Non-linear):`);
-console.log(`      Win Prob = ${win_prob.toFixed(3)}`);
-console.log(`      ECV = $${ecv.toLocaleString()}`);
-
-console.log(`\n   📊 Improvement:`);
-console.log(`      Win Probability: ${((win_prob - oldWinProb) * 100).toFixed(1)}% increase`);
-console.log(`      ECV: $${(ecv - oldECV).toLocaleString()} increase`);
+console.log('\n✅ Analysis complete!');
 console.log(`      Accuracy: 3-4x better (accounts for priority + compliance)`);
 
 console.log('\n\n✨ Key Advantages of New Algorithm:');
