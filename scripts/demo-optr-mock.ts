@@ -56,52 +56,28 @@ const requirements: Requirement[] = [
 // Simulated traces (what OPTR would generate)
 const traces: Trace[] = [
   {
-    req_id: 'REQ-001',
-    response_id: 'RESP-1',
-    evidence_doc_ids: ['doc-001'],
-    evidence_snippets: ['Our platform provides continuous 24/7 monitoring with real-time threat detection using ML-based anomaly detection...'],
-    confidence: 0.92,
-    gaps: []
+    timestamp: new Date().toISOString(),
+    stage: 'ingestion',
+    status: 'completed',
+    message: 'Loaded opportunity data'
   },
   {
-    req_id: 'REQ-002',
-    response_id: 'RESP-2',
-    evidence_doc_ids: ['doc-002'],
-    evidence_snippets: ['We maintain FedRAMP High authorization and implement all NIST 800-53 controls...'],
-    confidence: 0.88,
-    gaps: []
+    timestamp: new Date().toISOString(),
+    stage: 'embeddings',
+    status: 'completed',
+    message: 'Generated embeddings for 6 requirements'
   },
   {
-    req_id: 'REQ-003',
-    response_id: 'RESP-3',
-    evidence_doc_ids: ['doc-003'],
-    evidence_snippets: ['Native integrations with Splunk, QRadar, and other major SIEM platforms...'],
-    confidence: 0.75,
-    gaps: []
+    timestamp: new Date().toISOString(),
+    stage: 'retrieval',
+    status: 'completed',
+    message: 'Found 3 matching documents'
   },
   {
-    req_id: 'REQ-004',
-    response_id: 'RESP-4',
-    evidence_doc_ids: ['doc-004'],
-    evidence_snippets: ['Our SOAR platform includes 200+ pre-built incident response playbooks...'],
-    confidence: 0.68,
-    gaps: ['Low semantic match; verify evidence manually']
-  },
-  {
-    req_id: 'REQ-005',
-    response_id: 'RESP-5',
-    evidence_doc_ids: ['doc-005'],
-    evidence_snippets: ['Basic threat intelligence feeds available...'],
-    confidence: 0.45,
-    gaps: ['Low semantic match; verify evidence manually', 'Supporting evidence is very brief']
-  },
-  {
-    req_id: 'REQ-006',
-    response_id: 'RESP-6',
-    evidence_doc_ids: ['doc-006'],
-    evidence_snippets: ['Our facility holds active Secret clearance (FCL) and all staff are cleared...'],
-    confidence: 0.94,
-    gaps: []
+    timestamp: new Date().toISOString(),
+    stage: 'scoring',
+    status: 'completed',
+    message: 'Scored requirements against documents'
   }
 ];
 
@@ -113,8 +89,7 @@ console.log(`   Base Value: $${opportunity.estimatedValue.toLocaleString()}`);
 
 console.log(`\n📝 Requirements (${requirements.length} total):`);
 requirements.forEach(req => {
-  const priority = '★'.repeat(req.priority) + '☆'.repeat(5 - req.priority);
-  console.log(`   ${req.id}: [${req.kind.toUpperCase()}] ${priority}`);
+  console.log(`   ${req.id}: [${req.priority.toUpperCase()}]`);
   console.log(`      ${req.text.slice(0, 70)}...`);
 });
 
