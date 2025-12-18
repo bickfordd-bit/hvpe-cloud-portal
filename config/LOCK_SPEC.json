@@ -1,0 +1,185 @@
+{
+  "lock_spec_version": "1.1.0",
+  "locked_at": "2025-12-18T00:00:00-05:00",
+  "mode": "JAKE_BUILD",
+
+  "axioms": {
+    "PROMPTS_EQUALS_STORAGE": true,
+    "SUPPORT_ONLY": true,
+    "NO_NEW_MECHANISMS": true,
+    "NO_RIP_AND_REPLACE": true,
+    "NO_DEPLOYMENT_COST": true,
+    "NO_HUMAN_CAPITAL_IMPACT": true,
+    "NO_CONTRACT_IMPACT": true
+  },
+
+  "identity": {
+    "branding": {
+      "bickford_lowercase": true,
+      "bick_prefix": "BICK",
+      "disallow_bic": true
+    },
+    "tenants": {
+      "jake": { "role": "JAKE", "route": "/t/jake", "mode": "JAKE_BUILD", "never_fail": true },
+      "billy": { "role": "BILLY", "route": "/t/billy", "mode": "BILLY_INVEST", "never_fail": false }
+    }
+  },
+
+  "licenses": {
+    "never_fail_keys": ["BICK-JAKE-LIFETIME-0001"],
+    "lifetime_keys": ["BICK-JAKE-LIFETIME-0001", "BICK-BILLY-LIFETIME-0001"],
+    "rules": { "approval_required": false, "status_required": "ACTIVE", "route_resolution": "ROLE_BASED" }
+  },
+
+  "defines": {
+    "namespace": "BICKFORD",
+    "version": "1.0.0",
+    "commands": [
+      {
+        "id": "DEFINE",
+        "purpose": "Declare intent, target, constraints, and success criteria.",
+        "required_fields": ["intent", "target", "constraints", "success_criteria"],
+        "outputs": ["definition_record"]
+      },
+      {
+        "id": "GAP",
+        "purpose": "Detect where an approved mechanism acted and value decays over time.",
+        "required_fields": ["mechanism", "time_window", "drift_signals"],
+        "outputs": ["gap_record"]
+      },
+      {
+        "id": "FREEZE",
+        "purpose": "Lock a decision/artifact snapshot as immutable reference.",
+        "required_fields": ["scope", "hash", "locked_at"],
+        "outputs": ["freeze_record"]
+      },
+      {
+        "id": "SIM",
+        "purpose": "Simulate outcomes for admissible paths (support-only).",
+        "required_fields": ["scenario", "paths", "constraints"],
+        "outputs": ["simulation_result"]
+      },
+      {
+        "id": "SCORE",
+        "purpose": "Score paths by OPTR objective (T2V$ + decay).",
+        "required_fields": ["paths", "objective"],
+        "outputs": ["scorecard"]
+      },
+      {
+        "id": "OPTR",
+        "purpose": "Select optimal admissible path to realization.",
+        "required_fields": ["paths", "gate", "objective"],
+        "outputs": ["selected_path"]
+      },
+      {
+        "id": "T2V",
+        "purpose": "Compute time-to-value and T2V$ (dollarized delay).",
+        "required_fields": ["V", "T0", "deltaT", "Ch", "H", "R"],
+        "outputs": ["t2v_metrics"]
+      },
+      {
+        "id": "LEDGER",
+        "purpose": "Append-only persistence of prompts/decisions/artifacts/events.",
+        "required_fields": ["event_type", "payload", "hash", "prev_hash"],
+        "outputs": ["ledger_event_id"]
+      },
+      {
+        "id": "PROOF",
+        "purpose": "Attach verification artifact(s) to a decision/event.",
+        "required_fields": ["artifact_hash", "provenance", "verification"],
+        "outputs": ["proof_record"]
+      },
+      {
+        "id": "SHIP",
+        "purpose": "Package approved outputs for delivery (no mechanism change).",
+        "required_fields": ["bundle", "audience", "constraints"],
+        "outputs": ["ship_bundle"]
+      }
+    ],
+    "invariants": [
+      "All commands must be persisted (PROMPTS_EQUALS_STORAGE).",
+      "All writes are append-only.",
+      "All outputs must include hash + locked_at when frozen.",
+      "No command may introduce a new mechanism (SUPPORT_ONLY)."
+    ]
+  },
+
+  "activation": {
+    "CAE": {
+      "definition": "mechanism_fired && time_passed && drift_observed",
+      "mechanisms": ["six_pager_approved", "prfaq_signed", "map_committed", "escalation_resolved", "architecture_review_passed"],
+      "drift_signals": ["re_litigation", "restart", "re_explanation", "metric_regression", "escalation_recurrence"]
+    },
+    "political_gate": {
+      "support_only": true,
+      "disallow": ["new_mechanism", "new_owner", "new_cost", "human_evaluation", "behavior_change"]
+    }
+  },
+
+  "optr_t2v": {
+    "formula": "T2V$ = (V / T0) * ΔT + Ch * H + R",
+    "variables": {
+      "V": "value_committed_usd",
+      "T0": "planned_time_to_value",
+      "ΔT": "delay_due_to_decay",
+      "Ch": "fully_loaded_hourly_cost",
+      "H": "rework_hours",
+      "R": "escalation_or_risk_cost"
+    },
+    "objective": "minimize ΔT2V$",
+    "allowed_claims": ["avoided_loss", "earlier_value_realization"],
+    "disallowed_claims": ["new_revenue", "headcount_reduction"]
+  },
+
+  "pilot_success": {
+    "pass_conditions": {
+      "delta_t2v_usd_min": 500000,
+      "delta_time_reduction_pct": 0.15,
+      "rework_reduction_pct": 0.2,
+      "repeat_escalation_avoided_min": 1
+    },
+    "measurement": { "baseline_required": true, "append_only": true }
+  },
+
+  "aws_gap_model": {
+    "gaps": ["map_intent_decay", "execution_context_loss", "escalation_recurrence", "field_service_decision_drift", "invisible_rework"],
+    "meta_gap": "time_has_no_owner",
+    "valuation_ranges_usd_annual": { "low": 515000000, "high": 1060000000 }
+  },
+
+  "security": {
+    "server_only_secrets": true,
+    "no_client_keys": true,
+    "append_only_storage": true,
+    "tamper_evidence": { "hash_required": true, "prev_hash_required": true }
+  },
+
+  "trading_controls": {
+    "billy": {
+      "paper_default": true,
+      "live_guardrail": {
+        "require_env_flag": "ALLOW_BILLY_LIVE_TRADING",
+        "require_live_base_url": true
+      },
+      "hard_caps": { "per_order_usd": 2000 }
+    }
+  },
+
+  "ui_invariants": {
+    "minimalism": true,
+    "effect_before_explanation": true,
+    "no_internal_exposure": true,
+    "stable_entrypoints": true
+  },
+
+  "storage_rules": {
+    "write_mode": "APPEND_ONLY",
+    "events": ["CREATE", "AMEND", "SUPERSEDE"],
+    "retrieval": "LATEST_PLUS_LINEAGE"
+  },
+
+  "operations": {
+    "smoke_tests": ["/t/jake_never_404", "/t/billy_trading_guardrail", "license_entry_redirect"],
+    "rollback_policy": "IMMEDIATE_IF_LOCK_VIOLATED"
+  }
+}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { LICENSE_COOKIE } from "@/lib/licenseSession.types";
+import { STATIC_LOCK_SPEC, getJakeRoute, getBillyRoute } from "@/lib/lock/spec-static";
 
 // Session cookie for auth
 const SESSION_COOKIE_NAME = "optr";
@@ -9,16 +10,45 @@ const SESSION_COOKIE_NAME = "optr";
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Protect Jake instance - check for presence of license cookie
-  // Full validation happens in the client-side verify call
-  if (pathname.startsWith("/t/jake")) {
-    const token = req.cookies.get(LICENSE_COOKIE)?.value;
+  // --- helper: auth redirect
+  const denyToLicense = (nextPath: string) => {
+    const url = req.nextUrl.clone();
+    url.pathname = "/license";
+    url.searchParams.set("next", nextPath);
+    return NextResponse.redirect(url);
+  };
 
+  const token = req.cookies.get(LICENSE_COOKIE)?.value;
+
+  // --- Jake route: never fail, must be guarded by role
+  if (pathname.startsWith(getJakeRoute())) {
+    // Verify token exists
     if (!token) {
-      const url = req.nextUrl.clone();
-      url.pathname = "/license";
-      url.searchParams.set("next", pathname);
-      return NextResponse.redirect(url);
+      return denyToLicense(getJakeRoute());
+    }
+
+    // TODO: Decode token and verify claims.role === "JAKE"
+    // For now, presence of token is sufficient (full validation in API routes)
+
+    // Enforce route invariant from spec
+    if (STATIC_LOCK_SPEC.identity.tenants.jake.route !== getJakeRoute()) {
+      return NextResponse.json({ error: "LOCK violation: jake route drift" }, { status: 500 });
+    }
+
+    return NextResponse.next();
+  }
+
+  // --- Billy route: guarded by role, supports paper/live trading
+  if (pathname.startsWith(getBillyRoute()) || pathname.startsWith("/api/billy/")) {
+    if (!token) {
+      return denyToLicense(getBillyRoute());
+    }
+
+    // TODO: Decode token and verify claims.role === "BILLY"
+
+    // Enforce route invariant from spec
+    if (STATIC_LOCK_SPEC.identity.tenants.billy.route !== getBillyRoute()) {
+      return NextResponse.json({ error: "LOCK violation: billy route drift" }, { status: 500 });
     }
 
     return NextResponse.next();
@@ -46,6 +76,8 @@ export function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     "/t/jake/:path*",
+    "/t/billy/:path*",
+    "/api/billy/:path*",
     "/dashboard/:path*",
     "/admin/:path*",
     "/account/:path*",

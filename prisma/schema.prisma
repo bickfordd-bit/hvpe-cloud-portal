@@ -214,3 +214,21 @@ enum OpportunityStatus {
   ARCHIVED
   DELETED
 }
+model Ledger {
+  id        String   @id @default(cuid())
+  tenant    String   // e.g., "jake", "billy"
+  command   String   // e.g., "DEFINE", "GAP", "FREEZE", "SCORE", "OPTR"
+  eventType String   // "CREATE", "AMEND", "SUPERSEDE"
+  payload   String   @db.Text // JSON stringified payload
+  hash      String   @unique // SHA256 hash of payload
+  prevHash  String?  // Previous event hash (for chain integrity)
+  lockedAt  String   // ISO timestamp from LOCK_SPEC when created
+  createdAt DateTime @default(now())
+  
+  @@index([tenant])
+  @@index([command])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([hash])
+  @@index([prevHash])
+}
