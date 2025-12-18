@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
+      - mobile
       - ui-redesign-v1
   pull_request:
     branches:
       - main
+      - mobile
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -30,6 +32,15 @@ jobs:
 
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Ensure LICENSE_SESSION_SECRET is set
+        run: |
+          if [ -z "${{ secrets.LICENSE_SESSION_SECRET }}" ]; then
+            echo "⚠️  WARNING: LICENSE_SESSION_SECRET not set in GitHub secrets"
+            echo "    Add it to secrets for Jake instance license validation to work"
+          else
+            echo "✅ LICENSE_SESSION_SECRET is configured"
+          fi
 
       - name: Build Project Artifacts
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
