@@ -23,45 +23,33 @@ const opportunity = {
 const requirements: Requirement[] = [
   {
     id: 'REQ-001',
-    kind: 'shall',
     priority: 'high',
     text: 'The system shall provide 24/7 security monitoring and threat detection capabilities',
-    source: 'SOW Section 3.1'
   },
   {
     id: 'REQ-002',
-    kind: 'shall',
     priority: 'high',
     text: 'The solution shall comply with NIST 800-53 security controls and FedRAMP High',
-    source: 'SOW Section 2.4'
   },
   {
     id: 'REQ-003',
-    kind: 'shall',
     priority: 'high',
     text: 'The system shall integrate with existing SIEM platforms including Splunk',
-    source: 'SOW Section 3.2'
   },
   {
     id: 'REQ-004',
-    kind: 'should',
     priority: 'medium',
     text: 'The solution should provide automated incident response playbooks',
-    source: 'SOW Section 4.1'
   },
   {
     id: 'REQ-005',
-    kind: 'should',
     priority: 'low',
     text: 'The system should include AI-powered threat intelligence',
-    source: 'SOW Section 4.3'
   },
   {
     id: 'REQ-006',
-    kind: 'shall',
     priority: 'high',
     text: 'The contractor shall maintain active Secret facility clearance',
-    source: 'SOW Section 1.2'
   }
 ];
 
