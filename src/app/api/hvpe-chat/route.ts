@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import { buildUnifiedAgentPrompt } from "@/lib/chat/unifiedAgent";
+import { recordChatHistory } from "@/lib/chat/history";
 
 export const runtime = "nodejs";
 
@@ -108,7 +110,9 @@ export async function POST(req: Request) {
     if (body?.message) {
       const mode: Mode = body.mode || "general";
       const hvpeContext = await getHvpePortalContext();
-      const systemPrompt = buildSystemPrompt(mode, body.context, hvpeContext);
+      const systemPrompt = buildUnifiedAgentPrompt({
+        specialization: buildSystemPrompt(mode, body.context, hvpeContext)
+      });
 
       const completion = await client.chat.completions.create({
         model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
@@ -120,6 +124,16 @@ export async function POST(req: Request) {
       });
 
       const content = completion.choices[0]?.message?.content || "";
+      await recordChatHistory({
+        timestamp: new Date().toISOString(),
+        source: "hvpe-chat",
+        agent: "bigfern-unified",
+        payload: {
+          mode,
+          message: body.message,
+          reply: content
+        }
+      });
       return json({ reply: content, mode }, 200);
     }
 
@@ -134,8 +148,10 @@ export async function POST(req: Request) {
         else if (persona === "investor") personaPrompt = INVESTOR_MODE_PROMPT;
         else if (persona === "dod") personaPrompt = DOD_MODE_PROMPT;
 
-        const systemContent =
-          BASE_SYSTEM_PROMPT + "\n" + personaPrompt + (hvpeContext || "");
+        const systemContent = buildUnifiedAgentPrompt({
+          specialization: BASE_SYSTEM_PROMPT + "\n" + personaPrompt,
+          context: hvpeContext || undefined
+        });
 
         const messages: ChatMessage[] = [
           { role: "system", content: systemContent },
@@ -156,12 +172,26 @@ export async function POST(req: Request) {
           completion.choices[0]?.message?.content ||
           "I couldn't generate a response. Check OPENAI configuration.";
 
+        await recordChatHistory({
+          timestamp: new Date().toISOString(),
+          source: "hvpe-chat",
+          agent: "bigfern-unified",
+          payload: {
+            mode: "persona",
+            persona,
+            messages: body.messages,
+            reply
+          }
+        });
+
         return json({ reply }, 200);
       }
 
       const mode: Mode = body.mode || "general";
       const hvpeContext = await getHvpePortalContext();
-      const systemPrompt = buildSystemPrompt(mode, body.context, hvpeContext);
+      const systemPrompt = buildUnifiedAgentPrompt({
+        specialization: buildSystemPrompt(mode, body.context, hvpeContext)
+      });
 
       const messages: ChatMessage[] = [
         { role: "system", content: systemPrompt },
@@ -181,6 +211,17 @@ export async function POST(req: Request) {
       const reply =
         completion.choices[0]?.message?.content ||
         "I couldn't generate a response. Check OPENAI configuration.";
+
+      await recordChatHistory({
+        timestamp: new Date().toISOString(),
+        source: "hvpe-chat",
+        agent: "bigfern-unified",
+        payload: {
+          mode,
+          messages: body.messages,
+          reply
+        }
+      });
 
       return json({ reply, mode }, 200);
     }
