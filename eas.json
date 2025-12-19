@@ -13,10 +13,9 @@
     },
     "production": {
       "developmentClient": false,
-      "distribution": "app-store",
+      "distribution": "store",
       "autoIncrement": true,
       "ios": {
-        "bundler": "metro",
         "buildConfiguration": "Release"
       }
     }

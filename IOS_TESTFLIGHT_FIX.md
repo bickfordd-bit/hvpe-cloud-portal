@@ -168,12 +168,15 @@ xcodebuild -workspace ios/BickfordApp.xcworkspace \
 
 ## Status
 
-- [x] EAS production config fixed
-- [ ] Export iOS bundle
-- [ ] Build production IPA
-- [ ] Upload to TestFlight
+- [x] EAS production config fixed (corrected to distribution: "store")
+- [x] EAS build started (Build #11, buildNumber incremented 10→11)
+- [x] Build queued on EAS servers
+- [ ] Build completion (~15-20 min)
+- [ ] Upload to TestFlight (via eas submit)
 - [ ] Test with airplane mode
 - [ ] Submit for review
+
+**Current Build:** https://expo.dev/accounts/bickfordd/projects/bickford-app/builds/ad4b0c06-ac1d-4397-b4cf-a03dec4f932c
 
 ---
 
