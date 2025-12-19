@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS buckets (
 );
 
 CREATE TABLE IF NOT EXISTS chunks (
-  id SERIAL PRIMARY KEY,
+  id VARCHAR(100) PRIMARY KEY,
   content TEXT NOT NULL,
   bucket_id INTEGER REFERENCES buckets(id),
   message_id VARCHAR(100) NOT NULL,
