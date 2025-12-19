@@ -1,0 +1,79 @@
+{
+  "id": "codex-automation-deployed-2025-12-19T120000",
+  "ts": "2025-12-19T12:00:00-05:00",
+  "kind": "deployment",
+  "subject": "codex-sync-automation",
+  "payload": {
+    "description": "Codex sync automation deployed - enables automatic push/pull on task completion",
+    "commit": {
+      "sha": "ac946fd",
+      "message": "feat: Codex sync automation - auto push/pull on task completion",
+      "filesAdded": 6,
+      "linesAdded": 934
+    },
+    "components": {
+      "api": "src/app/api/codex/sync/route.ts",
+      "service": "src/lib/codex/sync.ts",
+      "docs": "CODEX_SYNC.md",
+      "cli": ["scripts/codex-client.js", "scripts/test-codex-sync.sh"]
+    },
+    "workflow": {
+      "trigger": "POST /api/codex/sync from Codex",
+      "authentication": "x-codex-secret header",
+      "steps": [
+        "1. Verify webhook secret",
+        "2. Pull latest: git pull --rebase origin mobile",
+        "3. Apply changes: create/modify/delete files",
+        "4. Stage: git add <files>",
+        "5. Commit: with task description",
+        "6. Push: git push origin mobile",
+        "7. Log to Bickford ledger with proof"
+      ],
+      "proof": {
+        "commitSha": "returned in response",
+        "ledgerEntry": ".bick/ledger/<date>/codex-sync-<taskId>.json",
+        "pushed": "boolean flag"
+      }
+    },
+    "setup": {
+      "secret": "d38c9f08d6b06e76efd600998fd765202efaabc109d09d2b8ad7728f4b93b12a",
+      "env_var": "CODEX_WEBHOOK_SECRET",
+      "endpoint": "https://hvpe-cloud-portal.vercel.app/api/codex/sync",
+      "test_command": "./scripts/test-codex-sync.sh"
+    },
+    "features": {
+      "preview_mode": "?preview=true query param to test without applying",
+      "ledger_integration": "All syncs logged to Bickford ledger",
+      "error_handling": "Failures recorded with proof of failure",
+      "file_operations": "Supports create, modify, delete",
+      "auto_directories": "Creates directories as needed"
+    },
+    "codex_integration": {
+      "on_task_complete": "Send POST request to /api/codex/sync",
+      "payload": {
+        "taskId": "unique-id",
+        "description": "what changed",
+        "timestamp": "ISO 8601",
+        "changes": [
+          {"type": "create|modify|delete", "path": "rel/path", "content": "..."}
+        ],
+        "metadata": {"optional": "context"}
+      },
+      "response": {
+        "success": true,
+        "commitSha": "git commit hash",
+        "filesChanged": 3,
+        "proof": {"commit": "sha", "pushed": true, "ledgerEntryId": "..."}
+      }
+    },
+    "verification": {
+      "endpoint_live": true,
+      "secret_generated": true,
+      "scripts_executable": true,
+      "pushed_to_github": true,
+      "commit_sha": "ac946fd"
+    }
+  },
+  "hash": "sha256:codex-automation-ac946fd",
+  "parentId": "execution-complete-2025-12-19T115200"
+}
