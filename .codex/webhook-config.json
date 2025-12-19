@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "webhooks": {
+    "onTaskComplete": {
+      "enabled": true,
+      "url": "${WEBHOOK_BASE_URL}/api/codex/sync",
+      "method": "POST",
+      "headers": {
+        "x-codex-secret": "d38c9f08d6b06e76efd600998fd765202efaabc109d09d2b8ad7728f4b93b12a",
+        "Content-Type": "application/json"
+      },
+      "timeout": 30000,
+      "retry": {
+        "enabled": true,
+        "maxAttempts": 3,
+        "backoffMs": 1000
+      }
+    }
+  },
+  "environments": {
+    "local": {
+      "WEBHOOK_BASE_URL": "http://localhost:3000"
+    },
+    "staging": {
+      "WEBHOOK_BASE_URL": "https://hvpe-cloud-portal-staging.vercel.app"
+    },
+    "production": {
+      "WEBHOOK_BASE_URL": "https://hvpe-cloud-portal.vercel.app"
+    }
+  },
+  "payload": {
+    "taskId": "string (required)",
+    "description": "string (required)",
+    "timestamp": "ISO8601 string (required)",
+    "changes": [
+      {
+        "type": "create|update|delete",
+        "path": "relative/file/path",
+        "content": "file content (for create/update)",
+        "encoding": "utf-8|base64"
+      }
+    ],
+    "metadata": {
+      "source": "codex",
+      "agent": "agent-name",
+      "priority": "low|medium|high"
+    }
+  }
+}

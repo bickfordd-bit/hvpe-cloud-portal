@@ -1,0 +1,66 @@
+{
+  "id": "15_fix_package_lock_sync",
+  "timestamp": "2025-12-19T18:30:00Z",
+  "agent": "bickford",
+  "decision": "Fix EAS build failure by syncing package-lock.json with package.json",
+  "context": {
+    "problem": "EAS build failed with 'npm ci can only install packages when package.json and package-lock.json are in sync'",
+    "rootCause": "Local npx expo install updated package.json but package-lock.json was not committed",
+    "missingPackages": [
+      "@testing-library/dom@10.4.1",
+      "@types/aria-query@5.0.4",
+      "dom-accessibility-api@0.5.16",
+      "expo-linking@8.0.11",
+      "react-native-safe-area-context@5.6.2",
+      "react-native-screens@4.19.0",
+      "react-freeze@1.0.4",
+      "react@18.3.1",
+      "ansi-styles@5.2.0",
+      "react-is@17.0.2"
+    ],
+    "easBuildId": "ad4b0c06-ac1d-4397-b4cf-a03dec4f932c",
+    "failedAtStep": "npm ci --include=dev"
+  },
+  "execution": {
+    "scope": "Regenerate package-lock.json, commit, and push",
+    "steps": [
+      "npm install (regenerate lock file)",
+      "git add package-lock.json",
+      "git commit with detailed message",
+      "git push origin mobile"
+    ],
+    "risk": "Low - standard dependency sync operation",
+    "rollback": "git revert fd80d80"
+  },
+  "proof": {
+    "commit": "fd80d80",
+    "branch": "mobile",
+    "changes": {
+      "file": "package-lock.json",
+      "stats": "208 insertions(+), 36 deletions(-)",
+      "packages": {
+        "added": 73,
+        "removed": 54,
+        "changed": 7,
+        "total": 1433
+      }
+    },
+    "verification": "git show fd80d80 --stat",
+    "nextAction": "EAS will retry build automatically or user can trigger: eas build -p ios --profile production"
+  },
+  "result": {
+    "whatChanged": [
+      "package-lock.json synced with package.json",
+      "All missing expo-router dependencies resolved in lock file",
+      "Prisma client regenerated successfully",
+      "Commit fd80d80 pushed to origin/mobile"
+    ],
+    "whatRemains": [
+      "Wait for EAS to detect push and retry build (or manually trigger)",
+      "Monitor build at: https://expo.dev/accounts/bickfordd/projects/bickford-app/builds/",
+      "TestFlight submission after successful build"
+    ]
+  },
+  "tags": ["ios", "eas-build", "package-lock", "dependency-sync", "build-fix"],
+  "sha256": "pending"
+}
