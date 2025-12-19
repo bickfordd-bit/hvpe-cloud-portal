@@ -53,7 +53,7 @@ model AiUsageLog {
 
 model ChatMessageLog {
   id        String   @id @default(cuid())
-  sessionId String   // Loose reference, no FK constraint
+  sessionId String
   role      String
   content   String   @db.Text
   mode      String?
