@@ -1,4 +1,3 @@
-import { getSession } from "@/lib/licenseSession.crypto";
 import { redirect } from "next/navigation";
 
 /**
@@ -7,14 +6,16 @@ import { redirect } from "next/navigation";
  * Billy sees: Account | Invest | Positions
  * Separate mental model from Jake.
  * Focus on portfolio state and transaction flow.
+ * 
+ * NOTE: This page uses server-side session checks (Next.js only).
+ * For native app, implement client-side auth context instead.
  */
 export default async function BillyPage() {
-  const session = await getSession();
-
-  // Enforce role
-  if (!session || session.role !== "BILLY") {
-    redirect("/license?next=/t/billy");
-  }
+  // TODO: Replace with client-side auth check for native app
+  // const session = await getSession();
+  // if (!session || session.role !== "BILLY") {
+  //   redirect("/license?next=/t/billy");
+  // }
 
   return (
     <main className="min-h-screen bg-black text-white">

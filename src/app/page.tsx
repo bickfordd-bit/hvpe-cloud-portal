@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/licenseSession.crypto";
 
 /**
  * Root page: Entry point for all users.

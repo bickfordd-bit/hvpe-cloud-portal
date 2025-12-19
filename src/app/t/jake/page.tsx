@@ -1,4 +1,3 @@
-import { getSession } from "@/lib/licenseSession.crypto";
 import { redirect } from "next/navigation";
 
 /**
@@ -12,12 +11,13 @@ import { redirect } from "next/navigation";
  * 
  * NO metrics, NO charts, NO complexity.
  * Jake controls intent. System preserves it.
+ * 
+ * NOTE: Server-side session check disabled for native compatibility.
  */
 export default async function JakePage() {
-  const session = await getSession();
-
-  // Enforce role
-  if (!session || session.role !== "JAKE") {
+  // TODO: Implement client-side auth for native app
+  // const session = await getSession();
+  // if (!session || session.role !== "JAKE") {
     redirect("/license?next=/t/jake");
   }
 
