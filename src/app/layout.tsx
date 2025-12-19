@@ -5,8 +5,6 @@ import { PersonaProvider } from "@/components/providers/PersonaProvider";
 import HvpeChatDock from "@/components/chat/HvpeChatDock";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import "@/lib/envValidator"; // Run environment validation on startup
-import { loadLockSpec } from "@/lib/lock/spec";
-import { validateLockSpec } from "@/lib/lock/validate";
 
 export const metadata: Metadata = {
   title: "HVPE Cloud Portal | Bickford Technologies",
@@ -18,9 +16,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Enforce lock spec at boot (fail closed if invalid)
-  const { spec } = loadLockSpec();
-  validateLockSpec(spec);
+  // Lock spec validation moved to API routes only (Node.js env)
+  // Native app doesn't need filesystem-based lock validation
 
   return (
     <html lang="en" className={`bg-black text-white ${bickfordFallback.variable}`}>
