@@ -1,6 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { bickfordFallback } from "./fonts";
+import { bickfordFont } from "./fonts";
 import { PersonaProvider } from "@/components/providers/PersonaProvider";
 import HvpeChatDock from "@/components/chat/HvpeChatDock";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
@@ -20,7 +20,7 @@ export default function RootLayout({
   // Native app doesn't need filesystem-based lock validation
 
   return (
-    <html lang="en" className={`bg-black text-white ${bickfordFallback.variable}`}>
+    <html lang="en" className={`bg-black text-white ${bickfordFont.variable}`}>
       <body className="font-bickford">
         <ErrorBoundary>
           <PersonaProvider>
