@@ -1,0 +1,262 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [mobile, main]
+  pull_request:
+    branches: [mobile, main]
+
+env:
+  NODE_VERSION: '18.x'
+
+jobs:
+  # Job 1: Code Quality Checks
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run TypeScript check
+        run: npx tsc --noEmit
+      
+      - name: Run ESLint
+        run: npm run lint
+      
+      - name: Check formatting
+        run: npx prettier --check "src/**/*.{ts,tsx,js,jsx,json,md}"
+
+  # Job 2: Tests
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Generate Prisma Client
+        run: npx prisma generate
+      
+      - name: Run tests
+        run: npm test -- --coverage --passWithNoTests
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        if: always()
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+
+  # Job 3: Build verification
+  build:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Generate Prisma Client
+        run: npx prisma generate
+      
+      - name: Build application
+        run: npm run build
+      
+      - name: Check build output
+        run: |
+          if [ ! -d ".next" ]; then
+            echo "Build failed: .next directory not found"
+            exit 1
+          fi
+          echo "✅ Build successful"
+
+  # Job 4: Security audit
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Run npm audit
+        run: npm audit --audit-level=high --production
+        continue-on-error: true
+      
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+  # Job 5: Deploy to Vercel (production)
+  deploy-production:
+    name: Deploy to Vercel Production
+    runs-on: ubuntu-latest
+    needs: [quality, test, build]
+    if: github.ref == 'refs/heads/mobile' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://hvpe-cloud-portal.vercel.app
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+      
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      
+      - name: Build project
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "✅ Deployed to $URL"
+      
+      - name: Add deployment comment
+        uses: actions/github-script@v7
+        if: github.event_name == 'push'
+        with:
+          script: |
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: `🚀 Deployed to production: ${{ steps.deploy.outputs.url }}`
+            })
+
+  # Job 6: Deploy preview (PRs only)
+  deploy-preview:
+    name: Deploy Preview
+    runs-on: ubuntu-latest
+    needs: [quality, test, build]
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+      
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      
+      - name: Build project
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      
+      - name: Deploy preview
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "✅ Preview deployed to $URL"
+      
+      - name: Comment PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🔍 Preview Deployment\n\n✅ Preview URL: ${{ steps.deploy.outputs.url }}\n\nChanges are ready for review!`
+            })
+
+  # Job 7: Trigger Codex sync notification
+  notify-codex:
+    name: Notify Codex of Deployment
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: success()
+    steps:
+      - name: Trigger Codex webhook
+        run: |
+          curl -X POST https://hvpe-cloud-portal.vercel.app/api/codex/sync?preview=true \
+            -H "x-codex-secret: ${{ secrets.CODEX_WEBHOOK_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "taskId": "github-actions-${{ github.run_id }}",
+              "description": "Production deployment completed",
+              "timestamp": "'$(date -Iseconds)'",
+              "changes": [],
+              "metadata": {
+                "commit": "${{ github.sha }}",
+                "branch": "${{ github.ref_name }}",
+                "workflow": "${{ github.workflow }}"
+              }
+            }' || echo "Codex notification failed (non-critical)"
+
+  # Job 8: Create ledger entry
+  ledger:
+    name: Record Deployment
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: success()
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create ledger entry
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          mkdir -p .bick/ledger/$DATE
+          cat > .bick/ledger/$DATE/deployment-${{ github.run_id }}.json << EOF
+          {
+            "id": "deployment-${{ github.run_id }}",
+            "ts": "$(date -Iseconds)",
+            "kind": "ci-deployment",
+            "subject": "production-mobile",
+            "payload": {
+              "commit": "${{ github.sha }}",
+              "branch": "${{ github.ref_name }}",
+              "workflow": "${{ github.workflow }}",
+              "run_id": "${{ github.run_id }}",
+              "actor": "${{ github.actor }}",
+              "event": "${{ github.event_name }}"
+            },
+            "hash": "github-actions-$(date +%s)",
+            "parentId": null
+          }
+          EOF
+      
+      - name: Commit ledger entry
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .bick/ledger/
+          git commit -m "chore: add deployment ledger entry [skip ci]" || echo "No changes"
+          git push || echo "Push failed (non-critical)"

@@ -1,0 +1,75 @@
+name: Automated Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREVIOUS_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
+          if [ -z "$PREVIOUS_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"- %s (%h)" HEAD)
+          else
+            COMMITS=$(git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD)
+          fi
+          echo "commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Create release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = context.ref.replace('refs/tags/', '');
+            const changelog = `${{ steps.changelog.outputs.commits }}`;
+            
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tag,
+              name: `Release ${tag}`,
+              body: `## What's Changed\n\n${changelog}\n\n**Full Changelog**: https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${tag}...HEAD`,
+              draft: false,
+              prerelease: tag.includes('beta') || tag.includes('alpha')
+            });
+      
+      - name: Create ledger entry
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          mkdir -p .bick/ledger/$DATE
+          cat > .bick/ledger/$DATE/release-${GITHUB_REF_NAME}.json << EOF
+          {
+            "id": "release-${GITHUB_REF_NAME}",
+            "ts": "$(date -Iseconds)",
+            "kind": "release",
+            "subject": "${GITHUB_REF_NAME}",
+            "payload": {
+              "tag": "${GITHUB_REF_NAME}",
+              "commit": "${{ github.sha }}",
+              "workflow": "${{ github.workflow }}",
+              "run_id": "${{ github.run_id }}"
+            },
+            "hash": "release-$(date +%s)",
+            "parentId": null
+          }
+          EOF
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .bick/ledger/
+          git commit -m "chore: add release ledger entry [skip ci]" || echo "No changes"
+          git push origin mobile || echo "Push failed (non-critical)"

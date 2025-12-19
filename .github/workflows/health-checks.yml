@@ -1,0 +1,53 @@
+name: Nightly Health Checks
+
+on:
+  schedule:
+    # Run at 2 AM UTC daily
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    name: Production Health Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check API health
+        id: health
+        run: |
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://hvpe-cloud-portal.vercel.app/api/health)
+          if [ "$RESPONSE" -eq 200 ]; then
+            echo "status=healthy" >> $GITHUB_OUTPUT
+            echo "✅ API is healthy"
+          else
+            echo "status=unhealthy" >> $GITHUB_OUTPUT
+            echo "❌ API returned $RESPONSE"
+            exit 1
+          fi
+      
+      - name: Check Bickford endpoint
+        run: |
+          RESPONSE=$(curl -s https://hvpe-cloud-portal.vercel.app/api/bickford)
+          echo "$RESPONSE" | jq .
+      
+      - name: Check Codex sync endpoint
+        run: |
+          RESPONSE=$(curl -s https://hvpe-cloud-portal.vercel.app/api/codex/sync)
+          echo "$RESPONSE" | jq .
+      
+      - name: Check persistence endpoint
+        run: |
+          RESPONSE=$(curl -s https://hvpe-cloud-portal.vercel.app/api/persistence)
+          echo "$RESPONSE" | jq .
+      
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Production Health Check Failed',
+              body: `Health check failed at ${new Date().toISOString()}\n\nWorkflow: ${context.workflow}\nRun ID: ${context.runId}`,
+              labels: ['bug', 'production', 'health-check']
+            })
