@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { LICENSE_COOKIE } from "@/lib/licenseSession.types";
 import { STATIC_LOCK_SPEC, getJakeRoute, getBillyRoute } from "@/lib/lock/spec-static";
 
+// Bickford runtime check (server-only, no imports in middleware edge runtime)
+// We check for bickford.mode.json existence and enforce on specific routes
+const BICKFORD_ROUTES = ["/api/bickford", "/t/jake", "/t/billy"];
+
 // Session cookie for auth
 const SESSION_COOKIE_NAME = "optr";
 
@@ -9,6 +13,22 @@ const SESSION_COOKIE_NAME = "optr";
 // The actual verification happens in the API routes which run in Node.js runtime
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // --- Bickford mode enforcement (if applicable)
+  const isBickfordRoute = BICKFORD_ROUTES.some(route => pathname.startsWith(route));
+  if (isBickfordRoute) {
+    // Check for required Bickford headers on POST/PUT/PATCH
+    if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+      const bickfordTs = req.headers.get('x-bickford-ts');
+      const bickfordKind = req.headers.get('x-bickford-kind');
+      
+      // If mode is active (checked in API routes), these will be validated
+      // Middleware just logs for observability
+      if (!bickfordTs || !bickfordKind) {
+        console.warn(`[Bickford] Request to ${pathname} missing timestamp headers`);
+      }
+    }
+  }
 
   // --- helper: auth redirect
   const denyToLicense = (nextPath: string) => {

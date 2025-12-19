@@ -1,0 +1,33 @@
+# New Bickford Files (not tracked by git yet)
+
+## 1. bickford.mode.json
+Location: /workspaces/hvpe-cloud-portal/bickford.mode.json
+Purpose: Executable activation artifact - runtime mode config
+
+## 2. src/lib/bickford/guardrails.ts
+Location: /workspaces/hvpe-cloud-portal/src/lib/bickford/guardrails.ts
+Purpose: Timestamp authority enforcement
+
+## 3. src/lib/bickford/runtime.ts
+Location: /workspaces/hvpe-cloud-portal/src/lib/bickford/runtime.ts
+Purpose: Mode loader singleton
+
+## 4. src/lib/bickford/ledger.ts
+Location: /workspaces/hvpe-cloud-portal/src/lib/bickford/ledger.ts
+Purpose: Decision persistence with SHA256 integrity
+
+## 5. src/app/api/bickford/route.ts
+Location: /workspaces/hvpe-cloud-portal/src/app/api/bickford/route.ts
+Purpose: Mode status + ledger write endpoints
+
+## 6. src/app/api/bickford/ledger/route.ts
+Location: /workspaces/hvpe-cloud-portal/src/app/api/bickford/ledger/route.ts
+Purpose: Ledger query interface
+
+## 7. .bick/ledger/2025-12-19/*.json
+Location: /workspaces/hvpe-cloud-portal/.bick/ledger/2025-12-19/
+Purpose: Immutable decision log (11 entries)
+
+## 8. BICKFORD_ACTIVATION.md
+Location: /workspaces/hvpe-cloud-portal/BICKFORD_ACTIVATION.md
+Purpose: Activation documentation

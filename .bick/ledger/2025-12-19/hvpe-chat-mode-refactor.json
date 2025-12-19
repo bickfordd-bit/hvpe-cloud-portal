@@ -1,0 +1,29 @@
+{
+  "id": "hvpe-chat-mode-refactor-2025-12-19T111800",
+  "ts": "2025-12-19T11:18:00-05:00",
+  "kind": "action",
+  "subject": "hvpe-chat-backward-compat-refactor",
+  "payload": {
+    "description": "Refactored hvpe-chat route to prioritize mode over persona; persona-only path now conditional on absence of mode",
+    "artifacts": [
+      "src/app/api/hvpe-chat/route.ts (staged)"
+    ],
+    "changes": [
+      "Added conditional check: if (body.persona && !body.mode) for legacy persona path",
+      "Persona-based prompts now only activate when mode is not provided",
+      "Mode-based path handles messages array with mode (temperature 0.4)",
+      "Response shape includes mode: { reply, mode } for mode-based paths",
+      "Maintains backward compatibility for persona-only requests"
+    ],
+    "verification": [
+      "git apply --3way succeeded cleanly",
+      "Staged diff shows conditional nesting of persona logic",
+      "Mode-based path is now default for messages array when mode present",
+      "Temperature adjusted to 0.4 for mode-based continuations"
+    ],
+    "impact": "Mode takes precedence over persona when both provided; smoother OPTR/Bickford/DoD mode transitions",
+    "status": "completed"
+  },
+  "hash": "d8833cffc4b3ed65db6ab9ecc0df02f2263c5280",
+  "parentId": "readme-expo-patch-2025-12-19T111500"
+}

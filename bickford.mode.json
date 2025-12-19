@@ -1,0 +1,18 @@
+{
+  "ts": "2025-12-19T11:02:00-05:00",
+  "mode": "BICKFORD",
+  "flags": {
+    "AUTO": true,
+    "PROMPTS_AS_STORAGE": true,
+    "OPTR_TTV": true,
+    "DECISION_CONTINUITY": true,
+    "TRUST_FIRST_GUARDRAILS": true,
+    "MANDATORY_TIMESTAMPS": true,
+    "UI_CONTEXT_AUTOLOAD": true,
+    "EXCEPTION_ONLY_SURFACING": true
+  },
+  "authority": {
+    "rule": "No untimestamped content may exert authority unless explicitly overridden.",
+    "locked": true
+  }
+}

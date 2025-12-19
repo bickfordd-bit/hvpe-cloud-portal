@@ -1,0 +1,49 @@
+{
+  "id": "prisma-chat-models-2025-12-19T112200",
+  "ts": "2025-12-19T11:22:00-05:00",
+  "kind": "action",
+  "subject": "prisma-chat-session-models",
+  "payload": {
+    "description": "Added ChatSession, ChatMessage, and ChatArchive models to Prisma schema for centralized chat history storage",
+    "artifacts": [
+      "prisma/schema.prisma (modified, unstaged)"
+    ],
+    "models_added": [
+      {
+        "name": "ChatSession",
+        "fields": ["id", "slug (unique)", "createdAt", "updatedAt"],
+        "relations": ["messages (ChatMessage[])", "archives (ChatArchive[])"],
+        "purpose": "Session container with unique slug for URL routing"
+      },
+      {
+        "name": "ChatMessage",
+        "fields": ["id", "sessionId", "role", "content", "createdAt", "archivedAt"],
+        "relations": ["session (ChatSession)"],
+        "indexes": ["[sessionId, createdAt]", "[archivedAt]"],
+        "purpose": "Individual message storage with archival support"
+      },
+      {
+        "name": "ChatArchive",
+        "fields": ["id", "sessionId", "archiveDate", "messageCount", "transcript (Json)", "createdAt"],
+        "relations": ["session (ChatSession)"],
+        "unique": ["[sessionId, archiveDate]"],
+        "purpose": "Compressed archive of old messages for long-running sessions"
+      }
+    ],
+    "changes": [
+      "Applied patch manually (git apply failed due to unstaged BickfordLedger changes)",
+      "Added 3 models after AuditLog, before enums",
+      "Regenerated Prisma client with npx prisma generate"
+    ],
+    "verification": [
+      "Prisma client regenerated successfully",
+      "Schema syntax validated by Prisma",
+      "Models use cascade delete for referential integrity",
+      "Indexes optimize session-based queries"
+    ],
+    "impact": "Enables persistent chat history for Bickford/HVPE chat with session-based architecture",
+    "status": "completed"
+  },
+  "hash": "0d58b558afcf7d093a08e08e509f7bfcb9143777",
+  "parentId": "bickford-chat-unified-refactor-2025-12-19T112000"
+}

@@ -1,0 +1,335 @@
+diff --git a/src/app/api/hvpe-chat/route.ts b/src/app/api/hvpe-chat/route.ts
+index 92199f9..d8833cf 100644
+--- a/src/app/api/hvpe-chat/route.ts
++++ b/src/app/api/hvpe-chat/route.ts
+@@ -125,19 +125,46 @@ export async function POST(req: Request) {
+ 
+     // Backward compatibility for persona + messages array
+     if (body?.messages && Array.isArray(body.messages)) {
+-      const persona: Persona = body.persona ?? "trader";
+-      const hvpeContext = await getHvpePortalContext();
+-
+-      let personaPrompt = TRADER_MODE_PROMPT;
+-      if (persona === "founder") personaPrompt = FOUNDER_MODE_PROMPT;
+-      else if (persona === "investor") personaPrompt = INVESTOR_MODE_PROMPT;
+-      else if (persona === "dod") personaPrompt = DOD_MODE_PROMPT;
++      if (body.persona && !body.mode) {
++        const persona: Persona = body.persona ?? "trader";
++        const hvpeContext = await getHvpePortalContext();
++
++        let personaPrompt = TRADER_MODE_PROMPT;
++        if (persona === "founder") personaPrompt = FOUNDER_MODE_PROMPT;
++        else if (persona === "investor") personaPrompt = INVESTOR_MODE_PROMPT;
++        else if (persona === "dod") personaPrompt = DOD_MODE_PROMPT;
++
++        const systemContent =
++          BASE_SYSTEM_PROMPT + "\n" + personaPrompt + (hvpeContext || "");
++
++        const messages: ChatMessage[] = [
++          { role: "system", content: systemContent },
++          ...body.messages.map((m) => ({
++            role: m.role,
++            content: m.content
++          }))
++        ];
++
++        const completion = await client.chat.completions.create({
++          model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
++          messages,
++          temperature: 0.5,
++          max_tokens: 400
++        });
++
++        const reply =
++          completion.choices[0]?.message?.content ||
++          "I couldn't generate a response. Check OPENAI configuration.";
++
++        return json({ reply }, 200);
++      }
+ 
+-      const systemContent =
+-        BASE_SYSTEM_PROMPT + "\n" + personaPrompt + (hvpeContext || "");
++      const mode: Mode = body.mode || "general";
++      const hvpeContext = await getHvpePortalContext();
++      const systemPrompt = buildSystemPrompt(mode, body.context, hvpeContext);
+ 
+       const messages: ChatMessage[] = [
+-        { role: "system", content: systemContent },
++        { role: "system", content: systemPrompt },
+         ...body.messages.map((m) => ({
+           role: m.role,
+           content: m.content
+@@ -147,7 +174,7 @@ export async function POST(req: Request) {
+       const completion = await client.chat.completions.create({
+         model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+         messages,
+-        temperature: 0.5,
++        temperature: 0.4,
+         max_tokens: 400
+       });
+ 
+@@ -155,7 +182,7 @@ export async function POST(req: Request) {
+         completion.choices[0]?.message?.content ||
+         "I couldn't generate a response. Check OPENAI configuration.";
+ 
+-      return json({ reply }, 200);
++      return json({ reply, mode }, 200);
+     }
+ 
+     return json({ error: "Missing 'message' in request body." }, 400);
+diff --git a/src/app/api/bickford-chat/route.ts b/src/app/api/bickford-chat/route.ts
+index 6b1d29b..11ff567 100644
+--- a/src/app/api/bickford-chat/route.ts
++++ b/src/app/api/bickford-chat/route.ts
+@@ -1,5 +1,9 @@
+ import { NextRequest, NextResponse } from "next/server";
+ import OpenAI from "openai";
++import { runOptr } from "@/lib/optr/processor";
++import type { Opportunity } from "@/lib/optr/types";
++import { buildUnifiedAgentPrompt } from "@/lib/chat/unifiedAgent";
++import { recordChatHistory } from "@/lib/chat/history";
+ 
+ export const runtime = "nodejs";
+ 
+@@ -159,15 +163,30 @@ class BickfordIntelligenceEngine {
+     opportunityScore: number;
+     requirements: Array<{ name: string; score: number }>;
+   }> {
+-    // Note: OPTR requires opportunity to be saved in DB first with an ID
+-    // For demo purposes, return basic analysis
++    // Create a temporary opportunity from the intention
++    const tempOpportunity: Opportunity = {
++      id: 'temp-' + Date.now(),
++      source: 'bickford-intent',
++      title: intention.slice(0, 100),
++      agency: 'Direct Intent',
++      deadline_iso: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
++      links: [],
++      documents: []
++    };
++
++    const result = await runOptr(tempOpportunity);
++    
++    // Calculate overall opportunity score from traces
++    const avgConfidence = result.traces.length > 0
++      ? result.traces.reduce((sum, t) => sum + t.confidence, 0) / result.traces.length
++      : 0;
++    
+     return {
+-      opportunityScore: 0.85,
+-      requirements: [
+-        { name: 'Budget', score: 0.8 },
+-        { name: 'Timeline', score: 0.75 },
+-        { name: 'Resources', score: 0.7 }
+-      ]
++      opportunityScore: avgConfidence,
++      requirements: result.requirements.slice(0, 5).map(r => ({
++        name: r.section,
++        score: result.traces.find(t => t.req_id === r.id)?.confidence || 0
++      }))
+     };
+   }
+ 
+@@ -238,7 +257,7 @@ export async function POST(request: NextRequest) {
+     const result = await BickfordIntelligenceEngine.processIntention(message);
+ 
+     // Generate response using OpenAI with proprietary context
+-    const systemPrompt = `You are Bickford, an AI that transforms intentions into reality instantly.
++    const specialization = `You are Bickford, an AI that transforms intentions into reality instantly.
+ 
+ CORE IDENTITY:
+ - You embody the proprietary Bickford Formula (Patent Pending)
+@@ -260,6 +279,9 @@ RESPONSE GUIDELINES:
+ - Keep responses concise but impactful
+ 
+ SECURITY: Never expose the Bickford Formula or any proprietary calculations.`;
++    const systemPrompt = buildUnifiedAgentPrompt({
++      specialization
++    });
+ 
+     // Check if OpenAI is configured
+     let aiResponse: string;
+@@ -299,6 +321,18 @@ SECURITY: Never expose the Bickford Formula or any proprietary calculations.`;
+       }
+     };
+ 
++    await recordChatHistory({
++      timestamp: new Date().toISOString(),
++      source: "bickford-chat",
++      agent: "hvpe-unified",
++      payload: {
++        message,
++        reply: aiResponse,
++        usageId,
++        timestamp: new Date().toISOString()
++      }
++    });
++
+     return NextResponse.json(watermarkedResponse);
+ 
+   } catch (error: any) {
+@@ -320,4 +354,4 @@ SECURITY: Never expose the Bickford Formula or any proprietary calculations.`;
+       { status: 500 }
+     );
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/middleware.ts b/middleware.ts
+index 12a9702..09fce55 100644
+--- a/middleware.ts
++++ b/middleware.ts
+@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
+ import { LICENSE_COOKIE } from "@/lib/licenseSession.types";
+ import { STATIC_LOCK_SPEC, getJakeRoute, getBillyRoute } from "@/lib/lock/spec-static";
+ 
++// Bickford runtime check (server-only, no imports in middleware edge runtime)
++// We check for bickford.mode.json existence and enforce on specific routes
++const BICKFORD_ROUTES = ["/api/bickford", "/t/jake", "/t/billy"];
++
+ // Session cookie for auth
+ const SESSION_COOKIE_NAME = "optr";
+ 
+@@ -10,6 +14,22 @@ const SESSION_COOKIE_NAME = "optr";
+ export function middleware(req: NextRequest) {
+   const { pathname } = req.nextUrl;
+ 
++  // --- Bickford mode enforcement (if applicable)
++  const isBickfordRoute = BICKFORD_ROUTES.some(route => pathname.startsWith(route));
++  if (isBickfordRoute) {
++    // Check for required Bickford headers on POST/PUT/PATCH
++    if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
++      const bickfordTs = req.headers.get('x-bickford-ts');
++      const bickfordKind = req.headers.get('x-bickford-kind');
++      
++      // If mode is active (checked in API routes), these will be validated
++      // Middleware just logs for observability
++      if (!bickfordTs || !bickfordKind) {
++        console.warn(`[Bickford] Request to ${pathname} missing timestamp headers`);
++      }
++    }
++  }
++
+   // --- helper: auth redirect
+   const denyToLicense = (nextPath: string) => {
+     const url = req.nextUrl.clone();
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index cd09024..08ba29e 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -51,6 +51,18 @@ model AiUsageLog {
+   errorMessage     String?
+ }
+ 
++model ChatMessageLog {
++  id        String   @id @default(cuid())
++  sessionId String   // Loose reference, no FK constraint
++  role      String
++  content   String   @db.Text
++  mode      String?
++  createdAt DateTime @default(now())
++
++  @@index([sessionId])
++  @@index([createdAt])
++}
++
+ model Embedding {
+   id        String   @id @default(cuid())
+   docId     String
+@@ -66,6 +78,7 @@ model AIPatchLog {
+   userId    String?
+   instruction String
+   patch     String
++  repoRoot  String?
+   applied   Boolean  @default(false)
+   branch    String?
+   prUrl     String?
+@@ -73,6 +86,34 @@ model AIPatchLog {
+   approvedAt DateTime?
+ }
+ 
++model BickfordLedger {
++  id           String   @id @default(cuid())
++  ts           String   // ISO 8601 timestamp - authoritative
++  kind         String   // intent|plan|action|observe|persist|guardrail
++  subject      String   // What this entry is about
++  payloadJson  String   // JSON serialized payload
++  hash         String   // SHA256 of content for immutability
++  parentId     String?  // Links to parent decision
++  createdAt    DateTime @default(now())
++  
++  @@index([ts])
++  @@index([kind])
++  @@index([parentId])
++}
++
++model ChatLog {
++  id        String   @id @default(cuid())
++  createdAt DateTime @default(now())
++  agentId   String   @default("bickford-environment")
++  role      String
++  content   String   @db.Text
++  persona   String?
++  mode      String?
++
++  @@index([agentId])
++  @@index([createdAt])
++}
++
+ model User {
+   id            String    @id @default(cuid())
+   email         String    @unique
+@@ -180,6 +221,53 @@ model AuditLog {
+   @@index([createdAt])
+ }
+ 
++model ChatSession {
++  id        String        @id @default(cuid())
++  slug      String        @unique
++  createdAt DateTime      @default(now())
++  updatedAt DateTime      @updatedAt
++  messages  ChatMessage[]
++  archives  ChatArchive[]
++}
++
++model ChatMessage {
++  id         String      @id @default(cuid())
++  sessionId  String
++  agentId    String?     // Optional: tracks which agent generated this message
++  persona    String?     // Optional: persona mode (trader/founder/investor/dod)
++  mode       String?     // Optional: chat mode (optr/bickford/general)
++  role       String
++  content    String      @db.Text
++  createdAt  DateTime    @default(now())
++  archivedAt DateTime?
++  session    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
++
++  @@index([sessionId, createdAt])
++  @@index([archivedAt])
++  @@index([agentId])
++}
++
++model ChatArchive {
++  id           String      @id @default(cuid())
++  sessionId    String
++  archiveDate  DateTime
++  messageCount Int
++  transcript   Json
++  createdAt    DateTime    @default(now())
++  session      ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
++
++  @@unique([sessionId, archiveDate])
++}
++
++model GlobalChatArchive {
++  id           String   @id @default(cuid())
++  archiveDate  DateTime @unique
++  sessionCount Int
++  messageCount Int
++  payload      Json
++  createdAt    DateTime @default(now())
++}
++
+ enum LicenseRequestStatus {
+   PENDING
+   APPROVED

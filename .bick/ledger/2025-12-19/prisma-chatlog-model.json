@@ -1,0 +1,45 @@
+{
+  "id": "prisma-chatlog-model-2025-12-19T112600",
+  "ts": "2025-12-19T11:26:00-05:00",
+  "kind": "action",
+  "subject": "prisma-add-chatlog-internal-logging",
+  "payload": {
+    "description": "Added ChatLog model for simplified agent-centric internal logging (distinct from user-facing ChatMessage)",
+    "artifacts": [
+      "prisma/schema.prisma (modified, unstaged)"
+    ],
+    "model_added": {
+      "name": "ChatLog",
+      "fields": [
+        "id String @id",
+        "createdAt DateTime",
+        "agentId String (default: 'bickford-environment')",
+        "role String",
+        "content String @db.Text",
+        "persona String?",
+        "mode String?"
+      ],
+      "indexes": [
+        "[agentId]",
+        "[createdAt]"
+      ],
+      "purpose": "Flat, session-less agent logging for internal debugging and analytics"
+    },
+    "architectural_note": "ChatLog coexists with ChatMessage/ChatSession for different purposes",
+    "use_cases": {
+      "ChatMessage": "User-facing persistent chat sessions with URLs (/chat/:slug), full continuity",
+      "ChatLog": "Internal agent activity logging, debugging traces, system-to-system chat without sessions"
+    },
+    "resolution": "Added ChatLog without removing existing ChatMessage/ChatSession hybrid model",
+    "verification": [
+      "Prisma client regenerated successfully",
+      "Schema validated",
+      "ChatLog is independent (no relations to ChatSession)",
+      "Indexes support agent-specific and time-based queries"
+    ],
+    "impact": "Dual-track chat persistence: session-based for users + flat logging for agents/debugging",
+    "status": "completed"
+  },
+  "hash": "d0eb32aca32a2d3e0f4655c4eb32a2ae1e98714d",
+  "parentId": "prisma-chat-agent-fields-2025-12-19T112400"
+}

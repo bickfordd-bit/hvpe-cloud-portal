@@ -161,3 +161,19 @@ CI: A GitHub Actions workflow is provided at `.github/workflows/ci-deploy.yml`. 
 ## Admin
 - AI usage logs: `/admin/ai-logs`
 - Protected by middleware; set `ADMIN_DASH_TOKEN` (use Bearer token or `?token=` query)
+
+## Bickford Live Filing (Expo)
+
+### Setup
+
+```bash
+npm install
+```
+
+```bash
+npx expo start
+```
+
+### Notes
+
+This project uses Expo Router. If you add gesture-handler or reanimated, follow the Expo setup guide for those packages. The current implementation uses the core Animated API and does not require extra setup steps.

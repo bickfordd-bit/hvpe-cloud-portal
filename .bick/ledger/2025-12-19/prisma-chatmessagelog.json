@@ -1,0 +1,60 @@
+{
+  "id": "prisma-chatmessagelog-2025-12-19T113000",
+  "ts": "2025-12-19T11:30:00-05:00",
+  "kind": "action",
+  "subject": "prisma-add-chatmessagelog-three-tier",
+  "payload": {
+    "description": "Added ChatMessageLog (middle-tier: session-grouped without FK) and GlobalChatArchive (date-based global archive)",
+    "artifacts": [
+      "prisma/schema.prisma (modified, unstaged)"
+    ],
+    "models_added": [
+      {
+        "name": "ChatMessageLog",
+        "fields": ["id", "sessionId (indexed, no FK)", "role", "content @db.Text", "mode?", "createdAt"],
+        "indexes": ["[sessionId]", "[createdAt]"],
+        "purpose": "Lightweight session-grouped logging without relation overhead"
+      },
+      {
+        "name": "GlobalChatArchive",
+        "fields": ["id", "archiveDate (unique)", "sessionCount", "messageCount", "payload Json", "createdAt"],
+        "purpose": "Global daily archive of all chat activity (cross-session)"
+      }
+    ],
+    "three_tier_architecture": {
+      "tier1_flat": {
+        "model": "ChatLog",
+        "sessionId": false,
+        "relations": false,
+        "use_case": "Internal agent logging, debugging traces"
+      },
+      "tier2_grouped": {
+        "model": "ChatMessageLog",
+        "sessionId": true,
+        "relations": false,
+        "use_case": "Lightweight session-grouped logs without FK constraints"
+      },
+      "tier3_relational": {
+        "model": "ChatMessage + ChatSession",
+        "sessionId": true,
+        "relations": true,
+        "use_case": "User-facing persistent sessions with /chat/:slug URLs"
+      }
+    },
+    "archive_models": {
+      "ChatArchive": "Per-session archives (sessionId FK)",
+      "GlobalChatArchive": "Daily global archives (all sessions combined)"
+    },
+    "resolution": "Added ChatMessageLog as middle tier; renamed incoming ChatArchive to GlobalChatArchive to avoid conflict",
+    "verification": [
+      "Prisma client regenerated successfully",
+      "Schema validated",
+      "ChatMessageLog has no FK (loose sessionId reference)",
+      "GlobalChatArchive.archiveDate is unique (one record per day)"
+    ],
+    "impact": "Three-tier chat logging enables performance/complexity tradeoffs per use case",
+    "status": "completed"
+  },
+  "hash": "72b14e9c3ef7e4161e373e560d987fab752bd8e8",
+  "parentId": "prisma-chatconversation-skipped-2025-12-19T112800"
+}
