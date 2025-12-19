@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "buildCommand": "cd apps/web && npm install && npm run build",
+  "outputDirectory": "apps/web/.next",
+  "framework": "nextjs",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://your-railway-api.railway.app",
+    "NEXT_PUBLIC_WS_URL": "wss://your-railway-api.railway.app"
+  }
+}
