@@ -1,18 +1,41 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap');
+
+/* Custom Bickford handwritten font */
+@font-face {
+  font-family: 'Bickford';
+  src: url('/fonts/bickford-regular.woff2') format('woff2'),
+       url('/fonts/bickford-regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Bickford';
+  src: url('/fonts/bickford-bold.woff2') format('woff2'),
+       url('/fonts/bickford-bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   color-scheme: dark;
+  --font-bickford: 'Bickford', 'Caveat', 'Brush Script MT', cursive;
 }
 
 html,
 body {
   margin: 0;
   padding: 0;
+  font-family: var(--font-bickford);
 }
 
 body {
   background: #000;
   color: #f4f4f5;
+  font-family: var(--font-bickford);
 }
 
 /* Simple fade-in animation used by cards */

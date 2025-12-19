@@ -1,14 +1,12 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { bickfordFallback } from "./fonts";
 import { PersonaProvider } from "@/components/providers/PersonaProvider";
 import HvpeChatDock from "@/components/chat/HvpeChatDock";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import "@/lib/envValidator"; // Run environment validation on startup
 import { loadLockSpec } from "@/lib/lock/spec";
 import { validateLockSpec } from "@/lib/lock/validate";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "HVPE Cloud Portal | Bickford Technologies",
@@ -25,8 +23,8 @@ export default function RootLayout({
   validateLockSpec(spec);
 
   return (
-    <html lang="en" className="bg-black text-white">
-      <body className={inter.className}>
+    <html lang="en" className={`bg-black text-white ${bickfordFallback.variable}`}>
+      <body className="font-bickford">
         <ErrorBoundary>
           <PersonaProvider>
             {children}
