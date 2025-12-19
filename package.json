@@ -22,6 +22,7 @@
     "ios": "expo run:ios"
   },
   "dependencies": {
+    "@bickfordd-bit/bickford": "file:packages/bickford",
     "@prisma/client": "^6.3.1",
     "expo": "^54.0.29",
     "expo-modules-autolinking": "^3.0.23",
