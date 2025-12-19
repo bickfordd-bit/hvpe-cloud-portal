@@ -18,8 +18,8 @@ export default async function JakePage() {
   // TODO: Implement client-side auth for native app
   // const session = await getSession();
   // if (!session || session.role !== "JAKE") {
-    redirect("/license?next=/t/jake");
-  }
+  //   redirect("/license?next=/t/jake");
+  // }
 
   return (
     <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4">
