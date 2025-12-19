@@ -11,10 +11,12 @@
 1. Go to https://www.linkedin.com/developers/apps
 2. Click **Create app**
 3. Fill in:
-   - **App name:** HVPE Cloud Portal
+   - **App name:** bickford
    - **LinkedIn Page:** (select your company page or create one)
    - **App logo:** Upload Bickford logo
 4. Click **Create app**
+
+**✅ DONE** - Your app: **bickford** (Client ID: `785qznu3cqn38v`)
 
 ### Configure OAuth Settings
 
@@ -43,8 +45,8 @@ Add to `.env.local`:
 
 ```bash
 # LinkedIn API
-LINKEDIN_CLIENT_ID=your_client_id_here
-LINKEDIN_CLIENT_SECRET=your_client_secret_here
+LINKEDIN_CLIENT_ID=785qznu3cqn38v
+LINKEDIN_CLIENT_SECRET=get_from_linkedin_auth_tab
 LINKEDIN_REDIRECT_URI=http://localhost:3000/api/linkedin/callback
 
 # Production (Vercel)

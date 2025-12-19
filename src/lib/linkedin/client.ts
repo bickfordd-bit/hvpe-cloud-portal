@@ -121,7 +121,7 @@ export class LinkedInClient {
   }
 
   /**
-   * Post text content to LinkedIn
+   * Post text content to LinkedIn (REST API 202401)
    */
   async postText(text: string, visibility: 'PUBLIC' | 'CONNECTIONS' = 'PUBLIC'): Promise<{ id: string; shareUrl: string }> {
     if (!this.accessToken) throw new Error('No access token');
@@ -130,28 +130,27 @@ export class LinkedInClient {
     const profile = await this.getUserProfile();
     const authorUrn = `urn:li:person:${profile.id}`;
 
-    const post: LinkedInPost = {
+    // REST API format (202401 version)
+    const post = {
       author: authorUrn,
+      commentary: text,
+      visibility: visibility === 'PUBLIC' ? 'PUBLIC' : 'CONNECTIONS',
+      distribution: {
+        feedDistribution: 'MAIN_FEED',
+        targetEntities: [],
+        thirdPartyDistributionChannels: [],
+      },
       lifecycleState: 'PUBLISHED',
-      specificContent: {
-        'com.linkedin.ugc.ShareContent': {
-          shareCommentary: {
-            text,
-          },
-          shareMediaCategory: 'NONE',
-        },
-      },
-      visibility: {
-        'com.linkedin.ugc.MemberNetworkVisibility': visibility,
-      },
+      isReshareDisabledByAuthor: false,
     };
 
-    const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+    const response = await fetch('https://api.linkedin.com/rest/posts', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${this.accessToken}`,
         'Content-Type': 'application/json',
         'X-Restli-Protocol-Version': '2.0.0',
+        'LinkedIn-Version': '202401',
       },
       body: JSON.stringify(post),
     });
@@ -163,7 +162,7 @@ export class LinkedInClient {
     }
 
     const result = await response.json();
-    const postId = result.id;
+    const postId = result.id || result.value?.id;
     const shareUrl = `https://www.linkedin.com/feed/update/${postId}`;
 
     logger.info('LinkedIn post created', { postId, shareUrl });
@@ -172,7 +171,7 @@ export class LinkedInClient {
   }
 
   /**
-   * Post content with link preview
+   * Post content with link preview (REST API 202401)
    */
   async postWithLink(
     text: string,
@@ -186,40 +185,34 @@ export class LinkedInClient {
     const profile = await this.getUserProfile();
     const authorUrn = `urn:li:person:${profile.id}`;
 
-    const post: LinkedInPost = {
+    // REST API format with link content
+    const post = {
       author: authorUrn,
-      lifecycleState: 'PUBLISHED',
-      specificContent: {
-        'com.linkedin.ugc.ShareContent': {
-          shareCommentary: {
-            text,
-          },
-          shareMediaCategory: 'ARTICLE',
-          media: [
-            {
-              status: 'READY',
-              description: {
-                text: linkDescription,
-              },
-              originalUrl: linkUrl,
-              title: {
-                text: linkTitle,
-              },
-            },
-          ],
+      commentary: text,
+      visibility: visibility === 'PUBLIC' ? 'PUBLIC' : 'CONNECTIONS',
+      distribution: {
+        feedDistribution: 'MAIN_FEED',
+        targetEntities: [],
+        thirdPartyDistributionChannels: [],
+      },
+      content: {
+        article: {
+          source: linkUrl,
+          title: linkTitle,
+          description: linkDescription,
         },
       },
-      visibility: {
-        'com.linkedin.ugc.MemberNetworkVisibility': visibility,
-      },
+      lifecycleState: 'PUBLISHED',
+      isReshareDisabledByAuthor: false,
     };
 
-    const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+    const response = await fetch('https://api.linkedin.com/rest/posts', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${this.accessToken}`,
         'Content-Type': 'application/json',
         'X-Restli-Protocol-Version': '2.0.0',
+        'LinkedIn-Version': '202401',
       },
       body: JSON.stringify(post),
     });
@@ -231,7 +224,7 @@ export class LinkedInClient {
     }
 
     const result = await response.json();
-    const postId = result.id;
+    const postId = result.id || result.value?.id;
     const shareUrl = `https://www.linkedin.com/feed/update/${postId}`;
 
     logger.info('LinkedIn post with link created', { postId, shareUrl });
