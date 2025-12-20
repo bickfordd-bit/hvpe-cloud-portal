@@ -108,9 +108,13 @@ async function processChunk(event: RedisStreamEvent): Promise<void> {
   }
 }
 
-// Main consumer loop
+// Main consumer loop with circuit breaker
 async function consumeEvents(): Promise<void> {
   console.log(`🔄 Starting consumer "${CONSUMER_NAME}" in group "${CONSUMER_GROUP}"`);
+
+  let consecutiveErrors = 0;
+  const MAX_CONSECUTIVE_ERRORS = 10;
+  const BACKOFF_BASE = 1000;
 
   while (true) {
     try {
@@ -129,11 +133,12 @@ async function consumeEvents(): Promise<void> {
       );
 
       if (!results || results.length === 0) {
+        consecutiveErrors = 0; // Reset on successful read
         continue;
       }
 
       // Process each message
-      for (const [stream, messages] of results) {
+      for (const [, messages] of results) {
         for (const [id, fields] of messages) {
           try {
             // Parse event data
@@ -147,14 +152,27 @@ async function consumeEvents(): Promise<void> {
 
             // Acknowledge the message
             await redis.xack('bickford:events', CONSUMER_GROUP, id);
+            
+            consecutiveErrors = 0; // Reset on successful processing
           } catch (error) {
             console.error(`Error processing message ${id}:`, error);
           }
         }
       }
     } catch (error) {
-      console.error('Error in consumer loop:', error);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      consecutiveErrors++;
+      console.error(`Error in consumer loop (attempt ${consecutiveErrors}/${MAX_CONSECUTIVE_ERRORS}):`, error);
+      
+      // Circuit breaker: exit if too many consecutive errors
+      if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+        console.error('❌ Circuit breaker triggered: too many consecutive errors. Exiting...');
+        process.exit(1);
+      }
+      
+      // Exponential backoff
+      const delay = Math.min(BACKOFF_BASE * Math.pow(2, consecutiveErrors - 1), 30000);
+      console.log(`⏳ Backing off for ${delay}ms before retry...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
 }

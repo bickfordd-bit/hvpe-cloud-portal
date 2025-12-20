@@ -21,7 +21,9 @@ fi
 # Load environment variables
 if [ -f .env ]; then
     echo "✅ Loading environment variables from .env"
-    export $(cat .env | grep -v '^#' | xargs)
+    set -a
+    source .env
+    set +a
 else
     echo "⚠️  No .env file found. Using default values."
 fi

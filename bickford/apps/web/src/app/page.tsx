@@ -12,8 +12,8 @@ export default function Home() {
   const [buckets, setBuckets] = useState<Bucket[]>([]);
   const [filingChunkIds, setFilingChunkIds] = useState<Set<string>>(new Set());
   const [selectedBucket, setSelectedBucket] = useState<{ id: number; name: string } | null>(null);
-  const [ws, setWs] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
   // Fetch buckets on mount
   useEffect(() => {
@@ -31,46 +31,60 @@ export default function Home() {
     }
   };
 
-  // WebSocket connection
+  // WebSocket connection with graceful reconnection
   useEffect(() => {
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3002';
-    const websocket = new WebSocket(wsUrl);
+    let websocket: WebSocket | null = null;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
 
-    websocket.onopen = () => {
-      console.log('✅ Connected to WebSocket server');
-      setIsConnected(true);
+    const connect = () => {
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3002';
+      websocket = new WebSocket(wsUrl);
+
+      websocket.onopen = () => {
+        console.log('✅ Connected to WebSocket server');
+        setIsConnected(true);
+        setReconnectAttempts(0);
+      };
+
+      websocket.onmessage = (event) => {
+        try {
+          const wsEvent: WSEvent = JSON.parse(event.data);
+          handleWSEvent(wsEvent);
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+
+      websocket.onclose = () => {
+        console.log('❌ Disconnected from WebSocket server');
+        setIsConnected(false);
+        
+        // Graceful reconnection with exponential backoff
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+        setReconnectAttempts((prev) => prev + 1);
+        
+        console.log(`🔄 Reconnecting in ${delay / 1000}s...`);
+        reconnectTimeout = setTimeout(() => {
+          connect();
+        }, delay);
+      };
+
+      websocket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
     };
 
-    websocket.onmessage = (event) => {
-      try {
-        const wsEvent: WSEvent = JSON.parse(event.data);
-        handleWSEvent(wsEvent);
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
-      }
-    };
-
-    websocket.onclose = () => {
-      console.log('❌ Disconnected from WebSocket server');
-      setIsConnected(false);
-      
-      // Reconnect after 3 seconds
-      setTimeout(() => {
-        console.log('🔄 Reconnecting...');
-        window.location.reload();
-      }, 3000);
-    };
-
-    websocket.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    setWs(websocket);
+    connect();
 
     return () => {
-      websocket.close();
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+      if (websocket) {
+        websocket.close();
+      }
     };
-  }, []);
+  }, [reconnectAttempts]);
 
   const handleWSEvent = useCallback((event: WSEvent) => {
     switch (event.type) {
@@ -79,7 +93,7 @@ export default function Home() {
         break;
 
       case 'chunk_filed':
-        const { id, bucketId, bucketName } = event.data as { id: string; bucketId: number; bucketName: string };
+        const { id, bucketId } = event.data as { id: string; bucketId: number; bucketName: string };
         
         // Trigger filing animation
         setFilingChunkIds((prev) => new Set(prev).add(id));
