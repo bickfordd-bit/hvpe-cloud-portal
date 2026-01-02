@@ -1,0 +1,47 @@
+{
+  "id": "prisma-chatconversation-skipped-2025-12-19T112800",
+  "ts": "2025-12-19T11:28:00-05:00",
+  "kind": "observe",
+  "subject": "prisma-chatconversation-patch-analysis",
+  "payload": {
+    "description": "Evaluated ChatConversation patch for redundancy with existing ChatSession/ChatMessage hybrid model",
+    "patch_intent": {
+      "models": ["ChatConversation", "ChatMessage", "ChatArchive"],
+      "features": [
+        "conversationKey (unique) for conversation identification",
+        "archived boolean on messages",
+        "Simple conversation-message relationship"
+      ]
+    },
+    "existing_implementation": {
+      "models": ["ChatSession", "ChatMessage", "ChatArchive", "ChatLog"],
+      "features": [
+        "slug (unique) for session URLs",
+        "agentId, persona, mode tracking",
+        "archivedAt timestamp (more flexible than boolean)",
+        "Hybrid session + agent architecture",
+        "Separate ChatLog for internal logging"
+      ],
+      "superiority": "Existing model has all features of ChatConversation PLUS agent/persona/mode tracking"
+    },
+    "decision": "SKIP - ChatConversation is redundant",
+    "rationale": [
+      "ChatSession already provides conversation continuity with unique slug",
+      "ChatMessage already has archival support (archivedAt timestamp > archived boolean)",
+      "Existing model adds agent/persona/mode metadata not in patch",
+      "ChatLog already handles internal/session-less logging",
+      "Adding ChatConversation would create confusion and duplication"
+    ],
+    "recommendation": "Use ChatSession where patch intended ChatConversation",
+    "mapping": {
+      "ChatConversation.conversationKey": "ChatSession.slug",
+      "ChatConversation.messages": "ChatSession.messages",
+      "ChatMessage.archived": "ChatMessage.archivedAt (nullable timestamp)",
+      "ChatMessage.conversationId": "ChatMessage.sessionId"
+    },
+    "status": "skipped",
+    "action_taken": "none - patch superseded by existing implementation"
+  },
+  "hash": "3861350bc0136915be958a1a3bb6ffd6899f0130",
+  "parentId": "prisma-chatlog-model-2025-12-19T112600"
+}

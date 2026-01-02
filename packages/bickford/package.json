@@ -1,0 +1,55 @@
+{
+  "name": "@bickfordd-bit/bickford",
+  "version": "1.0.0",
+  "description": "Bickford Intelligence Engine - Intent-to-Reality acceleration framework with unified AI agent system",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "prepublishOnly": "npm run build",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "bickford",
+    "ai-agent",
+    "intent-to-reality",
+    "hvpe",
+    "optr",
+    "chat-agent",
+    "unified-agent",
+    "intelligence-engine"
+  ],
+  "author": "Derek Bickford <bickfordd@gmail.com>",
+  "license": "PROPRIETARY",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bickfordd-bit/hvpe-cloud-portal",
+    "directory": "packages/bickford"
+  },
+  "homepage": "https://github.com/bickfordd-bit/hvpe-cloud-portal/tree/main/packages/bickford",
+  "bugs": {
+    "url": "https://github.com/bickfordd-bit/hvpe-cloud-portal/issues"
+  },
+  "dependencies": {
+    "openai": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "@types/jest": "^29.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.0.0"
+  },
+  "peerDependencies": {
+    "openai": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

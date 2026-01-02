@@ -20,6 +20,12 @@ const serverOnlyDirs = [
   path.join(__dirname, "build", "src", "app", "api"),
   path.join(__dirname, "src", "lib", "prisma"),
   path.join(__dirname, "build", "src", "lib", "prisma"),
+  path.join(__dirname, "src", "lib", "lock"),
+  path.join(__dirname, "build", "src", "lib", "lock"),
+];
+
+const serverOnlyFiles = [
+  /licenseSession\.crypto/,
 ];
 
 const dirPattern = (dir) =>
@@ -30,6 +36,8 @@ const dirPattern = (dir) =>
 
 config.resolver.blockList = makeBlockList([
   ...serverOnlyDirs.map((dir) => new RegExp(`${dirPattern(dir)}([\\\\/].*)?$`)),
+  ...serverOnlyFiles,
+  /\bnode_modules\/@prisma\b/,
 ]);
 
 module.exports = config;

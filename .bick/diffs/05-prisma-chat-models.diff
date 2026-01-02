@@ -1,0 +1,120 @@
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index cd09024..08ba29e 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -51,6 +51,18 @@ model AiUsageLog {
+   errorMessage     String?
+ }
+ 
++model ChatMessageLog {
++  id        String   @id @default(cuid())
++  sessionId String   // Loose reference, no FK constraint
++  role      String
++  content   String   @db.Text
++  mode      String?
++  createdAt DateTime @default(now())
++
++  @@index([sessionId])
++  @@index([createdAt])
++}
++
+ model Embedding {
+   id        String   @id @default(cuid())
+   docId     String
+@@ -66,6 +78,7 @@ model AIPatchLog {
+   userId    String?
+   instruction String
+   patch     String
++  repoRoot  String?
+   applied   Boolean  @default(false)
+   branch    String?
+   prUrl     String?
+@@ -73,6 +86,34 @@ model AIPatchLog {
+   approvedAt DateTime?
+ }
+ 
++model BickfordLedger {
++  id           String   @id @default(cuid())
++  ts           String   // ISO 8601 timestamp - authoritative
++  kind         String   // intent|plan|action|observe|persist|guardrail
++  subject      String   // What this entry is about
++  payloadJson  String   // JSON serialized payload
++  hash         String   // SHA256 of content for immutability
++  parentId     String?  // Links to parent decision
++  createdAt    DateTime @default(now())
++  
++  @@index([ts])
++  @@index([kind])
++  @@index([parentId])
++}
++
++model ChatLog {
++  id        String   @id @default(cuid())
++  createdAt DateTime @default(now())
++  agentId   String   @default("bickford-environment")
++  role      String
++  content   String   @db.Text
++  persona   String?
++  mode      String?
++
++  @@index([agentId])
++  @@index([createdAt])
++}
++
+ model User {
+   id            String    @id @default(cuid())
+   email         String    @unique
+@@ -180,6 +221,53 @@ model AuditLog {
+   @@index([createdAt])
+ }
+ 
++model ChatSession {
++  id        String        @id @default(cuid())
++  slug      String        @unique
++  createdAt DateTime      @default(now())
++  updatedAt DateTime      @updatedAt
++  messages  ChatMessage[]
++  archives  ChatArchive[]
++}
++
++model ChatMessage {
++  id         String      @id @default(cuid())
++  sessionId  String
++  agentId    String?     // Optional: tracks which agent generated this message
++  persona    String?     // Optional: persona mode (trader/founder/investor/dod)
++  mode       String?     // Optional: chat mode (optr/bickford/general)
++  role       String
++  content    String      @db.Text
++  createdAt  DateTime    @default(now())
++  archivedAt DateTime?
++  session    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
++
++  @@index([sessionId, createdAt])
++  @@index([archivedAt])
++  @@index([agentId])
++}
++
++model ChatArchive {
++  id           String      @id @default(cuid())
++  sessionId    String
++  archiveDate  DateTime
++  messageCount Int
++  transcript   Json
++  createdAt    DateTime    @default(now())
++  session      ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
++
++  @@unique([sessionId, archiveDate])
++}
++
++model GlobalChatArchive {
++  id           String   @id @default(cuid())
++  archiveDate  DateTime @unique
++  sessionCount Int
++  messageCount Int
++  payload      Json
++  createdAt    DateTime @default(now())
++}
++
+ enum LicenseRequestStatus {
+   PENDING
+   APPROVED

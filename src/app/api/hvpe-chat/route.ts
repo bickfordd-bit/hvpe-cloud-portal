@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import { buildUnifiedAgentPrompt } from "@/lib/chat/unifiedAgent";
+import { recordChatHistory } from "@/lib/chat/history";
 
 export const runtime = "nodejs";
 
@@ -108,7 +110,9 @@ export async function POST(req: Request) {
     if (body?.message) {
       const mode: Mode = body.mode || "general";
       const hvpeContext = await getHvpePortalContext();
-      const systemPrompt = buildSystemPrompt(mode, body.context, hvpeContext);
+      const systemPrompt = buildUnifiedAgentPrompt({
+        specialization: buildSystemPrompt(mode, body.context, hvpeContext)
+      });
 
       const completion = await client.chat.completions.create({
         model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
@@ -120,24 +124,77 @@ export async function POST(req: Request) {
       });
 
       const content = completion.choices[0]?.message?.content || "";
+      await recordChatHistory({
+        timestamp: new Date().toISOString(),
+        source: "hvpe-chat",
+        agent: "bigfern-unified",
+        payload: {
+          mode,
+          message: body.message,
+          reply: content
+        }
+      });
       return json({ reply: content, mode }, 200);
     }
 
     // Backward compatibility for persona + messages array
     if (body?.messages && Array.isArray(body.messages)) {
-      const persona: Persona = body.persona ?? "trader";
+      if (body.persona && !body.mode) {
+        const persona: Persona = body.persona ?? "trader";
+        const hvpeContext = await getHvpePortalContext();
+
+        let personaPrompt = TRADER_MODE_PROMPT;
+        if (persona === "founder") personaPrompt = FOUNDER_MODE_PROMPT;
+        else if (persona === "investor") personaPrompt = INVESTOR_MODE_PROMPT;
+        else if (persona === "dod") personaPrompt = DOD_MODE_PROMPT;
+
+        const systemContent = buildUnifiedAgentPrompt({
+          specialization: BASE_SYSTEM_PROMPT + "\n" + personaPrompt,
+          context: hvpeContext || undefined
+        });
+
+        const messages: ChatMessage[] = [
+          { role: "system", content: systemContent },
+          ...body.messages.map((m) => ({
+            role: m.role,
+            content: m.content
+          }))
+        ];
+
+        const completion = await client.chat.completions.create({
+          model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+          messages,
+          temperature: 0.5,
+          max_tokens: 400
+        });
+
+        const reply =
+          completion.choices[0]?.message?.content ||
+          "I couldn't generate a response. Check OPENAI configuration.";
+
+        await recordChatHistory({
+          timestamp: new Date().toISOString(),
+          source: "hvpe-chat",
+          agent: "bigfern-unified",
+          payload: {
+            mode: "persona",
+            persona,
+            messages: body.messages,
+            reply
+          }
+        });
+
+        return json({ reply }, 200);
+      }
+
+      const mode: Mode = body.mode || "general";
       const hvpeContext = await getHvpePortalContext();
-
-      let personaPrompt = TRADER_MODE_PROMPT;
-      if (persona === "founder") personaPrompt = FOUNDER_MODE_PROMPT;
-      else if (persona === "investor") personaPrompt = INVESTOR_MODE_PROMPT;
-      else if (persona === "dod") personaPrompt = DOD_MODE_PROMPT;
-
-      const systemContent =
-        BASE_SYSTEM_PROMPT + "\n" + personaPrompt + (hvpeContext || "");
+      const systemPrompt = buildUnifiedAgentPrompt({
+        specialization: buildSystemPrompt(mode, body.context, hvpeContext)
+      });
 
       const messages: ChatMessage[] = [
-        { role: "system", content: systemContent },
+        { role: "system", content: systemPrompt },
         ...body.messages.map((m) => ({
           role: m.role,
           content: m.content
@@ -147,7 +204,7 @@ export async function POST(req: Request) {
       const completion = await client.chat.completions.create({
         model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
         messages,
-        temperature: 0.5,
+        temperature: 0.4,
         max_tokens: 400
       });
 
@@ -155,7 +212,18 @@ export async function POST(req: Request) {
         completion.choices[0]?.message?.content ||
         "I couldn't generate a response. Check OPENAI configuration.";
 
-      return json({ reply }, 200);
+      await recordChatHistory({
+        timestamp: new Date().toISOString(),
+        source: "hvpe-chat",
+        agent: "bigfern-unified",
+        payload: {
+          mode,
+          messages: body.messages,
+          reply
+        }
+      });
+
+      return json({ reply, mode }, 200);
     }
 
     return json({ error: "Missing 'message' in request body." }, 400);

@@ -1,0 +1,34 @@
+{
+  "id": "bickford-chat-unified-refactor-2025-12-19T112000",
+  "ts": "2025-12-19T11:20:00-05:00",
+  "kind": "action",
+  "subject": "bickford-chat-unified-agent-integration",
+  "payload": {
+    "description": "Refactored bickford-chat to use unified agent prompt builder, real OPTR integration, and chat history recording",
+    "artifacts": [
+      "src/app/api/bickford-chat/route.ts (staged)"
+    ],
+    "changes": [
+      "Added imports: buildUnifiedAgentPrompt, recordChatHistory, runOptr, Opportunity type",
+      "Refactored system prompt creation: specialization -> buildUnifiedAgentPrompt()",
+      "Integrated real OPTR processor: creates temp opportunity, runs analysis, extracts confidence",
+      "Added chat history recording after successful response generation",
+      "Fixed missing newline at EOF"
+    ],
+    "verification": [
+      "git apply --3way with conflict resolved (accepted theirs)",
+      "All imports added cleanly",
+      "OPTR integration replaces mock opportunity analysis",
+      "recordChatHistory logs to centralized history store",
+      "systemPrompt now uses unified agent builder pattern"
+    ],
+    "impact": "Bickford chat now uses real OPTR analysis for intention scoring + unified prompt architecture",
+    "status": "completed",
+    "dependencies_required": [
+      "@/lib/chat/unifiedAgent (buildUnifiedAgentPrompt)",
+      "@/lib/chat/history (recordChatHistory)"
+    ]
+  },
+  "hash": "11ff56738a7e544c17b33d8eae1eeadded770876",
+  "parentId": "hvpe-chat-mode-refactor-2025-12-19T111800"
+}

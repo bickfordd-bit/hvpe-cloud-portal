@@ -1,0 +1,45 @@
+{
+  "id": "prisma-chat-agent-fields-2025-12-19T112400",
+  "ts": "2025-12-19T11:24:00-05:00",
+  "kind": "action",
+  "subject": "prisma-merge-agent-session-chat-models",
+  "payload": {
+    "description": "Added repoRoot to AIPatchLog and merged agent-centric fields into session-based ChatMessage model",
+    "artifacts": [
+      "prisma/schema.prisma (modified, unstaged)"
+    ],
+    "changes": [
+      {
+        "model": "AIPatchLog",
+        "added": ["repoRoot String?"],
+        "purpose": "Track multi-repo patch applications (e.g., mono-repo voice-to-code)"
+      },
+      {
+        "model": "ChatMessage",
+        "added": [
+          "agentId String? (indexed)",
+          "persona String? (trader/founder/investor/dod)",
+          "mode String? (optr/bickford/general)",
+          "content changed to @db.Text (long text support)"
+        ],
+        "kept": [
+          "sessionId (required, session relation)",
+          "session ChatSession relation",
+          "indexes: [sessionId, createdAt], [archivedAt], [agentId]"
+        ],
+        "purpose": "Hybrid architecture: session-based storage + agent/persona/mode tracking"
+      }
+    ],
+    "resolution": "Merged incoming agent-based patch with existing session-based architecture instead of replacing",
+    "verification": [
+      "Prisma client regenerated successfully",
+      "Schema validated by Prisma",
+      "@db.Text enables long message content",
+      "agentId index enables agent-specific queries"
+    ],
+    "impact": "ChatMessage now tracks both session context AND agent/persona/mode metadata for unified history",
+    "status": "completed"
+  },
+  "hash": "01cb78ea-partial-merged-with-session",
+  "parentId": "prisma-chat-models-2025-12-19T112200"
+}

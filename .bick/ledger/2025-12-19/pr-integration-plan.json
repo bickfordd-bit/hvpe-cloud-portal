@@ -1,0 +1,82 @@
+{
+  "id": "pr-integration-plan-2025-12-19T113400",
+  "ts": "2025-12-19T11:34:00-05:00",
+  "kind": "plan",
+  "subject": "multi-repo-pr-integration-strategy",
+  "payload": {
+    "description": "Plan for integrating unique content from 4 external HVPE repos into hvpe-cloud-portal",
+    "target_repos": [
+      {
+        "name": "HVPE-Trading-Bot-Dashboard",
+        "url": "https://github.com/bickfordd-bit/HVPE-Trading-Bot-Dashboard",
+        "expected_content": ["Trading bot UI", "Dashboard components", "Real-time market data visualization"],
+        "integration_target": "src/app/dashboard/trading/",
+        "pr_title": "feat: integrate trading bot dashboard from HVPE-Trading-Bot-Dashboard"
+      },
+      {
+        "name": "High-Velocity-Profit-Engine",
+        "url": "https://github.com/bickfordd-bit/High-Velocity-Profit-Engine",
+        "expected_content": ["Core trading engine", "Profit algorithms", "Market analysis logic"],
+        "integration_target": "src/lib/trading/",
+        "pr_title": "feat: integrate profit engine core from High-Velocity-Profit-Engine"
+      },
+      {
+        "name": "tradestation",
+        "url": "https://github.com/bickfordd-bit/tradestation",
+        "expected_content": ["TradeStation API integration", "Brokerage connectors", "Order execution"],
+        "integration_target": "src/lib/brokers/tradestation/",
+        "pr_title": "feat: add TradeStation brokerage integration"
+      },
+      {
+        "name": "copilot/agents",
+        "url": "https://github.com/copilot/agents",
+        "expected_content": ["GitHub Copilot agent patterns", "AI agent templates"],
+        "integration_target": "src/lib/ai/agents/",
+        "pr_title": "feat: integrate Copilot agent patterns",
+        "note": "This may be a GitHub-owned repo; verify accessibility"
+      }
+    ],
+    "blockers_encountered": [
+      {
+        "issue": "403 Forbidden on git fetch",
+        "cause": "Private repos require authentication",
+        "solutions": [
+          "Use GitHub Personal Access Token (PAT) with repo scope",
+          "Configure git credential helper: git config --global credential.helper store",
+          "Or use SSH authentication with deploy keys"
+        ]
+      },
+      {
+        "issue": "github_repo tool index not ready",
+        "cause": "Repos not yet indexed by search tool",
+        "solutions": [
+          "Wait for indexing to complete",
+          "Use manual git operations with proper auth",
+          "Clone repos separately and use diff/merge tools"
+        ]
+      }
+    ],
+    "recommended_approach": {
+      "phase1": "Authentication Setup",
+      "steps": [
+        "1. Generate GitHub PAT with 'repo' scope at https://github.com/settings/tokens",
+        "2. Configure git: git config --global credential.helper cache",
+        "3. Test access: git ls-remote https://github.com/bickfordd-bit/HVPE-Trading-Bot-Dashboard.git"
+      ]
+    },
+    "alternative_approach": {
+      "description": "Manual comparison and selective integration",
+      "steps": [
+        "1. User provides file listings from each repo (tree output)",
+        "2. Identify unique files not in hvpe-cloud-portal",
+        "3. User provides content of unique files",
+        "4. Create feature branches with integrated content",
+        "5. Generate PRs with detailed change summaries"
+      ]
+    },
+    "status": "blocked_on_auth",
+    "next_action": "User must provide GitHub authentication OR file listings from target repos"
+  },
+  "hash": "pr-integration-planning",
+  "parentId": "prisma-chatsession-agentid-skipped-2025-12-19T113200"
+}

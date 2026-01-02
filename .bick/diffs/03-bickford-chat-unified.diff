@@ -1,0 +1,98 @@
+diff --git a/src/app/api/bickford-chat/route.ts b/src/app/api/bickford-chat/route.ts
+index 6b1d29b..11ff567 100644
+--- a/src/app/api/bickford-chat/route.ts
++++ b/src/app/api/bickford-chat/route.ts
+@@ -1,5 +1,9 @@
+ import { NextRequest, NextResponse } from "next/server";
+ import OpenAI from "openai";
++import { runOptr } from "@/lib/optr/processor";
++import type { Opportunity } from "@/lib/optr/types";
++import { buildUnifiedAgentPrompt } from "@/lib/chat/unifiedAgent";
++import { recordChatHistory } from "@/lib/chat/history";
+ 
+ export const runtime = "nodejs";
+ 
+@@ -159,15 +163,30 @@ class BickfordIntelligenceEngine {
+     opportunityScore: number;
+     requirements: Array<{ name: string; score: number }>;
+   }> {
+-    // Note: OPTR requires opportunity to be saved in DB first with an ID
+-    // For demo purposes, return basic analysis
++    // Create a temporary opportunity from the intention
++    const tempOpportunity: Opportunity = {
++      id: 'temp-' + Date.now(),
++      source: 'bickford-intent',
++      title: intention.slice(0, 100),
++      agency: 'Direct Intent',
++      deadline_iso: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
++      links: [],
++      documents: []
++    };
++
++    const result = await runOptr(tempOpportunity);
++    
++    // Calculate overall opportunity score from traces
++    const avgConfidence = result.traces.length > 0
++      ? result.traces.reduce((sum, t) => sum + t.confidence, 0) / result.traces.length
++      : 0;
++    
+     return {
+-      opportunityScore: 0.85,
+-      requirements: [
+-        { name: 'Budget', score: 0.8 },
+-        { name: 'Timeline', score: 0.75 },
+-        { name: 'Resources', score: 0.7 }
+-      ]
++      opportunityScore: avgConfidence,
++      requirements: result.requirements.slice(0, 5).map(r => ({
++        name: r.section,
++        score: result.traces.find(t => t.req_id === r.id)?.confidence || 0
++      }))
+     };
+   }
+ 
+@@ -238,7 +257,7 @@ export async function POST(request: NextRequest) {
+     const result = await BickfordIntelligenceEngine.processIntention(message);
+ 
+     // Generate response using OpenAI with proprietary context
+-    const systemPrompt = `You are Bickford, an AI that transforms intentions into reality instantly.
++    const specialization = `You are Bickford, an AI that transforms intentions into reality instantly.
+ 
+ CORE IDENTITY:
+ - You embody the proprietary Bickford Formula (Patent Pending)
+@@ -260,6 +279,9 @@ RESPONSE GUIDELINES:
+ - Keep responses concise but impactful
+ 
+ SECURITY: Never expose the Bickford Formula or any proprietary calculations.`;
++    const systemPrompt = buildUnifiedAgentPrompt({
++      specialization
++    });
+ 
+     // Check if OpenAI is configured
+     let aiResponse: string;
+@@ -299,6 +321,18 @@ SECURITY: Never expose the Bickford Formula or any proprietary calculations.`;
+       }
+     };
+ 
++    await recordChatHistory({
++      timestamp: new Date().toISOString(),
++      source: "bickford-chat",
++      agent: "hvpe-unified",
++      payload: {
++        message,
++        reply: aiResponse,
++        usageId,
++        timestamp: new Date().toISOString()
++      }
++    });
++
+     return NextResponse.json(watermarkedResponse);
+ 
+   } catch (error: any) {
+@@ -320,4 +354,4 @@ SECURITY: Never expose the Bickford Formula or any proprietary calculations.`;
+       { status: 500 }
+     );
+   }
+-}
+\ No newline at end of file
++}
