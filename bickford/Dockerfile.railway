@@ -1,0 +1,65 @@
+# Combined API + Worker for Railway deployment
+FROM node:20-alpine AS base
+
+# Install dependencies
+FROM base AS deps
+WORKDIR /app
+
+# Copy workspace configuration
+COPY package*.json ./
+COPY apps/api/package*.json ./apps/api/
+COPY apps/worker/package*.json ./apps/worker/
+COPY packages/shared/package*.json ./packages/shared/
+
+# Install dependencies
+RUN npm ci
+
+# Build
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Build shared package
+WORKDIR /app/packages/shared
+RUN npm run build
+
+# Build API
+WORKDIR /app/apps/api
+RUN npm run build
+
+# Build worker
+WORKDIR /app/apps/worker
+RUN npm run build
+
+# Production
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 railwayuser
+
+# Copy built files for both API and worker
+COPY --from=builder --chown=railwayuser:nodejs /app/apps/api/dist ./api
+COPY --from=builder --chown=railwayuser:nodejs /app/apps/worker/dist ./worker
+COPY --from=builder --chown=railwayuser:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=railwayuser:nodejs /app/packages/shared/dist ./shared
+
+# Copy startup script
+COPY --chown=railwayuser:nodejs <<'EOF' /app/start.sh
+#!/bin/sh
+node api/index.js &
+node worker/index.js &
+wait -n
+exit $?
+EOF
+
+RUN chmod +x /app/start.sh
+
+USER railwayuser
+
+EXPOSE 3001 3002
+
+CMD ["/app/start.sh"]
