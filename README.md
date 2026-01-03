@@ -42,6 +42,99 @@ The canonical specification is stored in `/canon/`:
 
 ---
 
+## 🤖 Auto-Merge Workflow
+
+This repository implements zero-approval auto-merge for owner PRs. No manual merge button clicking required.
+
+### How It Works
+
+When the repository owner (`bickfordd-bit`) creates a PR:
+
+1. **Automatic Check Execution**: PR checks workflow runs lint, build, and test
+2. **Auto-Approval**: Once checks pass, the PR is automatically approved
+3. **Auto-Merge**: PR merges automatically with squash strategy
+4. **Branch Cleanup**: Source branch is deleted after merge
+5. **Notifications**: Status updates posted as PR comments at each stage
+
+### Requirements
+
+For auto-merge to trigger, the PR must:
+- ✅ Be created by repository owner (`bickfordd-bit`)
+- ✅ Not be in draft state
+- ✅ Not have `[no-auto-merge]` in the title
+- ✅ Pass all required checks (lint, build, test)
+
+### Required Status Checks
+
+Auto-merge waits for these checks to pass:
+- **Lint** - ESLint validation
+- **Build** - Next.js build verification  
+- **Test** - Jest test suite
+
+### Disabling Auto-Merge
+
+To disable auto-merge for a specific PR, add `[no-auto-merge]` anywhere in the PR title:
+
+```
+[no-auto-merge] WIP: Experimental feature
+```
+
+### Monitoring PR Progress
+
+**GitHub Notifications:**
+- Watch repository → Custom → Select "Pull requests"
+- Enable email notifications for PR activity
+
+**PR Comments:**
+The auto-merge workflow posts status updates:
+- 🤖 "Auto-merge initiated" - When workflow starts
+- ⏱️ "Waiting for checks" - While checks are running
+- ✅ "Auto-merge enabled" - When checks pass and merge is queued
+- ❌ "Auto-merge blocked" - If checks fail
+- 🎉 "Auto-merged successfully" - After successful merge
+
+**Workflow Logs:**
+View detailed execution logs at:
+```
+https://github.com/bickfordd-bit/hvpe-cloud-portal/actions
+```
+
+### Branch Protection
+
+To configure branch protection rules:
+
+1. Go to **Actions** tab in GitHub
+2. Select **Setup Branch Protection** workflow
+3. Click **Run workflow**
+4. Select target branch (main/mobile)
+5. Click **Run workflow** button
+
+This configures:
+- Required status checks (lint, build, test)
+- Force push protection
+- Branch deletion protection
+- No required PR reviews (owner can self-merge)
+
+### Troubleshooting
+
+**Auto-merge didn't trigger:**
+- Check PR author is `bickfordd-bit`
+- Ensure PR is not in draft
+- Verify title doesn't contain `[no-auto-merge]`
+- Check workflow logs for errors
+
+**Checks are failing:**
+- Review workflow run logs
+- Fix failing tests/lints locally
+- Push fixes - auto-merge will retry
+
+**Workflow timed out:**
+- Checks took longer than 30 minutes
+- Auto-merge will retry on next push
+- Check for stuck/hanging tests
+
+---
+
 ## Canon + Sale Architecture
 - **Executable canon** lives in [`src/lib/btiCanon.ts`](./src/lib/btiCanon.ts) and drives the proof-gated $1B sale plan.
 - Human-readable mirror: [`docs/BICKFORD_CANON.md`](./docs/BICKFORD_CANON.md).
@@ -108,6 +201,63 @@ curl -X POST https://your-domain/api/license/approve \
 - Build: `npm run build`
 - Lint: `npm run lint`
 - Test: `npm test`
+
+## Automated Deployment (CI/CD) 🚀
+
+The project uses a **unified deployment pipeline** that automatically deploys on every push:
+
+### How It Works
+
+1. **Push your code** to any branch
+2. **GitHub Actions** automatically runs the deployment workflow
+3. **Get notified** when deployment completes with a live URL
+
+### Deployment Types
+
+- **Production:** Pushes to `main` or `mobile` → deployed to production
+- **Preview:** Pushes to any other branch → deployed to preview URL
+- **Pull Requests:** Automatic preview deployments with PR comments
+
+### Features
+
+✅ Automatic retries for transient failures  
+✅ Pre-deployment validation (catches issues early)  
+✅ Post-deployment smoke tests  
+✅ Real-time status updates via GitHub UI  
+✅ Zero manual intervention required  
+
+### Configuration
+
+Deployment is configured via GitHub Secrets:
+- `VERCEL_TOKEN` - Vercel authentication
+- `VERCEL_ORG_ID` - Organization ID
+- `VERCEL_PROJECT_ID` - Project ID
+
+Optional secrets (auto-detected):
+- `DATABASE_URL` - Database connection
+- `OPENAI_API_KEY` - AI features
+- `LICENSE_SESSION_SECRET` - License validation
+
+### Manual Deployment
+
+You can also deploy manually using helper scripts:
+
+```bash
+# Validate environment
+./scripts/preflight-check.sh
+
+# Deploy with automatic retries
+./scripts/deploy-with-retry.sh production
+
+# Verify deployment health
+./scripts/verify-deployment.sh https://your-url.vercel.app
+```
+
+### Documentation
+
+- **Quick Start:** See [Deployment Guide](./DEPLOYMENT.md)
+- **Comprehensive Reference:** See [CI/CD Guide](./docs/CI_CD_GUIDE.md)
+- **Workflow Details:** See `.github/workflows/master-deploy.yml`
 
 ## Docker Deployment 🐳
 
@@ -183,7 +333,33 @@ If you want, I can scaffold a simple CLA acceptance flow (web form + signed reco
 
 Security note: The `/api/ai/code` endpoint runs `git` commands on the host. Do not expose it publicly without authentication and approval gates. Prefer setting `AI_WEBHOOK_SECRET` and adding user authentication in front of it.
 
-CI: A GitHub Actions workflow is provided at `.github/workflows/ci-deploy.yml`. It builds the app on push/PR to `ui-redesign-v1` and attempts to deploy to Vercel when Vercel secrets are configured.
+## CI/CD: Unified Deployment Pipeline
+
+The project uses a **bulletproof unified deployment workflow** at `.github/workflows/master-deploy.yml`.
+
+### Key Features:
+- ✅ Single workflow handles all deployments (production + preview)
+- ✅ Automatic retry logic for transient failures (3 retries with exponential backoff)
+- ✅ Preflight validation catches issues before deployment starts
+- ✅ Post-deployment smoke tests verify deployment health
+- ✅ Real-time status updates via GitHub commit status API
+- ✅ Concurrency protection (queues instead of canceling deployments)
+- ✅ Auto-fixes common issues (stale dependencies, cache)
+
+### How to Use:
+**Just push your code!** The workflow automatically:
+1. Validates environment and dependencies
+2. Builds and tests the application
+3. Deploys to Vercel (production or preview based on branch)
+4. Verifies deployment health
+5. Comments on PR/commit with deployment URL
+
+### Documentation:
+- **Comprehensive Guide:** [docs/CI_CD_GUIDE.md](./docs/CI_CD_GUIDE.md)
+- **Deployment Platforms:** [DEPLOYMENT.md](./DEPLOYMENT.md)
+- **Workflow Source:** [.github/workflows/master-deploy.yml](./.github/workflows/master-deploy.yml)
+
+Legacy workflows (`ci-cd.yml`, `deploy-vercel.yml`, `ci-deploy.yml`) are deprecated and will be archived after a monitoring period. See `.github/workflows/archive/README.md` for details.
 
 ## HVPE chat dock
 - API: `POST /api/hvpe-chat` (requires `OPENAI_API_KEY`)

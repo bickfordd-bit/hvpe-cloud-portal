@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function LicensePage() {
+// Extract search params logic into a separate component
+function LicenseForm() {
   const [key, setKey] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -44,7 +45,9 @@ export default function LicensePage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-black">
       <div className="w-full max-w-md p-8 bg-neutral-900 border border-neutral-800 rounded-lg">
-        <h1 className="text-2xl font-bold text-white mb-6">Enter License Key</h1>
+        <h1 className="text-2xl font-bold text-white mb-6">
+          Enter License Key
+        </h1>
 
         <input
           value={key}
@@ -68,5 +71,19 @@ export default function LicensePage() {
         {err && <p className="mt-4 text-red-500 text-sm">{err}</p>}
       </div>
     </div>
+  );
+}
+
+export default function LicensePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen bg-black">
+          <div className="text-white">Loading...</div>
+        </div>
+      }
+    >
+      <LicenseForm />
+    </Suspense>
   );
 }
