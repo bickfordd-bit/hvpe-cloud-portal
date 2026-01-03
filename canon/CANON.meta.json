@@ -1,0 +1,10 @@
+{
+  "version": "1.0.0",
+  "sha256": "1348cb76147f40b31f50c1d0321d9e21ee88a7b3cc6b08bf51a2027ab23eb334",
+  "timestamp": "2026-01-03T04:38:00.000Z",
+  "status": "LOCKED",
+  "lastModifiedBy": "bickford-system",
+  "description": "Bickford Canon — Authoritative Specification for Zero-Approval Execution Runtime",
+  "enforcementLevel": "strict",
+  "verificationRequired": true
+}

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { signClaims, type LicenseClaims } from "@/lib/licenseSession.crypto";
-import { LICENSE_COOKIE } from "@/lib/licenseSession.types";
+import { signClaims } from "@/lib/licenseSession.crypto";
+import { LICENSE_COOKIE, type LicenseClaims } from "@/lib/licenseSession.types";
 
 export const runtime = "nodejs";
 

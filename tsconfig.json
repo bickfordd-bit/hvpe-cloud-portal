@@ -38,7 +38,11 @@
   ],
   "exclude": [
     "node_modules",
-    "scripts/**"
+    "scripts/**",
+    "bickford/**",
+    "packages/**",
+    "android/**",
+    "ios/**"
   ],
   "extends": "expo/tsconfig.base"
 }

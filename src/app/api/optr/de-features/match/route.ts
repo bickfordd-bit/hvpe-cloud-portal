@@ -45,12 +45,11 @@ export async function POST(req: NextRequest) {
     
     // Initialize matcher
     const matcher = new DEFeaturesMatcher(workbook);
-    await matcher.initialize(env.HVPE_OPENAI_API_KEY);
+    await matcher.initialize();
     
     // Match requirements
     const matchedFeatures = await matcher.matchRequirements(
       requirements,
-      env.HVPE_OPENAI_API_KEY,
       topK
     );
     

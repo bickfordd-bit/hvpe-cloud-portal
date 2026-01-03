@@ -1,5 +1,47 @@
 HVPE Cloud Portal – Next.js (App Router) with Stripe and Prisma-backed licensing.
 
+## 🚀 Bickford Homepage — Zero-Approval Execution Runtime
+
+**NEW**: The root homepage (`/`) is now the Bickford execution runtime with zero-approval intent-to-reality flow.
+
+### Features
+- **Intent Input**: Natural language intent parsing
+- **OPTR Policy Selection**: Automatic policy binding via T2V optimization
+- **Canon Verification**: SHA-256 integrity checking on every execution
+- **Auto-Commit**: Direct GitHub commits with no manual approval
+- **Hash-Chained Ledger**: Immutable execution history in `.bick/ledger/`
+- **Real-Time Status**: Live execution tracking and history visualization
+
+### Quick Start
+```bash
+npm install
+npm run dev
+# Open http://localhost:3000 - the Bickford Homepage will load
+```
+
+### API Endpoints
+- `GET /api/execute` - Check canon status and capabilities
+- `POST /api/execute` - Submit intent for execution (body: `{ "intent": "your intent text" }`)
+- `GET /api/ledger?limit=10` - Query execution history
+
+### Environment Variables
+Required for full functionality:
+- `GITHUB_TOKEN` - For auto-commits to repository
+- `DATABASE_URL` - PostgreSQL connection (optional, falls back to file-based ledger)
+
+Optional:
+- `GITHUB_REPO` - Target repository (default: bickfordd-bit/hvpe-cloud-portal)
+- `GITHUB_BRANCH` - Target branch (default: main)
+
+### Canon System
+The canonical specification is stored in `/canon/`:
+- `CANON.md` - Full specification (11KB, LOCKED status)
+- `CANON.meta.json` - SHA-256 hash and metadata
+
+**Canon verification runs on every execution. Hash mismatch = ABORT.**
+
+---
+
 ## Canon + Sale Architecture
 - **Executable canon** lives in [`src/lib/btiCanon.ts`](./src/lib/btiCanon.ts) and drives the proof-gated $1B sale plan.
 - Human-readable mirror: [`docs/BICKFORD_CANON.md`](./docs/BICKFORD_CANON.md).
