@@ -34,7 +34,7 @@ export default async function BillyPage() {
             </div>
             <div className="pt-3 border-t border-neutral-700">
               <p className="text-xs uppercase tracking-wider text-neutral-500">Role</p>
-              <p className="text-white mt-1">{session.role}</p>
+              <p className="text-white mt-1">BILLY</p>
             </div>
           </div>
         </section>
@@ -72,7 +72,7 @@ export default async function BillyPage() {
 
       {/* Details */}
       <footer className="border-t border-neutral-800 px-6 py-4 text-xs text-neutral-500 mt-12">
-        <p>Tenant: {session.tenant} · Mode: {session.mode}</p>
+        <p>Mode: Trading</p>
       </footer>
     </main>
   );

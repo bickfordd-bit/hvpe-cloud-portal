@@ -8,9 +8,9 @@ name: CI Build and Deploy (DEPRECATED - Use master-deploy.yml)
 
 on:
   push:
-    branches: [ ui-redesign-v1 ]
+    branches: [ main, mobile ]
   pull_request:
-    branches: [ ui-redesign-v1 ]
+    branches: [ main, mobile ]
 
 jobs:
   build:

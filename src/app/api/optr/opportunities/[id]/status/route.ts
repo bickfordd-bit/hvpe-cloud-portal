@@ -10,12 +10,9 @@ export async function GET(req: NextRequest) {
   }
 
   const state: OPTRState = {
-    phase: "D",
-    blocked: false,
-    blockers: [],
-    coverage: 0.62,
-    win_prob: 0.28,
-    ecv: 1750000
+    stage: "scoring",
+    progress: 62,
+    message: "Analyzing requirements and scoring coverage"
   };
 
   return NextResponse.json(state);
