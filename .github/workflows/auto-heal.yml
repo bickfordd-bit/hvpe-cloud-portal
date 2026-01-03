@@ -145,8 +145,28 @@ jobs:
           fi
         continue-on-error: true
       
-      - name: Create dead code issue
+      - name: Check for existing issue
+        id: check-existing-dead-code
         if: steps.prune.outputs.has_dead_code == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'technical-debt,auto-heal'
+            });
+            
+            const hasExisting = issues.data.some(issue => 
+              issue.title === '🧹 Dead Code Detected'
+            );
+            
+            core.setOutput('has_existing', hasExisting);
+            return hasExisting;
+      
+      - name: Create dead code issue
+        if: steps.prune.outputs.has_dead_code == 'true' && steps.check-existing-dead-code.outputs.has_existing == 'false'
         uses: actions/github-script@v7
         with:
           script: |
@@ -195,8 +215,28 @@ jobs:
           fi
         continue-on-error: true
       
-      - name: Create type safety issue
+      - name: Check for existing issue
+        id: check-existing
         if: steps.tsc.outputs.has_type_errors == 'true' && steps.tsc.outputs.error_count > 0
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'typescript,auto-heal'
+            });
+            
+            const hasExisting = issues.data.some(issue => 
+              issue.title === '🔧 TypeScript Errors Detected'
+            );
+            
+            core.setOutput('has_existing', hasExisting);
+            return hasExisting;
+      
+      - name: Create type safety issue
+        if: steps.tsc.outputs.has_type_errors == 'true' && steps.tsc.outputs.error_count > 0 && steps.check-existing.outputs.has_existing == 'false'
         uses: actions/github-script@v7
         with:
           script: |
