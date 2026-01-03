@@ -1,12 +1,22 @@
-name: Nightly Health Checks
+name: Comprehensive Health Dashboard
 
 on:
   schedule:
-    # Run at 2 AM UTC daily
+    # Run at 6 AM UTC daily (aligned with auto-heal)
+    - cron: '0 6 * * *'
+    # Also run at 2 AM for continuous monitoring
     - cron: '0 2 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  issues: write
+
+env:
+  NODE_VERSION: '18.x'
+
 jobs:
+  # Job 1: Production endpoint health checks
   health-check:
     name: Production Health Check
     runs-on: ubuntu-latest
@@ -51,3 +61,251 @@ jobs:
               body: `Health check failed at ${new Date().toISOString()}\n\nWorkflow: ${context.workflow}\nRun ID: ${context.runId}`,
               labels: ['bug', 'production', 'health-check']
             })
+
+  # Job 2: Comprehensive health report (daily at 6 AM)
+  daily-health-report:
+    name: Daily Health Report
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 6 * * *' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Generate Prisma Client
+        run: npx prisma generate
+      
+      # Check dependency vulnerabilities
+      - name: Check dependency vulnerabilities
+        id: audit
+        run: |
+          AUDIT_JSON=$(npm audit --json || true)
+          TOTAL_VULNS=$(echo "$AUDIT_JSON" | jq '.metadata.vulnerabilities.total // 0')
+          CRITICAL=$(echo "$AUDIT_JSON" | jq '.metadata.vulnerabilities.critical // 0')
+          HIGH=$(echo "$AUDIT_JSON" | jq '.metadata.vulnerabilities.high // 0')
+          MODERATE=$(echo "$AUDIT_JSON" | jq '.metadata.vulnerabilities.moderate // 0')
+          LOW=$(echo "$AUDIT_JSON" | jq '.metadata.vulnerabilities.low // 0')
+          
+          echo "total=$TOTAL_VULNS" >> $GITHUB_OUTPUT
+          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "high=$HIGH" >> $GITHUB_OUTPUT
+          echo "moderate=$MODERATE" >> $GITHUB_OUTPUT
+          echo "low=$LOW" >> $GITHUB_OUTPUT
+        continue-on-error: true
+      
+      # Check build status
+      - name: Test build
+        id: build
+        run: |
+          npm run build 2>&1 | tee build.log
+          if [ $? -eq 0 ]; then
+            echo "status=✅ passing" >> $GITHUB_OUTPUT
+          else
+            echo "status=❌ failing" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+      
+      # Check test coverage
+      - name: Run tests with coverage
+        id: coverage
+        run: |
+          npm test -- --coverage --json --outputFile=coverage-report.json --passWithNoTests || true
+          
+          if [ -f coverage/coverage-summary.json ]; then
+            COVERAGE=$(jq '.total.lines.pct // 0' coverage/coverage-summary.json)
+            echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
+          else
+            echo "percentage=0" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+      
+      # Check lint errors
+      - name: Run linter
+        id: lint
+        run: |
+          npm run lint 2>&1 | tee lint.log || true
+          ERROR_COUNT=$(grep -c "error" lint.log || echo "0")
+          WARNING_COUNT=$(grep -c "warning" lint.log || echo "0")
+          echo "errors=$ERROR_COUNT" >> $GITHUB_OUTPUT
+          echo "warnings=$WARNING_COUNT" >> $GITHUB_OUTPUT
+        continue-on-error: true
+      
+      # Check bundle size
+      - name: Check bundle size
+        id: bundle
+        run: |
+          if [ -d ".next/static" ]; then
+            SIZE=$(du -sh .next/static | cut -f1)
+            echo "size=$SIZE" >> $GITHUB_OUTPUT
+          else
+            echo "size=N/A" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+      
+      # Check all branches build status
+      - name: Check branch status
+        id: branches
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: branches } = await github.rest.repos.listBranches({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              protected: true
+            });
+            
+            const branchStatus = [];
+            
+            for (const branch of branches.slice(0, 5)) {
+              const { data: checks } = await github.rest.checks.listForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: branch.name
+              }).catch(() => ({ data: { check_runs: [] } }));
+              
+              const latestRun = checks.check_runs[0];
+              const status = latestRun ? latestRun.conclusion : 'unknown';
+              
+              branchStatus.push({
+                name: branch.name,
+                status: status === 'success' ? '✅' : status === 'failure' ? '❌' : '⚠️'
+              });
+            }
+            
+            return branchStatus;
+      
+      # Generate and post health report
+      - name: Generate health report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branchStatus = ${{ steps.branches.outputs.result }};
+            
+            const alertLevel = 
+              ${{ steps.audit.outputs.critical }} > 0 ? '🔴 CRITICAL' :
+              ${{ steps.audit.outputs.high }} > 0 ? '🟠 WARNING' :
+              ${{ steps.audit.outputs.total }} > 0 ? '🟡 INFO' :
+              '🟢 HEALTHY';
+            
+            const report = `## 📊 Daily Health Report
+            
+**Generated:** ${new Date().toISOString()}
+**Overall Status:** ${alertLevel}
+
+---
+
+### 🔒 Security
+- **Total Vulnerabilities:** ${{ steps.audit.outputs.total }}
+  - Critical: ${{ steps.audit.outputs.critical }}
+  - High: ${{ steps.audit.outputs.high }}
+  - Moderate: ${{ steps.audit.outputs.moderate }}
+  - Low: ${{ steps.audit.outputs.low }}
+
+${${{ steps.audit.outputs.critical }} > 0 ? '⚠️ **Action Required:** Critical vulnerabilities detected. Auto-heal should address these.' : ''}
+
+---
+
+### 🏗️ Build Status
+- **Main Build:** ${{ steps.build.outputs.status }}
+- **Bundle Size:** ${{ steps.bundle.outputs.size }}
+
+---
+
+### 🧪 Test Coverage
+- **Coverage:** ${{ steps.coverage.outputs.percentage }}%
+${parseFloat('${{ steps.coverage.outputs.percentage }}') < 80 ? '⚠️ Coverage below 80% threshold' : '✅ Coverage meets threshold'}
+
+---
+
+### 🔍 Code Quality
+- **Lint Errors:** ${{ steps.lint.outputs.errors }}
+- **Lint Warnings:** ${{ steps.lint.outputs.warnings }}
+${${{ steps.lint.outputs.errors }} > 0 ? '⚠️ Lint errors found - review needed' : '✅ No lint errors'}
+
+---
+
+### 🌿 Branch Status
+${branchStatus.map(b => `- **${b.name}:** ${b.status}`).join('\n')}
+
+---
+
+### 📈 Trends
+- Previous vulnerabilities: [Track in ledger]
+- Coverage trend: [Track over time]
+
+---
+
+### 🎯 Recommended Actions
+
+${${{ steps.audit.outputs.critical }} > 0 ? '- 🚨 **IMMEDIATE:** Review and fix critical vulnerabilities\n' : ''}
+${${{ steps.audit.outputs.high }} > 0 ? '- ⚠️ **HIGH PRIORITY:** Address high severity vulnerabilities\n' : ''}
+${${{ steps.lint.outputs.errors }} > 0 ? '- 🔧 Fix lint errors\n' : ''}
+${parseFloat('${{ steps.coverage.outputs.percentage }}') < 80 ? '- 🧪 Increase test coverage\n' : ''}
+${branchStatus.some(b => b.status === '❌') ? '- 🔨 Fix failing branch builds\n' : ''}
+
+---
+
+🤖 *Generated by Comprehensive Health Dashboard*
+`;
+
+            // Determine if we should create an issue or discussion
+            const shouldCreateIssue = 
+              ${{ steps.audit.outputs.critical }} > 0 ||
+              ${{ steps.lint.outputs.errors }} > 10;
+            
+            if (shouldCreateIssue) {
+              // Create issue for critical items
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `📊 Daily Health Report - ${alertLevel}`,
+                body: report,
+                labels: ['health-report', 'automated']
+              });
+            } else {
+              // Just log for info
+              console.log(report);
+            }
+      
+      # Record to ledger
+      - name: Record health report to ledger
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          mkdir -p .bick/ledger/$DATE
+          cat > .bick/ledger/$DATE/health-report-${{ github.run_id }}.json << EOF
+          {
+            "id": "health-report-${{ github.run_id }}",
+            "ts": "$(date -Iseconds)",
+            "kind": "health-report",
+            "subject": "daily-health-check",
+            "payload": {
+              "vulnerabilities": {
+                "total": "${{ steps.audit.outputs.total }}",
+                "critical": "${{ steps.audit.outputs.critical }}",
+                "high": "${{ steps.audit.outputs.high }}",
+                "moderate": "${{ steps.audit.outputs.moderate }}",
+                "low": "${{ steps.audit.outputs.low }}"
+              },
+              "build_status": "${{ steps.build.outputs.status }}",
+              "coverage_percentage": "${{ steps.coverage.outputs.percentage }}",
+              "lint_errors": "${{ steps.lint.outputs.errors }}",
+              "lint_warnings": "${{ steps.lint.outputs.warnings }}",
+              "bundle_size": "${{ steps.bundle.outputs.size }}"
+            },
+            "hash": "health-$(date +%s)",
+            "parentId": null
+          }
+          EOF
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .bick/ledger/
+          git commit -m "chore: add health report ledger entry [skip ci]" || true
+          git push || true

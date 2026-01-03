@@ -1,0 +1,297 @@
+name: PR Orchestrator
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  schedule:
+    # Clean up stale PRs daily at 3 AM UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  # Job 1: Auto-label PRs
+  auto-label:
+    name: Auto-label PR
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Analyze PR changes
+        id: analyze
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number
+            });
+            
+            const labels = new Set();
+            let riskLevel = 'low';
+            
+            // Analyze file changes
+            for (const file of files) {
+              // Dependencies
+              if (file.filename.match(/package.*\.json/)) {
+                labels.add('dependencies');
+                riskLevel = file.additions > 5 ? 'medium' : 'low';
+              }
+              
+              // Documentation
+              if (file.filename.match(/\.(md|txt)$/i)) {
+                labels.add('documentation');
+              }
+              
+              // Tests
+              if (file.filename.match(/\.(test|spec)\./)) {
+                labels.add('tests');
+              }
+              
+              // Source code
+              if (file.filename.match(/^src\//) && file.filename.match(/\.(ts|tsx|js|jsx)$/)) {
+                // API changes are higher risk
+                if (file.filename.match(/\/api\//)) {
+                  labels.add('api');
+                  riskLevel = 'high';
+                }
+                
+                // Component changes
+                if (file.filename.match(/\/components\//)) {
+                  labels.add('ui');
+                  riskLevel = riskLevel === 'high' ? 'high' : 'medium';
+                }
+                
+                // Database changes
+                if (file.filename.match(/prisma|database/i)) {
+                  labels.add('database');
+                  riskLevel = 'high';
+                }
+              }
+              
+              // Config changes
+              if (file.filename.match(/\.(config|json|yml|yaml)$/) && !file.filename.match(/package/)) {
+                labels.add('configuration');
+                riskLevel = riskLevel === 'high' ? 'high' : 'medium';
+              }
+              
+              // Workflow changes
+              if (file.filename.match(/^\.github\/workflows\//)) {
+                labels.add('ci-cd');
+                riskLevel = 'high';
+              }
+            }
+            
+            // Determine PR type from title
+            const title = context.payload.pull_request.title.toLowerCase();
+            if (title.match(/^fix[:(]/)) labels.add('bugfix');
+            if (title.match(/^feat[:(]/)) labels.add('feature');
+            if (title.match(/^chore[:(]/)) labels.add('chore');
+            if (title.match(/^docs[:(]/)) labels.add('documentation');
+            if (title.match(/^refactor[:(]/)) labels.add('refactor');
+            if (title.match(/^perf[:(]/)) labels.add('performance');
+            if (title.match(/^test[:(]/)) labels.add('tests');
+            
+            // Add risk level label
+            labels.add(`risk:${riskLevel}`);
+            
+            // Determine auto-merge eligibility
+            const autoMergeEligible = riskLevel === 'low' && 
+              (labels.has('dependencies') || labels.has('documentation') || labels.has('chore'));
+            
+            if (autoMergeEligible) {
+              labels.add('auto-merge-eligible');
+            }
+            
+            return {
+              labels: Array.from(labels),
+              riskLevel,
+              autoMergeEligible
+            };
+      
+      - name: Apply labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const analysis = ${{ steps.analyze.outputs.result }};
+            
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: analysis.labels
+            });
+            
+            // Add comment with risk assessment
+            const riskEmoji = {
+              low: '🟢',
+              medium: '🟡',
+              high: '🔴'
+            };
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `## 🤖 Automatic PR Analysis\n\n**Risk Level:** ${riskEmoji[analysis.riskLevel]} ${analysis.riskLevel.toUpperCase()}\n**Labels Applied:** ${analysis.labels.join(', ')}\n**Auto-merge Eligible:** ${analysis.autoMergeEligible ? '✅ Yes' : '❌ No'}\n\n${analysis.autoMergeEligible ? '✨ This PR is eligible for automatic merge after checks pass.' : '👀 This PR requires manual review before merge.'}\n\n---\n🤖 Generated by PR Orchestrator`
+            });
+
+  # Job 2: Auto-rebase PRs
+  auto-rebase:
+    name: Auto-rebase PR
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Check if rebase needed
+        id: check
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          BASE_SHA=$(git rev-parse origin/${{ github.event.pull_request.base.ref }})
+          MERGE_BASE=$(git merge-base HEAD $BASE_SHA)
+          
+          if [ "$MERGE_BASE" != "$BASE_SHA" ]; then
+            echo "rebase_needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "rebase_needed=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Comment about outdated base
+        if: steps.check.outputs.rebase_needed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `## 🔄 Base Branch Update Detected\n\nThe base branch \`${context.payload.pull_request.base.ref}\` has been updated.\n\n**Action:** Please rebase or merge the latest changes to resolve any conflicts.\n\n\`\`\`bash\ngit fetch origin\ngit rebase origin/${context.payload.pull_request.base.ref}\n\`\`\`\n\n---\n🤖 Generated by PR Orchestrator`
+            });
+
+  # Job 3: Clean up stale PRs
+  cleanup-stale:
+    name: Cleanup Stale PRs
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Find and close stale draft PRs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pulls } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            });
+            
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            for (const pr of pulls) {
+              const updatedAt = new Date(pr.updated_at);
+              
+              // Close draft PRs older than 30 days
+              if (pr.draft && updatedAt < thirtyDaysAgo) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  body: `## 🧹 Closing Stale Draft PR\n\nThis draft PR has been inactive for over 30 days and is being automatically closed.\n\nIf you still need this PR:\n1. Re-open it\n2. Update the code\n3. Mark it as ready for review\n\n---\n🤖 Generated by PR Orchestrator`
+                });
+                
+                await github.rest.pulls.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number,
+                  state: 'closed'
+                });
+                
+                console.log(`Closed stale draft PR #${pr.number}`);
+              }
+              
+              // Comment on stale non-draft PRs (14+ days)
+              const fourteenDaysAgo = new Date();
+              fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+              
+              if (!pr.draft && updatedAt < fourteenDaysAgo) {
+                const { data: comments } = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number
+                });
+                
+                const hasStaleComment = comments.some(c => 
+                  c.body.includes('Stale PR Reminder') && 
+                  c.user.login === 'github-actions[bot]'
+                );
+                
+                if (!hasStaleComment) {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: pr.number,
+                    body: `## ⏰ Stale PR Reminder\n\nThis PR has been inactive for over 14 days.\n\n**Suggestions:**\n- Update the code with latest changes from base branch\n- Request review from team members\n- Close if no longer needed\n- Convert to draft if still work in progress\n\nThe PR will remain open but will receive periodic reminders.\n\n---\n🤖 Generated by PR Orchestrator`
+                  });
+                  
+                  console.log(`Commented on stale PR #${pr.number}`);
+                }
+              }
+            }
+
+  # Job 4: Conflict detection
+  detect-conflicts:
+    name: Detect Merge Conflicts
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Check for conflicts
+        id: conflicts
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          
+          # Try to merge base into head
+          git merge --no-commit --no-ff origin/${{ github.event.pull_request.base.ref }} || {
+            echo "has_conflicts=true" >> $GITHUB_OUTPUT
+            git merge --abort
+            exit 0
+          }
+          
+          echo "has_conflicts=false" >> $GITHUB_OUTPUT
+          git merge --abort || true
+      
+      - name: Comment about conflicts
+        if: steps.conflicts.outputs.has_conflicts == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `## ⚠️ Merge Conflicts Detected\n\nThis PR has conflicts with the base branch \`${context.payload.pull_request.base.ref}\`.\n\n**To resolve:**\n\`\`\`bash\ngit fetch origin\ngit merge origin/${context.payload.pull_request.base.ref}\n# Resolve conflicts in your editor\ngit add .\ngit commit\ngit push\n\`\`\`\n\n---\n🤖 Generated by PR Orchestrator`
+            });
+            
+            // Add label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: ['conflicts']
+            });
