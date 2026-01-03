@@ -135,6 +135,7 @@ jobs:
         id: prune
         run: |
           # Run ts-prune with ignore patterns to filter out Next.js framework requirements
+          # Note: ts-prune doesn't support loading from .ts-prunerc, so patterns must be inline
           npx ts-prune --error \
             --ignore "src/app/.*/page\.tsx" \
             --ignore "src/app/api/.*/route\.ts" \
@@ -148,13 +149,18 @@ jobs:
             > dead-code-report.txt || echo "Dead code found"
           
           # Filter out "(used in module)" entries - these are type definitions used internally
-          grep -v "(used in module)" dead-code-report.txt > dead-code-filtered.txt || true
-          
-          if [ -s dead-code-filtered.txt ]; then
-            echo "has_dead_code=true" >> $GITHUB_OUTPUT
-            echo "Dead code detected:"
-            cat dead-code-filtered.txt
-            mv dead-code-filtered.txt dead-code-report.txt
+          if [ -f dead-code-report.txt ] && [ -s dead-code-report.txt ]; then
+            grep -v "(used in module)" dead-code-report.txt > dead-code-filtered.txt || true
+            
+            if [ -s dead-code-filtered.txt ]; then
+              echo "has_dead_code=true" >> $GITHUB_OUTPUT
+              echo "Dead code detected:"
+              cat dead-code-filtered.txt
+              mv dead-code-filtered.txt dead-code-report.txt
+            else
+              echo "has_dead_code=false" >> $GITHUB_OUTPUT
+              echo "No dead code found (only type definitions)"
+            fi
           else
             echo "has_dead_code=false" >> $GITHUB_OUTPUT
             echo "No dead code found"

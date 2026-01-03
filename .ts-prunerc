@@ -1,4 +1,5 @@
 {
+  "comment": "NOTE: ts-prune doesn't currently support loading config from this file. This serves as documentation of ignore patterns. The auto-heal workflow duplicates these patterns inline.",
   "ignore": [
     "src/app/**/page.tsx",
     "src/app/**/layout.tsx",
