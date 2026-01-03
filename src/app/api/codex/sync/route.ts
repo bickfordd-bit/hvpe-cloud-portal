@@ -67,7 +67,8 @@ export async function POST(req: NextRequest) {
       })
     );
   } catch (error: unknown) {
-    logger.error('Codex sync endpoint error', { error: error.message });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error('Codex sync endpoint error', { error: errorMessage });
     return NextResponse.json(apiError(error), { status: 500 });
   }
 }

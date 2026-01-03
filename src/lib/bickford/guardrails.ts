@@ -8,22 +8,24 @@
 export function assertTimestampedAuthority(obj: unknown, path = 'root'): void {
   if (!obj || typeof obj !== 'object') return;
 
+  const record = obj as Record<string, unknown>;
+
   // If something claims authority, it must have ts
   if (
-    obj.authoritative === true ||
-    obj.kind === 'guardrail' ||
-    obj.kind === 'policy' ||
-    obj.kind === 'intent' ||
-    obj.mode === 'BICKFORD'
+    record.authoritative === true ||
+    record.kind === 'guardrail' ||
+    record.kind === 'policy' ||
+    record.kind === 'intent' ||
+    record.mode === 'BICKFORD'
   ) {
-    if (!obj.ts || typeof obj.ts !== 'string') {
+    if (!record.ts || typeof record.ts !== 'string') {
       throw new Error(`BICKFORD_GUARDRAIL: Missing ts for authoritative object at ${path}`);
     }
 
     // Validate ISO 8601 format
     const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
-    if (!isoRegex.test(obj.ts)) {
-      throw new Error(`BICKFORD_GUARDRAIL: Invalid timestamp format at ${path}: ${obj.ts}`);
+    if (!isoRegex.test(record.ts)) {
+      throw new Error(`BICKFORD_GUARDRAIL: Invalid timestamp format at ${path}: ${record.ts}`);
     }
   }
 
@@ -48,16 +50,22 @@ export interface BickfordDecision {
 }
 
 export function validateDecision(decision: unknown): decision is BickfordDecision {
-  if (!decision.ts || typeof decision.ts !== 'string') {
+  if (!decision || typeof decision !== 'object') {
+    throw new Error('BICKFORD_GUARDRAIL: Decision must be an object');
+  }
+
+  const record = decision as Record<string, unknown>;
+
+  if (!record.ts || typeof record.ts !== 'string') {
     throw new Error('BICKFORD_GUARDRAIL: Decision missing ts');
   }
-  if (!decision.kind || typeof decision.kind !== 'string') {
+  if (!record.kind || typeof record.kind !== 'string') {
     throw new Error('BICKFORD_GUARDRAIL: Decision missing kind');
   }
-  if (!decision.subject || typeof decision.subject !== 'string') {
+  if (!record.subject || typeof record.subject !== 'string') {
     throw new Error('BICKFORD_GUARDRAIL: Decision missing subject');
   }
-  if (decision.payload === undefined) {
+  if (record.payload === undefined) {
     throw new Error('BICKFORD_GUARDRAIL: Decision missing payload');
   }
   return true;
@@ -68,7 +76,13 @@ export function validateDecision(decision: unknown): decision is BickfordDecisio
  * Simple heuristic: reject actions that require new user behavior without strong justification.
  */
 export function checkOPTR_TTV(action: unknown): { approved: boolean; reason: string } {
-  if (action.requiresNewUserBehavior && !action.ttv_justification) {
+  if (!action || typeof action !== 'object') {
+    return { approved: true, reason: 'T2V check passed (no action data)' };
+  }
+
+  const record = action as Record<string, unknown>;
+
+  if (record.requiresNewUserBehavior && !record.ttv_justification) {
     return {
       approved: false,
       reason: 'OPTR T2V: Action requires new user behavior without T2V justification (90% rule)',

@@ -44,7 +44,10 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     console.error('[API KEY ERROR]', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to generate API key' },
+      {
+        error:
+          error instanceof Error ? error.message : String(error) || 'Failed to generate API key',
+      },
       { status: 500 }
     );
   }

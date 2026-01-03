@@ -47,7 +47,9 @@ export async function GET(req: NextRequest) {
       })
     );
   } catch (error: unknown) {
-    logger.error('Ledger query failed', { error: error.message });
+    logger.error('Ledger query failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(apiError(error), { status: 500 });
   }
 }

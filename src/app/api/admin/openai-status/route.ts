@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
     );
   } catch (error: unknown) {
     logger.error('Failed to check OpenAI key status', {
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     });
     return NextResponse.json(apiError(error), { status: 500 });
   }
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: unknown) {
     logger.error('Admin action failed', {
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     });
     return NextResponse.json(apiError(error), { status: 500 });
   }
