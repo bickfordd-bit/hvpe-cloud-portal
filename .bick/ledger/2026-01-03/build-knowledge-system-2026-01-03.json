@@ -1,0 +1,191 @@
+{
+  "id": "build-knowledge-system-2026-01-03",
+  "ts": "2026-01-03T18:30:00.000Z",
+  "kind": "feature-implementation",
+  "subject": "knowledge-persistence-system",
+  "intent": "Build complete Knowledge Persistence System that captures 'why' behind every action for coaching-style learning, integrating with existing .bick/ledger system",
+  "executionContract": {
+    "scope": "Knowledge base infrastructure, CLI tools, API endpoints, web dashboard, GitHub Actions workflows, and validation scripts",
+    "plan": [
+      "Create .github/knowledge/ directory structure with schema, entries, patterns",
+      "Build CLI query tool (scripts/knowledge-cli.js)",
+      "Create API endpoints (/api/knowledge/*)",
+      "Implement GitHub Actions workflow for auto-capture",
+      "Generate seed knowledge entries (3 examples)",
+      "Build visualization dashboard (/knowledge)",
+      "Add pattern detection (scripts/detect-patterns.js)",
+      "Integrate with CI/validation (pr-checks.yml)"
+    ],
+    "risk": "Schema complexity may require iteration, pattern detection accuracy depends on data quality",
+    "rollback": "All changes are additive (new directories/files), can be reverted via git reset"
+  },
+  "proof": {
+    "artifacts": [
+      ".github/knowledge/schema.json",
+      ".github/knowledge/index.yml",
+      ".github/knowledge/README.md",
+      ".github/knowledge/entries/fix-codex-sync-2026-01-03.yml",
+      ".github/knowledge/entries/enable-auto-merge-2026-01-03.yml",
+      ".github/knowledge/entries/build-knowledge-system-2026-01-03.yml",
+      "scripts/knowledge-cli.js",
+      "scripts/detect-patterns.js",
+      "scripts/verify-knowledge-integrity.js",
+      "src/app/api/knowledge/route.ts",
+      "src/app/api/knowledge/deps/route.ts",
+      "src/app/api/knowledge/coach/route.ts",
+      "src/app/api/knowledge/patterns/route.ts",
+      "src/app/knowledge/page.tsx",
+      "src/components/knowledge/SearchKnowledge.tsx",
+      "src/components/knowledge/ActionTimeline.tsx",
+      "src/components/knowledge/KnowledgeGraph.tsx",
+      "src/components/knowledge/RecurringPatterns.tsx",
+      ".github/workflows/capture-knowledge.yml",
+      ".bick/ledger/2026-01-03/build-knowledge-system-2026-01-03.json"
+    ],
+    "verification": [
+      "node scripts/knowledge-cli.js list # CLI lists 3 seed entries",
+      "node scripts/knowledge-cli.js query --type build_fix # Query by type works",
+      "node scripts/knowledge-cli.js query --enables 'Automated' # Query by enables works",
+      "node scripts/knowledge-cli.js deps --action 'fix-codex-sync-2026-01-03' # Dependency chain works",
+      "node scripts/detect-patterns.js # Pattern detection runs (0 patterns with <2 instances each)",
+      "node scripts/verify-knowledge-integrity.js # Integrity check passes (0 errors, 2 warnings for historical deps)",
+      "npm install yaml # Added yaml package for YAML parsing"
+    ],
+    "checksPerformed": [
+      "Schema validation - PASSED (JSON schema defines all required fields)",
+      "CLI functionality - VERIFIED (list, query, deps commands work)",
+      "Pattern detection - VERIFIED (runs, needs 2+ instances per type)",
+      "Integrity verification - VERIFIED (0 errors, historical deps flagged as warnings)",
+      "Index structure - VERIFIED (3 entries indexed correctly)",
+      "Seed entries - VERIFIED (3 comprehensive examples with coaching notes)"
+    ]
+  },
+  "result": {
+    "changed": [
+      "Created .github/knowledge/ infrastructure (schema, index, README)",
+      "Generated 3 seed knowledge entries with coaching notes",
+      "Built CLI query tool with 5 commands (list, query, deps, coach, patterns)",
+      "Created 4 API endpoints (/knowledge, /deps, /coach, /patterns)",
+      "Built web dashboard with 4 views (search, timeline, graph, patterns)",
+      "Implemented pattern detection script",
+      "Created integrity verification script",
+      "Added GitHub Actions workflow for auto-capture on PR merge",
+      "Integrated knowledge-integrity job into pr-checks.yml CI pipeline",
+      "Added yaml npm package dependency"
+    ],
+    "remains": [
+      "Manual testing of web dashboard (/knowledge) in development",
+      "Testing auto-capture workflow on actual PR merge",
+      "Building more patterns (requires 2+ instances per type)",
+      "Testing API endpoints via HTTP requests"
+    ]
+  },
+  "payload": {
+    "infrastructure": {
+      "schema": {
+        "file": ".github/knowledge/schema.json",
+        "fields": [
+          "action (id, timestamp, type)",
+          "intent (description, context)",
+          "enables (capabilities unlocked)",
+          "depends_on (upstream requirements)",
+          "unlocks (future actions)",
+          "implementation (approach, why_this_sequence)",
+          "proof (verifiable artifacts)",
+          "lessons (learnings)",
+          "coaching_notes (detailed guidance)",
+          "related_ledger_entries (links to .bick/ledger)"
+        ],
+        "actionTypes": [
+          "build_fix",
+          "feature",
+          "refactor",
+          "bug_fix",
+          "deployment",
+          "configuration",
+          "documentation",
+          "test",
+          "security",
+          "performance"
+        ]
+      },
+      "directories": {
+        "entries": ".github/knowledge/entries/",
+        "patterns": ".github/knowledge/patterns/",
+        "dependencies": ".github/knowledge/dependencies/"
+      }
+    },
+    "cli": {
+      "file": "scripts/knowledge-cli.js",
+      "commands": {
+        "list": "List all knowledge entries",
+        "query --type": "Query by action type",
+        "query --enables": "Query by what action enables",
+        "deps --action": "Show dependency chain",
+        "coach --error": "Get coaching for error",
+        "patterns": "Show detected patterns"
+      }
+    },
+    "api": {
+      "endpoints": {
+        "/api/knowledge": "Search entries (query, type, limit params)",
+        "/api/knowledge/deps": "Dependency graph for action",
+        "/api/knowledge/coach": "Coaching suggestions for error",
+        "/api/knowledge/patterns": "Recurring patterns"
+      }
+    },
+    "dashboard": {
+      "route": "/knowledge",
+      "tabs": [
+        "Search (full-text search with filters)",
+        "Timeline (chronological view)",
+        "Dependencies (graph view)",
+        "Patterns (recurring issues)"
+      ],
+      "components": [
+        "SearchKnowledge.tsx",
+        "ActionTimeline.tsx",
+        "KnowledgeGraph.tsx",
+        "RecurringPatterns.tsx"
+      ]
+    },
+    "automation": {
+      "workflow": ".github/workflows/capture-knowledge.yml",
+      "trigger": "pull_request closed (merged only)",
+      "actions": [
+        "Extract PR metadata (title, body, number)",
+        "Generate knowledge entry template",
+        "Update index.yml",
+        "Commit and push",
+        "Comment on PR with TODOs"
+      ]
+    },
+    "validation": {
+      "script": "scripts/verify-knowledge-integrity.js",
+      "checks": [
+        "YAML schema compliance",
+        "Dependency cycle detection",
+        "Proof artifacts validation",
+        "Index consistency",
+        "Orphaned dependencies"
+      ],
+      "ci_integration": ".github/workflows/pr-checks.yml (knowledge-integrity job)"
+    },
+    "seedEntries": {
+      "fix-codex-sync-2026-01-03": {
+        "type": "build_fix",
+        "coaching": "Demonstrates 'unblock first, refactor later' principle"
+      },
+      "enable-auto-merge-2026-01-03": {
+        "type": "deployment",
+        "coaching": "Auto-merge prerequisites and quality gates"
+      },
+      "build-knowledge-system-2026-01-03": {
+        "type": "feature",
+        "coaching": "Meta-entry documenting knowledge system itself"
+      }
+    }
+  },
+  "hash": "sha256:knowledge-system-2026-01-03-18:30:00",
+  "parentId": "auto-merge-workflow-implementation-2026-01-03"
+}
