@@ -1,57 +1,57 @@
 // src/components/chat/ChatDock.tsx
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Send } from "lucide-react";
+import { useState } from 'react';
+import { Send } from 'lucide-react';
 
-type Mode = "general" | "optr" | "bic" | "ovtr";
+type Mode = 'general' | 'optr' | 'bic' | 'ovtr';
 
 interface ChatMessage {
   id: string;
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
 }
 
 export default function ChatDock() {
-  const [mode] = useState<Mode>("general");
+  const [mode] = useState<Mode>('general');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function send() {
     if (!input.trim() || loading) return;
     const content = input.trim();
-    setInput("");
+    setInput('');
 
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
-      role: "user",
-      content
+      role: 'user',
+      content,
     };
     setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
 
     try {
-      const res = await fetch("/api/hvpe-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content, mode })
+      const res = await fetch('/api/hvpe-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: content, mode }),
       });
       const data = await res.json();
       const assistantMsg: ChatMessage = {
         id: crypto.randomUUID(),
-        role: "assistant",
-        content: data.reply || "[no response]"
+        role: 'assistant',
+        content: data.reply || '[no response]',
       };
       setMessages((prev) => [...prev, assistantMsg]);
-    } catch (e) {
+    } catch (e: unknown) {
       setMessages((prev) => [
         ...prev,
         {
           id: crypto.randomUUID(),
-          role: "assistant",
-          content: "Chat error – check /api/hvpe-chat logs."
-        }
+          role: 'assistant',
+          content: 'Chat error – check /api/hvpe-chat logs.',
+        },
       ]);
     } finally {
       setLoading(false);
@@ -59,7 +59,7 @@ export default function ChatDock() {
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       send();
     }
@@ -80,11 +80,11 @@ export default function ChatDock() {
         {messages.map((m) => (
           <div
             key={m.id}
-            className={`max-w-[90%] ${m.role === "user" ? "ml-auto text-right" : "mr-auto text-left"}`}
+            className={`max-w-[90%] ${m.role === 'user' ? 'ml-auto text-right' : 'mr-auto text-left'}`}
           >
             <div
               className={`inline-block whitespace-pre-wrap rounded-md px-2 py-1 ${
-                m.role === "user" ? "bg-[#0A1F44] text-white" : "bg-gray-100 text-gray-900"
+                m.role === 'user' ? 'bg-[#0A1F44] text-white' : 'bg-gray-100 text-gray-900'
               }`}
             >
               {m.content}

@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { OptrShell } from "@/components/optr/OptrShell";
-import { OptrOpportunityList } from "@/components/optr/OptrOpportunityList";
-import { optrClient } from "@/lib/optr/client";
-import type { Opportunity } from "@/lib/optr/types";
+import { useEffect, useMemo, useState } from 'react';
+import { OptrShell } from '@/components/optr/OptrShell';
+import { OptrOpportunityList } from '@/components/optr/OptrOpportunityList';
+import { optrClient } from '@/lib/optr/client';
+import type { Opportunity } from '@/lib/optr/types';
 
 export default function OptrHomePage() {
   const [items, setItems] = useState<Opportunity[]>([]);
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -17,8 +17,8 @@ export default function OptrHomePage() {
     try {
       const data = await optrClient.list();
       setItems(data);
-    } catch (e: any) {
-      setErr(e.message || "Failed to load opportunities.");
+    } catch (e: unknown) {
+      setErr(e.message || 'Failed to load opportunities.');
     }
   }
 
@@ -29,9 +29,7 @@ export default function OptrHomePage() {
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return items;
-    return items.filter((x) =>
-      `${x.title} ${x.agency} ${x.id}`.toLowerCase().includes(s)
-    );
+    return items.filter((x) => `${x.title} ${x.agency} ${x.id}`.toLowerCase().includes(s));
   }, [items, q]);
 
   async function seedMock() {
@@ -42,16 +40,16 @@ export default function OptrHomePage() {
       const deadline = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 14).toISOString();
       const created = await optrClient.create({
         id: `oppty_${Math.random().toString(16).slice(2)}`,
-        title: "Sample Opportunity (Mock)",
-        agency: "DEMO / TEST",
+        title: 'Sample Opportunity (Mock)',
+        agency: 'DEMO / TEST',
         deadline_iso: deadline,
-        source: "manual",
+        source: 'manual',
         links: [],
-        documents: []
+        documents: [],
       });
       setItems((prev) => [created, ...prev]);
-    } catch (e: any) {
-      setErr(e.message || "Failed to create mock.");
+    } catch (e: unknown) {
+      setErr(e.message || 'Failed to create mock.');
     } finally {
       setBusy(false);
     }

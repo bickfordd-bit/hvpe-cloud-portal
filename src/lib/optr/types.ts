@@ -1,16 +1,16 @@
-export type Phase = "I" | "D" | "M" | "V" | "O" | "S" | "HALT";
+export type Phase = 'I' | 'D' | 'M' | 'V' | 'O' | 'S' | 'HALT';
 
 export type Blocker = { code: string; detail: string };
 
 export interface OPTRState {
-  stage: "idle" | "ingestion" | "embeddings" | "retrieval" | "scoring" | "completed" | "error";
+  stage: 'idle' | 'ingestion' | 'embeddings' | 'retrieval' | 'scoring' | 'completed' | 'error';
   progress: number;
   message?: string;
 }
 
 export type DocumentRef = {
   id: string;
-  type: "pdf" | "docx" | "html" | "text";
+  type: 'pdf' | 'docx' | 'html' | 'text';
   sha256: string;
   filename: string;
 };
@@ -30,20 +30,20 @@ export type Opportunity = {
 export interface Trace {
   timestamp: string;
   stage: string;
-  status: "started" | "completed" | "failed";
+  status: 'started' | 'completed' | 'failed';
   message: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface Requirement {
   id: string;
   text: string;
-  priority: "high" | "medium" | "low";
+  priority: 'high' | 'medium' | 'low';
 }
 
 export interface ScoredRequirement extends Requirement {
   score: number;
-  status: "met" | "partial" | "gap";
+  status: 'met' | 'partial' | 'gap';
   matchedDocuments: string[];
   explanation?: string;
 }
@@ -66,5 +66,5 @@ export interface ScoredDocument {
   id: string;
   text: string;
   score: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }

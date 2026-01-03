@@ -12,10 +12,7 @@ export async function GET(req: NextRequest) {
     // Verify admin authentication
     const token = req.headers.get('x-admin-token');
     if (token !== process.env.ADMIN_DASH_TOKEN) {
-      return NextResponse.json(
-        apiError('Unauthorized'),
-        { status: 401 }
-      );
+      return NextResponse.json(apiError('Unauthorized'), { status: 401 });
     }
 
     const metadata = keyManager.getMetadata();
@@ -29,32 +26,33 @@ export async function GET(req: NextRequest) {
 
     logger.info('OpenAI key status checked by admin');
 
-    return NextResponse.json(apiSuccess({
-      keyPreview,
-      metadata: {
-        source: metadata.source,
-        createdAt: metadata.createdAt,
-        expiresAt: metadata.expiresAt,
-        usageCount: metadata.usageCount,
-        lastUsed: metadata.lastUsed
-      },
-      rateLimits: rateLimitStatus,
-      rotation: {
-        shouldRotate,
-        reason: shouldRotate
-          ? 'Key is older than 30 days or expired'
-          : 'Key is within recommended rotation period'
-      },
-      recommendations: [
-        shouldRotate && 'Rotate key at https://platform.openai.com/api-keys',
-        rateLimitStatus.shouldAlert && 'Consider upgrading OpenAI tier or reducing usage',
-        metadata.usageCount > 10000 && 'High usage detected, monitor costs'
-      ].filter(Boolean)
-    }));
-
-  } catch (error: any) {
+    return NextResponse.json(
+      apiSuccess({
+        keyPreview,
+        metadata: {
+          source: metadata.source,
+          createdAt: metadata.createdAt,
+          expiresAt: metadata.expiresAt,
+          usageCount: metadata.usageCount,
+          lastUsed: metadata.lastUsed,
+        },
+        rateLimits: rateLimitStatus,
+        rotation: {
+          shouldRotate,
+          reason: shouldRotate
+            ? 'Key is older than 30 days or expired'
+            : 'Key is within recommended rotation period',
+        },
+        recommendations: [
+          shouldRotate && 'Rotate key at https://platform.openai.com/api-keys',
+          rateLimitStatus.shouldAlert && 'Consider upgrading OpenAI tier or reducing usage',
+          metadata.usageCount > 10000 && 'High usage detected, monitor costs',
+        ].filter(Boolean),
+      })
+    );
+  } catch (error: unknown) {
     logger.error('Failed to check OpenAI key status', {
-      error: error.message
+      error: error.message,
     });
     return NextResponse.json(apiError(error), { status: 500 });
   }
@@ -68,10 +66,7 @@ export async function POST(req: NextRequest) {
     // Verify admin authentication
     const token = req.headers.get('x-admin-token');
     if (token !== process.env.ADMIN_DASH_TOKEN) {
-      return NextResponse.json(
-        apiError('Unauthorized'),
-        { status: 401 }
-      );
+      return NextResponse.json(apiError('Unauthorized'), { status: 401 });
     }
 
     const body = await req.json();
@@ -79,31 +74,33 @@ export async function POST(req: NextRequest) {
 
     if (action === 'validate') {
       const isValid = keyManager.validateKeyFormat();
-      return NextResponse.json(apiSuccess({
-        valid: isValid,
-        message: isValid
-          ? 'Key format is valid'
-          : 'Key format is invalid (should start with sk- and be 48-51 chars)'
-      }));
+      return NextResponse.json(
+        apiSuccess({
+          valid: isValid,
+          message: isValid
+            ? 'Key format is valid'
+            : 'Key format is invalid (should start with sk- and be 48-51 chars)',
+        })
+      );
     }
 
     if (action === 'reset-rate-limits') {
       // This would reset the in-memory rate limit counters
       // In production, you'd want to persist this to Redis or similar
       logger.info('Rate limit counters reset by admin');
-      return NextResponse.json(apiSuccess({
-        message: 'Rate limit counters reset'
-      }));
+      return NextResponse.json(
+        apiSuccess({
+          message: 'Rate limit counters reset',
+        })
+      );
     }
 
-    return NextResponse.json(
-      apiError('Invalid action. Supported: validate, reset-rate-limits'),
-      { status: 400 }
-    );
-
-  } catch (error: any) {
+    return NextResponse.json(apiError('Invalid action. Supported: validate, reset-rate-limits'), {
+      status: 400,
+    });
+  } catch (error: unknown) {
     logger.error('Admin action failed', {
-      error: error.message
+      error: error.message,
     });
     return NextResponse.json(apiError(error), { status: 500 });
   }

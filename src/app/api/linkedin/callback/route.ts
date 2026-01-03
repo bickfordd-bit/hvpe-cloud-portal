@@ -17,26 +17,18 @@ export async function GET(req: NextRequest) {
     // Check for OAuth errors
     if (error) {
       logger.error('LinkedIn OAuth error', { error });
-      return NextResponse.redirect(
-        new URL(`/dashboard?error=linkedin_auth_${error}`, req.url)
-      );
+      return NextResponse.redirect(new URL(`/dashboard?error=linkedin_auth_${error}`, req.url));
     }
 
     if (!code || !state) {
-      return NextResponse.json(
-        { error: 'Missing code or state parameter' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing code or state parameter' }, { status: 400 });
     }
 
     // Verify state for CSRF protection
     const savedState = req.cookies.get('linkedin_oauth_state')?.value;
     if (state !== savedState) {
       logger.error('LinkedIn OAuth state mismatch', { state, savedState });
-      return NextResponse.json(
-        { error: 'Invalid state parameter' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid state parameter' }, { status: 400 });
     }
 
     // Exchange code for access token
@@ -57,10 +49,8 @@ export async function GET(req: NextRequest) {
     logger.info('LinkedIn OAuth successful', { scope: tokenData.scope });
 
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('LinkedIn callback error', { error: error.message });
-    return NextResponse.redirect(
-      new URL('/dashboard?error=linkedin_callback_failed', req.url)
-    );
+    return NextResponse.redirect(new URL('/dashboard?error=linkedin_callback_failed', req.url));
   }
 }

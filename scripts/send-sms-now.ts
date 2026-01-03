@@ -2,12 +2,12 @@
  * Send SMS to Kathy directly using Twilio
  */
 
-import twilio from "twilio";
+import twilio from 'twilio';
 
-const accountSid = "ACb0a4821ebd89c68cdbee5b1f7dfb446a";
-const authToken = "74435130590eec2f3f8cc6ac28758936";
-const fromNumber = "+12765985129"; // Bickford SMS Number (verified local)
-const toNumber = "+12152057238"; // Target number
+const accountSid = 'ACb0a4821ebd89c68cdbee5b1f7dfb446a';
+const authToken = '74435130590eec2f3f8cc6ac28758936';
+const fromNumber = '+12765985129'; // Bickford SMS Number (verified local)
+const toNumber = '+12152057238'; // Target number
 
 const message = `Hi Kathy! 🎉
 
@@ -29,23 +29,22 @@ Any questions? Just text back!
 async function sendSMS() {
   try {
     const client = twilio(accountSid, authToken);
-    
-    console.log("📱 Sending SMS to Kathy...");
-    
+
+    console.log('📱 Sending SMS to Kathy...');
+
     const result = await client.messages.create({
       body: message,
       from: fromNumber,
-      to: toNumber
+      to: toNumber,
     });
 
-    console.log("\n✅ SMS SENT SUCCESSFULLY!");
+    console.log('\n✅ SMS SENT SUCCESSFULLY!');
     console.log(`📨 Message SID: ${result.sid}`);
     console.log(`📱 To: ${result.to}`);
     console.log(`📊 Status: ${result.status}`);
     console.log(`💰 Price: ${result.price || 'calculating...'}`);
-    
-  } catch (error: any) {
-    console.error("\n❌ FAILED TO SEND SMS");
+  } catch (error: unknown) {
+    console.error('\n❌ FAILED TO SEND SMS');
     console.error(`Error: ${error.message}`);
     if (error.code) {
       console.error(`Twilio Error Code: ${error.code}`);

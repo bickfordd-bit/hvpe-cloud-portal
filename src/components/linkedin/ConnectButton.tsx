@@ -3,17 +3,20 @@
 import { useState, useEffect } from 'react';
 
 export default function LinkedInConnectButton() {
-  const [connected, setConnected] = useState(false);
+  // Check if already connected during initialization
+  const isConnectedFromCallback =
+    typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('linkedin_connected') === 'true'
+      : false;
+
+  const [connected, setConnected] = useState(isConnectedFromCallback);
 
   useEffect(() => {
-    // Check if already connected (query param from callback)
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('linkedin_connected') === 'true') {
-      setConnected(true);
-      // Clean up URL
+    // Clean up URL if connected from callback
+    if (isConnectedFromCallback && typeof window !== 'undefined') {
       window.history.replaceState({}, '', window.location.pathname);
     }
-  }, []);
+  }, [isConnectedFromCallback]);
 
   const handleConnect = () => {
     window.location.href = '/api/linkedin/auth';

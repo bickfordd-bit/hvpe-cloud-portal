@@ -1,6 +1,6 @@
 /**
  * Bickford Homepage — Core Type Definitions
- * 
+ *
  * Zero-approval execution runtime types for intent parsing,
  * OPTR policy selection, execution, and ledger tracking.
  */
@@ -9,22 +9,22 @@
 // Intent Types
 // ============================================================================
 
-export type IntentType = 
-  | 'feature'        // Add/modify feature
-  | 'bugfix'         // Fix existing issue
-  | 'refactor'       // Code improvement
-  | 'docs'           // Documentation change
-  | 'config'         // Configuration update
-  | 'deploy'         // Deployment action
-  | 'query';         // Information request
+export type IntentType =
+  | 'feature' // Add/modify feature
+  | 'bugfix' // Fix existing issue
+  | 'refactor' // Code improvement
+  | 'docs' // Documentation change
+  | 'config' // Configuration update
+  | 'deploy' // Deployment action
+  | 'query'; // Information request
 
 export interface Intent {
   rawText: string;
   intentType: IntentType;
-  scope: string[];                // Affected files/modules
+  scope: string[]; // Affected files/modules
   timestamp: string;
-  confidence: number;             // 0-1 confidence in parsing
-  metadata?: Record<string, any>;
+  confidence: number; // 0-1 confidence in parsing
+  metadata?: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -40,7 +40,7 @@ export interface CanonMeta {
 }
 
 export interface Canon {
-  content: string;                // Full CANON.md content
+  content: string; // Full CANON.md content
   meta: CanonMeta;
   rules: CanonRule[];
 }
@@ -49,7 +49,7 @@ export interface CanonRule {
   id: string;
   category: 'invariant' | 'gate' | 'metric' | 'principle';
   description: string;
-  enforcement: 'hard' | 'soft';   // hard = block execution, soft = warn
+  enforcement: 'hard' | 'soft'; // hard = block execution, soft = warn
 }
 
 // ============================================================================
@@ -57,11 +57,11 @@ export interface CanonRule {
 // ============================================================================
 
 export interface OPTRScore {
-  ttv: number;                    // Time-to-value (lower is better)
-  risk: number;                   // Risk score (0-1)
-  cognitiveLoad: number;          // Cognitive load (0-1)
-  automationGain: number;         // Automation gain (0-1)
-  totalScore: number;             // Weighted combination
+  ttv: number; // Time-to-value (lower is better)
+  risk: number; // Risk score (0-1)
+  cognitiveLoad: number; // Cognitive load (0-1)
+  automationGain: number; // Automation gain (0-1)
+  totalScore: number; // Weighted combination
 }
 
 export interface Policy {
@@ -77,13 +77,13 @@ export interface Policy {
 export interface PolicyConstraint {
   type: 'canon_compliance' | 'non_interference' | 'monotonic_safety' | 'burden_reduction';
   description: string;
-  checkFn: string;                // Name of validation function
+  checkFn: string; // Name of validation function
 }
 
 export interface PolicyAction {
   type: 'git_commit' | 'api_call' | 'file_write' | 'notification';
   description: string;
-  params: Record<string, any>;
+  params: Record<string, unknown>;
 }
 
 export interface PolicyBinding {
@@ -98,7 +98,7 @@ export interface PolicyBinding {
 // Execution Types
 // ============================================================================
 
-export type ExecutionStatus = 
+export type ExecutionStatus =
   | 'PENDING'
   | 'VALIDATING'
   | 'EXECUTING'
@@ -111,7 +111,7 @@ export interface ExecutionPlan {
   intent: Intent;
   policyBinding: PolicyBinding;
   changes: FileChange[];
-  estimatedTTV: number;           // Estimated time-to-value in seconds
+  estimatedTTV: number; // Estimated time-to-value in seconds
   risks: Risk[];
 }
 
@@ -165,8 +165,8 @@ export interface LedgerEntry {
   executionResult?: Partial<ExecutionResult>;
   reasoning: string;
   artifacts: Artifact[];
-  hash: string;                   // SHA-256 of this entry
-  prevHash: string | null;        // Previous entry hash (chain)
+  hash: string; // SHA-256 of this entry
+  prevHash: string | null; // Previous entry hash (chain)
 }
 
 export interface Artifact {
@@ -186,7 +186,7 @@ export interface InvariantCheck {
   type: PolicyConstraint['type'];
   passed: boolean;
   message: string;
-  evidence?: any;
+  evidence?: unknown;
 }
 
 export interface InvariantResult {
@@ -200,9 +200,9 @@ export interface InvariantResult {
 // ============================================================================
 
 export interface ExecuteRequest {
-  intent: string;                 // Raw intent text
-  dryRun?: boolean;               // Preview only, no execution
-  skipApproval?: boolean;         // Force zero-approval mode (default true)
+  intent: string; // Raw intent text
+  dryRun?: boolean; // Preview only, no execution
+  skipApproval?: boolean; // Force zero-approval mode (default true)
 }
 
 export interface ExecuteResponse {
@@ -249,8 +249,6 @@ export interface BickfordConfig {
 // Utility Types
 // ============================================================================
 
-export type Result<T, E = Error> = 
-  | { ok: true; value: T }
-  | { ok: false; error: E };
+export type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E };
 
 export type Awaitable<T> = T | Promise<T>;

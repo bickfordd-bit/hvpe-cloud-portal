@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/Card";
+import { useState, useEffect } from 'react';
+import { Card } from '@/components/ui/Card';
 
 /**
  * Intent to Reality Valuation Panel
@@ -82,8 +82,8 @@ export function IntentToRealityPanel() {
         body: JSON.stringify({
           feature: 'intent-to-reality-valuation',
           usageId,
-          timestamp: new Date().toISOString()
-        })
+          timestamp: new Date().toISOString(),
+        }),
       });
 
       if (response.ok) {
@@ -93,7 +93,7 @@ export function IntentToRealityPanel() {
         setAccessGranted(false);
         setError('Access denied. This feature requires proper licensing.');
       }
-    } catch (_err) {
+    } catch (_err: unknown) {
       setAccessGranted(false);
       setError('Authentication required for valuation access.');
     }
@@ -113,8 +113,8 @@ export function IntentToRealityPanel() {
         headers: {
           'X-Usage-ID': usageId,
           'X-Feature-Access': 'intent-to-reality-valuation',
-          'X-Timestamp': new Date().toISOString()
-        }
+          'X-Timestamp': new Date().toISOString(),
+        },
       });
 
       if (!response.ok) {
@@ -130,7 +130,7 @@ export function IntentToRealityPanel() {
       const watermarkedResult = addDigitalWatermark(result, usageId);
 
       setData(watermarkedResult);
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setIsLoading(false);
@@ -145,25 +145,28 @@ export function IntentToRealityPanel() {
       usageId,
       timestamp: new Date().toISOString(),
       patent: 'Patent Pending - US Provisional Patent Application Filed',
-      confidentiality: 'CONFIDENTIAL - DO NOT DISTRIBUTE'
+      confidentiality: 'CONFIDENTIAL - DO NOT DISTRIBUTE',
     };
 
     // Embed watermark in data structure
     return {
       ...data,
       _watermark: watermark,
-      _integrity: generateIntegrityHash(data, watermark)
+      _integrity: generateIntegrityHash(data, watermark),
     };
   };
 
   // IP Protection: Integrity Verification
-  const generateIntegrityHash = (data: IntentToRealityData, watermark: Record<string, string>): string => {
+  const generateIntegrityHash = (
+    data: IntentToRealityData,
+    watermark: Record<string, string>
+  ): string => {
     const payload = JSON.stringify({ data, watermark });
     // Simple hash for demonstration - in production use crypto.subtle
     let hash = 0;
     for (let i = 0; i < payload.length; i++) {
       const char = payload.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash).toString(16);
@@ -181,7 +184,7 @@ export function IntentToRealityPanel() {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(value);
   };
 
@@ -242,7 +245,9 @@ export function IntentToRealityPanel() {
       {/* Main Value Display */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="text-center p-4 bg-gradient-to-br from-purple-900/50 to-purple-800/30 rounded-lg border border-purple-500/30">
-          <div className="text-xs text-purple-300 uppercase tracking-wide mb-2">Traditional Value</div>
+          <div className="text-xs text-purple-300 uppercase tracking-wide mb-2">
+            Traditional Value
+          </div>
           <div className="text-2xl font-bold text-purple-200">
             {formatCurrency(traditional.finalValuation)}
           </div>
@@ -268,7 +273,10 @@ export function IntentToRealityPanel() {
         <div className="text-sm font-medium text-neutral-200 mb-3">Trillion-Dollar Scenarios</div>
         <div className="space-y-3">
           {enhanced.trillionScenarios.map((scenario: TrillionScenario, index: number) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-neutral-900/50 rounded-lg">
+            <div
+              key={index}
+              className="flex items-center justify-between p-3 bg-neutral-900/50 rounded-lg"
+            >
               <div className="flex-1">
                 <div className="font-medium text-neutral-200">{scenario.scenario}</div>
                 <div className="text-xs text-neutral-400 mt-1">{scenario.description}</div>
@@ -293,19 +301,27 @@ export function IntentToRealityPanel() {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-neutral-400">Speed Value:</span>
-              <span className="text-blue-400">{formatCurrency(intentToReality.breakdown.speedValue)}</span>
+              <span className="text-blue-400">
+                {formatCurrency(intentToReality.breakdown.speedValue)}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-neutral-400">Complexity Value:</span>
-              <span className="text-purple-400">{formatCurrency(intentToReality.breakdown.complexityValue)}</span>
+              <span className="text-purple-400">
+                {formatCurrency(intentToReality.breakdown.complexityValue)}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-neutral-400">Disruption Value:</span>
-              <span className="text-red-400">{formatCurrency(intentToReality.breakdown.disruptionValue)}</span>
+              <span className="text-red-400">
+                {formatCurrency(intentToReality.breakdown.disruptionValue)}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-neutral-400">Velocity Value:</span>
-              <span className="text-emerald-400">{formatCurrency(intentToReality.breakdown.velocityValue)}</span>
+              <span className="text-emerald-400">
+                {formatCurrency(intentToReality.breakdown.velocityValue)}
+              </span>
             </div>
           </div>
         </div>
@@ -360,18 +376,14 @@ export function IntentToRealityPanel() {
           <div className="font-medium text-neutral-400">
             © 2025 Bickford Technologies LLC - All Rights Reserved
           </div>
-          <div>
-            Patent Pending - US Provisional Patent Application Filed
-          </div>
-          <div>
-            CONFIDENTIAL AND PROPRIETARY - Protected by US Patent Law
-          </div>
+          <div>Patent Pending - US Provisional Patent Application Filed</div>
+          <div>CONFIDENTIAL AND PROPRIETARY - Protected by US Patent Law</div>
           <div className="text-neutral-600">
             Usage ID: {usageId.slice(0, 8)}... | Generated: {new Date().toLocaleDateString()}
           </div>
           <div className="text-neutral-600 mt-2">
-            This valuation contains proprietary methodologies and algorithms.
-            Unauthorized use, reproduction, or distribution is strictly prohibited.
+            This valuation contains proprietary methodologies and algorithms. Unauthorized use,
+            reproduction, or distribution is strictly prohibited.
           </div>
         </div>
       </div>

@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/Card";
-import type { ValuationResult } from "@/lib/valuation/ValuationEngine";
+import { useState, useEffect } from 'react';
+import { Card } from '@/components/ui/Card';
+import type { ValuationResult } from '@/lib/valuation/ValuationEngine';
 
 interface ExtendedValuationResult extends ValuationResult {
   scenarioLabel?: string;
@@ -27,7 +27,7 @@ export function ValuationPanel() {
       const data = await response.json();
       setValuation(data.valuation);
       setSensitivity(data.sensitivityAnalysis || []);
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setIsLoading(false);
@@ -43,7 +43,7 @@ export function ValuationPanel() {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(value);
   };
 
@@ -82,7 +82,9 @@ export function ValuationPanel() {
           {/* Main Valuation */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-3 bg-neutral-900/50 rounded-lg">
-              <div className="text-xs text-neutral-500 uppercase tracking-wide">Final Valuation</div>
+              <div className="text-xs text-neutral-500 uppercase tracking-wide">
+                Final Valuation
+              </div>
               <div className="text-lg font-bold text-emerald-400 mt-1">
                 {formatCurrency(valuation.finalValuation)}
               </div>
@@ -114,15 +116,21 @@ export function ValuationPanel() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-neutral-400">DCF Valuation:</span>
-                  <span className="text-neutral-200">{formatCurrency(valuation.discountedCashFlow)}</span>
+                  <span className="text-neutral-200">
+                    {formatCurrency(valuation.discountedCashFlow)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-neutral-400">Market Multiples:</span>
-                  <span className="text-neutral-200">{formatCurrency(valuation.marketMultiples)}</span>
+                  <span className="text-neutral-200">
+                    {formatCurrency(valuation.marketMultiples)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-neutral-400">Risk Adjustment:</span>
-                  <span className="text-red-400">-{formatCurrency(valuation.breakdown.riskDiscount)}</span>
+                  <span className="text-red-400">
+                    -{formatCurrency(valuation.breakdown.riskDiscount)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -132,15 +140,21 @@ export function ValuationPanel() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-neutral-400">IP Value:</span>
-                  <span className="text-blue-400">{formatCurrency(valuation.breakdown.ipValue)}</span>
+                  <span className="text-blue-400">
+                    {formatCurrency(valuation.breakdown.ipValue)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-neutral-400">Growth Value:</span>
-                  <span className="text-emerald-400">+{formatCurrency(valuation.breakdown.growthValue)}</span>
+                  <span className="text-emerald-400">
+                    +{formatCurrency(valuation.breakdown.growthValue)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-neutral-400">Market Premium:</span>
-                  <span className="text-yellow-400">+{formatCurrency(valuation.breakdown.marketPremium)}</span>
+                  <span className="text-yellow-400">
+                    +{formatCurrency(valuation.breakdown.marketPremium)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -165,7 +179,10 @@ export function ValuationPanel() {
               <div className="text-sm font-medium text-neutral-200 mb-3">Sensitivity Analysis</div>
               <div className="space-y-2">
                 {sensitivity.map((scenario, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-neutral-900/50 rounded">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-2 bg-neutral-900/50 rounded"
+                  >
                     <span className="text-sm text-neutral-300">{scenario.scenarioLabel}</span>
                     <span className="text-sm font-medium text-emerald-400">
                       {formatCurrency(scenario.finalValuation)}

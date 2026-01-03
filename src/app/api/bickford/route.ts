@@ -13,13 +13,15 @@ import { logger } from '@/lib/logger';
 export async function GET(req: NextRequest) {
   try {
     const mode = loadBickfordMode();
-    
-    return NextResponse.json(apiSuccess({
-      active: isBickfordMode(),
-      mode: mode || null,
-      ts: new Date().toISOString(),
-    }));
-  } catch (error: any) {
+
+    return NextResponse.json(
+      apiSuccess({
+        active: isBickfordMode(),
+        mode: mode || null,
+        ts: new Date().toISOString(),
+      })
+    );
+  } catch (error: unknown) {
     logger.error('Bickford status check failed', { error: error.message });
     return NextResponse.json(apiError(error), { status: 500 });
   }
@@ -31,7 +33,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    
+
     // Validate required fields
     if (!body.ts || !body.kind || !body.subject || body.payload === undefined) {
       return NextResponse.json(
@@ -48,11 +50,14 @@ export async function POST(req: NextRequest) {
       parentId: body.parentId,
     });
 
-    return NextResponse.json(apiSuccess({
-      entryId,
-      ts: body.ts,
-    }), { status: 201 });
-  } catch (error: any) {
+    return NextResponse.json(
+      apiSuccess({
+        entryId,
+        ts: body.ts,
+      }),
+      { status: 201 }
+    );
+  } catch (error: unknown) {
     logger.error('Ledger write failed', { error: error.message });
     return NextResponse.json(apiError(error), { status: 500 });
   }

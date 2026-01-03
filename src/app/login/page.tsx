@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [passcode, setPasscode] = useState("");
+  const [email, setEmail] = useState('');
+  const [passcode, setPasscode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -14,25 +14,25 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, passcode })
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, passcode }),
       });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.message || "Login failed");
+        setError(data.message || 'Login failed');
         setLoading(false);
         return;
       }
 
       const data = await res.json();
-      const redirectTo = data.redirectTo || "/dashboard";
+      const redirectTo = data.redirectTo || '/dashboard';
       window.location.href = redirectTo;
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      setError("Something went wrong. Try again.");
+      setError('Something went wrong. Try again.');
       setLoading(false);
     }
   }
@@ -70,7 +70,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-full bg-white py-2 text-sm font-medium text-black disabled:opacity-60"
           >
-            {loading ? "Signing in…" : "Sign in"}
+            {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
       </div>

@@ -2,12 +2,12 @@
  * Send Derek the Bickford app download link
  */
 
-import twilio from "twilio";
+import twilio from 'twilio';
 
-const accountSid = "ACb0a4821ebd89c68cdbee5b1f7dfb446a";
-const authToken = "74435130590eec2f3f8cc6ac28758936";
-const fromNumber = "+18555528521";
-const toNumber = "+12152057238"; // Derek's number
+const accountSid = 'ACb0a4821ebd89c68cdbee5b1f7dfb446a';
+const authToken = '74435130590eec2f3f8cc6ac28758936';
+const fromNumber = '+18555528521';
+const toNumber = '+12152057238'; // Derek's number
 
 const message = `🚀 Your Bickford Instance is Ready!
 
@@ -37,22 +37,21 @@ Need help? Text back anytime.
 async function sendToDerek() {
   try {
     const client = twilio(accountSid, authToken);
-    
-    console.log("📱 Sending your Bickford instance...");
-    
+
+    console.log('📱 Sending your Bickford instance...');
+
     const result = await client.messages.create({
       body: message,
       from: fromNumber,
-      to: toNumber
+      to: toNumber,
     });
 
-    console.log("\n✅ SMS SENT!");
+    console.log('\n✅ SMS SENT!');
     console.log(`📨 Message SID: ${result.sid}`);
     console.log(`📱 To: ${result.to}`);
     console.log(`📊 Status: ${result.status}`);
-    
-  } catch (error: any) {
-    console.error("\n❌ FAILED");
+  } catch (error: unknown) {
+    console.error('\n❌ FAILED');
     console.error(`Error: ${error.message}`);
   }
 }

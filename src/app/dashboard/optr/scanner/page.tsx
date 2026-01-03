@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 export default function OPTRScanner() {
   const [loading, setLoading] = useState(true);
-  const [opps, setOpps] = useState<any[]>([]);
+  const [opps, setOpps] = useState<unknown[]>([]);
 
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/api/optr/top10");
+        const res = await fetch('/api/optr/top10');
         const data = await res.json();
         setOpps(data.results || []);
-      } catch (err) {
-        console.error("Failed to load opportunities", err);
+      } catch (err: unknown) {
+        console.error('Failed to load opportunities', err);
       } finally {
         setLoading(false);
       }
@@ -30,7 +30,7 @@ export default function OPTRScanner() {
       <h1 className="mb-6 text-2xl">Top 10 Federal Opportunities (Live OPTR Scan)</h1>
 
       <div className="space-y-6">
-        {opps.map((opp: any, i: number) => (
+        {opps.map((opp: unknown, i: number) => (
           <a
             key={i}
             href={`/dashboard/optr/${opp.id ?? i + 1}`}
@@ -39,7 +39,7 @@ export default function OPTRScanner() {
             <h2 className="text-xl font-semibold">{opp.title}</h2>
             <p className="text-sm text-neutral-400">{opp.agency}</p>
             <p className="mt-1 text-xs text-neutral-500">Due: {opp.responseDate}</p>
-            {typeof opp.readinessScore === "number" && (
+            {typeof opp.readinessScore === 'number' && (
               <p className="mt-1 text-xs text-neutral-400">
                 Readiness: {opp.readinessScore}% · {opp.status}
               </p>

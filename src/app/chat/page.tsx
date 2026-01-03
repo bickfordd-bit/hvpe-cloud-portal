@@ -1,23 +1,23 @@
 // src/app/chat/page.tsx
-"use client";
+'use client';
 
-import { useState, type ReactNode } from "react";
-import DoDLayout from "@/components/layout/DoDLayout";
-import { Send, Shield, Crosshair, Cpu, Workflow } from "lucide-react";
+import { useState, type ReactNode } from 'react';
+import DoDLayout from '@/components/layout/DoDLayout';
+import { Send, Shield, Crosshair, Cpu, Workflow } from 'lucide-react';
 
-type Mode = "general" | "optr" | "bic" | "ovtr";
+type Mode = 'general' | 'optr' | 'bic' | 'ovtr';
 
 interface ChatMessage {
   id: string;
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
   mode: Mode;
 }
 
 export default function ChatPage() {
-  const [mode, setMode] = useState<Mode>("general");
+  const [mode, setMode] = useState<Mode>('general');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,51 +26,51 @@ export default function ChatPage() {
 
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
-      role: "user",
+      role: 'user',
       content: input.trim(),
-      mode
+      mode,
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+    setInput('');
     setError(null);
     setLoading(true);
 
     try {
-      const res = await fetch("/api/hvpe-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/hvpe-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage.content,
           mode,
-          context: buildContextForMode(mode)
-        })
+          context: buildContextForMode(mode),
+        }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Unknown error");
+        throw new Error(data.error || 'Unknown error');
       }
 
       const assistantMessage: ChatMessage = {
         id: crypto.randomUUID(),
-        role: "assistant",
+        role: 'assistant',
         content: data.reply,
-        mode
+        mode,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err?.message || "Request failed");
+      setError(err?.message || 'Request failed');
     } finally {
       setLoading(false);
     }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
@@ -86,9 +86,8 @@ export default function ChatPage() {
               BIC // Mission Assistant Console
             </h1>
             <p className="mt-1 max-w-2xl text-sm text-gray-700">
-              Secure conversational layer for OPTR, BIC, and OVTR. Use this
-              console to reason about opportunities, integrations, and mission
-              objectives in DoD terms.
+              Secure conversational layer for OPTR, BIC, and OVTR. Use this console to reason about
+              opportunities, integrations, and mission objectives in DoD terms.
             </p>
           </div>
           <ModeSelector mode={mode} onChange={setMode} />
@@ -99,9 +98,8 @@ export default function ChatPage() {
           <div className="flex-1 space-y-3 overflow-y-auto p-4">
             {messages.length === 0 && (
               <div className="flex h-full items-center justify-center px-8 text-center text-sm text-gray-500">
-                Select a mode (General, OPTR, BIC, or OVTR) and ask a question.
-                Example: “Evaluate the AI partnerships RFI in OPTR terms and
-                tell me what is blocking submission.”
+                Select a mode (General, OPTR, BIC, or OVTR) and ask a question. Example: “Evaluate
+                the AI partnerships RFI in OPTR terms and tell me what is blocking submission.”
               </div>
             )}
 
@@ -143,25 +141,17 @@ export default function ChatPage() {
   );
 }
 
-function ModeSelector({
-  mode,
-  onChange
-}: {
-  mode: Mode;
-  onChange: (m: Mode) => void;
-}) {
+function ModeSelector({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
   const modes: { id: Mode; label: string; icon: ReactNode }[] = [
-    { id: "general", label: "General", icon: <Shield size={14} /> },
-    { id: "optr", label: "OPTR", icon: <Crosshair size={14} /> },
-    { id: "bic", label: "BIC", icon: <Cpu size={14} /> },
-    { id: "ovtr", label: "OVTR", icon: <Workflow size={14} /> }
+    { id: 'general', label: 'General', icon: <Shield size={14} /> },
+    { id: 'optr', label: 'OPTR', icon: <Crosshair size={14} /> },
+    { id: 'bic', label: 'BIC', icon: <Cpu size={14} /> },
+    { id: 'ovtr', label: 'OVTR', icon: <Workflow size={14} /> },
   ];
 
   return (
     <div className="flex min-w-[260px] flex-col gap-1 rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
-      <div className="px-1 text-xs font-semibold uppercase tracking-wide text-gray-600">
-        Mode
-      </div>
+      <div className="px-1 text-xs font-semibold uppercase tracking-wide text-gray-600">Mode</div>
       <div className="flex flex-wrap gap-1">
         {modes.map((m) => {
           const active = mode === m.id;
@@ -171,8 +161,8 @@ function ModeSelector({
               onClick={() => onChange(m.id)}
               className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs transition ${
                 active
-                  ? "border-[#0A1F44] bg-[#0A1F44] text-white"
-                  : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100"
+                  ? 'border-[#0A1F44] bg-[#0A1F44] text-white'
+                  : 'border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100'
               }`}
             >
               {m.icon}
@@ -186,22 +176,16 @@ function ModeSelector({
 }
 
 function ChatBubble({ message }: { message: ChatMessage }) {
-  const isUser = message.role === "user";
-  const align = isUser ? "items-end" : "items-start";
-  const bubbleStyle = isUser
-    ? "bg-[#0A1F44] text-white"
-    : "bg-gray-100 text-gray-900";
-  const label = isUser ? "You" : modeLabel(message.mode);
+  const isUser = message.role === 'user';
+  const align = isUser ? 'items-end' : 'items-start';
+  const bubbleStyle = isUser ? 'bg-[#0A1F44] text-white' : 'bg-gray-100 text-gray-900';
+  const label = isUser ? 'You' : modeLabel(message.mode);
 
   return (
     <div className={`flex ${align}`}>
       <div className="max-w-[80%]">
-        <div className="mb-0.5 text-[10px] uppercase tracking-wide text-gray-500">
-          {label}
-        </div>
-        <div
-          className={`whitespace-pre-wrap rounded-md px-3 py-2 text-sm ${bubbleStyle}`}
-        >
+        <div className="mb-0.5 text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
+        <div className={`whitespace-pre-wrap rounded-md px-3 py-2 text-sm ${bubbleStyle}`}>
           {message.content}
         </div>
       </div>
@@ -211,40 +195,37 @@ function ChatBubble({ message }: { message: ChatMessage }) {
 
 function modeLabel(mode: Mode): string {
   switch (mode) {
-    case "optr":
-      return "OPTR Engine";
-    case "bic":
-      return "BIC Engine";
-    case "ovtr":
-      return "OVTR Orchestrator";
-    case "general":
+    case 'optr':
+      return 'OPTR Engine';
+    case 'bic':
+      return 'BIC Engine';
+    case 'ovtr':
+      return 'OVTR Orchestrator';
+    case 'general':
     default:
-      return "Assistant";
+      return 'Assistant';
   }
 }
 
-function buildContextForMode(mode: Mode): any {
+function buildContextForMode(mode: Mode): unknown {
   switch (mode) {
-    case "optr":
+    case 'optr':
       return {
-        engine: "OPTR",
-        note:
-          "Inject current opportunity, R/E/P/S status, gaps, and confidence score here."
+        engine: 'OPTR',
+        note: 'Inject current opportunity, R/E/P/S status, gaps, and confidence score here.',
       };
-    case "bic":
+    case 'bic':
       return {
-        engine: "BIC",
-        note:
-          "Inject system inventory, legacy platforms, and integration objectives here."
+        engine: 'BIC',
+        note: 'Inject system inventory, legacy platforms, and integration objectives here.',
       };
-    case "ovtr":
+    case 'ovtr':
       return {
-        engine: "OVTR",
-        note:
-          "Inject summary of OPTR and BIC states so OVTR can decide which is primary."
+        engine: 'OVTR',
+        note: 'Inject summary of OPTR and BIC states so OVTR can decide which is primary.',
       };
-    case "general":
+    case 'general':
     default:
-      return { engine: "General" };
+      return { engine: 'General' };
   }
 }

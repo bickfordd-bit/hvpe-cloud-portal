@@ -3,7 +3,11 @@
  * Centralizes prompt construction across all chat endpoints
  */
 
-import { formatBickfordKnowledgePackage, formatBickfordModeSummary, BickfordMode } from './knowledge';
+import {
+  formatBickfordKnowledgePackage,
+  formatBickfordModeSummary,
+  BickfordMode,
+} from './knowledge';
 
 export const UNIFIED_AGENT_ID = 'bickford-unified';
 
@@ -96,7 +100,7 @@ export function buildUnifiedAgentPrompt(options: UnifiedAgentOptions): string {
  */
 export function buildModePrompt(
   mode: string,
-  context?: any,
+  context?: unknown,
   bickfordMode?: BickfordMode | null
 ): string {
   const baseOptions: UnifiedAgentOptions = { mode, bickfordMode };

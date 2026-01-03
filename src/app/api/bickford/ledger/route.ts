@@ -18,7 +18,7 @@ import { logger } from '@/lib/logger';
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
-    
+
     const results = await queryLedger({
       kind: searchParams.get('kind') || undefined,
       subject: searchParams.get('subject') || undefined,
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     });
 
     // Parse payloadJson for response
-    const entries = results.map(entry => ({
+    const entries = results.map((entry) => ({
       id: entry.id,
       ts: entry.ts,
       kind: entry.kind,
@@ -39,12 +39,14 @@ export async function GET(req: NextRequest) {
       createdAt: entry.createdAt,
     }));
 
-    return NextResponse.json(apiSuccess({
-      entries,
-      count: entries.length,
-      ts: new Date().toISOString(),
-    }));
-  } catch (error: any) {
+    return NextResponse.json(
+      apiSuccess({
+        entries,
+        count: entries.length,
+        ts: new Date().toISOString(),
+      })
+    );
+  } catch (error: unknown) {
     logger.error('Ledger query failed', { error: error.message });
     return NextResponse.json(apiError(error), { status: 500 });
   }

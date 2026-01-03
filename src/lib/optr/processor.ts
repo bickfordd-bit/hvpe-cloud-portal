@@ -36,23 +36,41 @@ export async function processOpportunity(
       opportunity.requirements,
       mergedConfig.maxConcurrentEmbeddings!
     );
-    traces.push(createTrace('embeddings', 'completed', `Generated ${requirements.length} embeddings`));
+    traces.push(
+      createTrace('embeddings', 'completed', `Generated ${requirements.length} embeddings`)
+    );
 
     // Stage 3: Retrieve relevant documents (stub for now - will add vector DB later)
     traces.push(createTrace('retrieval', 'started', 'Searching for matching documents'));
     const documents = await retrieveDocuments(requirements, mergedConfig.topK!);
-    traces.push(createTrace('retrieval', 'completed', `Found ${documents.length} relevant documents`));
+    traces.push(
+      createTrace('retrieval', 'completed', `Found ${documents.length} relevant documents`)
+    );
 
     // Stage 4: Score requirements
     traces.push(createTrace('scoring', 'started', 'Scoring requirements against documents'));
-    const scoredRequirements = await scoreRequirements(requirements, documents, mergedConfig.similarityThreshold!);
-    traces.push(createTrace('scoring', 'completed', `Scored ${scoredRequirements.length} requirements`));
+    const scoredRequirements = await scoreRequirements(
+      requirements,
+      documents,
+      mergedConfig.similarityThreshold!
+    );
+    traces.push(
+      createTrace('scoring', 'completed', `Scored ${scoredRequirements.length} requirements`)
+    );
 
     // Stage 5: Calculate aggregate metrics
-    const avgScore = scoredRequirements.reduce((sum, r) => sum + r.score, 0) / scoredRequirements.length;
-    const coverage = scoredRequirements.filter(r => r.score >= 70).length / scoredRequirements.length;
+    const avgScore =
+      scoredRequirements.reduce((sum, r) => sum + r.score, 0) / scoredRequirements.length;
+    const coverage =
+      scoredRequirements.filter((r) => r.score >= 70).length / scoredRequirements.length;
 
-    traces.push(createTrace('aggregation', 'completed', `Average score: ${avgScore.toFixed(1)}%, Coverage: ${(coverage * 100).toFixed(1)}%`));
+    traces.push(
+      createTrace(
+        'aggregation',
+        'completed',
+        `Average score: ${avgScore.toFixed(1)}%, Coverage: ${(coverage * 100).toFixed(1)}%`
+      )
+    );
 
     const result: RunResult = {
       success: true,
@@ -74,7 +92,7 @@ export async function processOpportunity(
     });
 
     return result;
-  } catch (error) {
+  } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error('OPTR pipeline failed', { opportunityId, error: errorMessage });
 
@@ -110,7 +128,7 @@ async function fetchOpportunity(opportunityId: string) {
     id: opportunity.id,
     title: opportunity.title,
     description: opportunity.description || '',
-    requirements: opportunity.requirements.map(r => ({
+    requirements: opportunity.requirements.map((r) => ({
       id: r.id,
       text: r.text,
       priority: r.priority as 'high' | 'medium' | 'low',
@@ -157,7 +175,11 @@ async function retrieveDocuments(
   return mockDocs.slice(0, topK);
 }
 
-function createTrace(stage: string, status: 'started' | 'completed' | 'failed', message: string): Trace {
+function createTrace(
+  stage: string,
+  status: 'started' | 'completed' | 'failed',
+  message: string
+): Trace {
   return {
     timestamp: new Date().toISOString(),
     stage,

@@ -1,13 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import {
-  TradingEngineData,
-  defaultTradingEngineData,
-} from "@/lib/tradingEngineData";
+import { TradingEngineData, defaultTradingEngineData } from '@/lib/tradingEngineData';
 
 export function useHvpeTrading() {
-  const [data, setData] =
-    useState<TradingEngineData>(defaultTradingEngineData);
+  const [data, setData] = useState<TradingEngineData>(defaultTradingEngineData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,22 +12,18 @@ export function useHvpeTrading() {
 
     const fetchData = async () => {
       try {
-        const res = await fetch("/api/hvpe-trading");
+        const res = await fetch('/api/hvpe-trading');
         if (!mounted) return;
         if (!res.ok) {
-          throw new Error(
-            `Trading request failed (${res.status} ${res.statusText})`,
-          );
+          throw new Error(`Trading request failed (${res.status} ${res.statusText})`);
         }
         const payload = (await res.json()) as TradingEngineData;
         setData(payload);
         setError(null);
-      } catch (err) {
-        console.error("Failed to load trading data", err);
+      } catch (err: unknown) {
+        console.error('Failed to load trading data', err);
         if (mounted) {
-          setError(
-            err instanceof Error ? err.message : "Unable to load trading data",
-          );
+          setError(err instanceof Error ? err.message : 'Unable to load trading data');
         }
       } finally {
         if (mounted) {

@@ -1,7 +1,7 @@
-import { NextResponse, NextRequest } from "next/server";
-import { ValuationEngine } from "@/lib/valuation/ValuationEngine";
-import { IntentToRealityEngine } from "@/lib/valuation/IntentToRealityEngine";
-import { defaultDashboardData } from "@/lib/hvpeDashboardData";
+import { NextResponse, NextRequest } from 'next/server';
+import { ValuationEngine } from '@/lib/valuation/ValuationEngine';
+import { IntentToRealityEngine } from '@/lib/valuation/IntentToRealityEngine';
+import { defaultDashboardData } from '@/lib/hvpeDashboardData';
 
 /**
  * Intent to Reality Valuation API
@@ -34,7 +34,7 @@ function checkRateLimit(identifier: string): boolean {
     // Reset or initialize rate limit
     rateLimitStore.set(identifier, {
       count: 1,
-      resetTime: now + RATE_LIMIT.windowMs
+      resetTime: now + RATE_LIMIT.windowMs,
     });
     return true;
   }
@@ -70,9 +70,8 @@ async function checkAuthentication(request: NextRequest): Promise<boolean> {
 function logUsage(request: NextRequest, response: Record<string, unknown>) {
   const usageId = request.headers.get('X-Usage-ID');
   const userAgent = request.headers.get('User-Agent');
-  const ip = request.headers.get('X-Forwarded-For') ||
-             request.headers.get('CF-Connecting-IP') ||
-             'unknown';
+  const ip =
+    request.headers.get('X-Forwarded-For') || request.headers.get('CF-Connecting-IP') || 'unknown';
 
   console.log(`[IP PROTECTION] Intent-to-Reality API Usage:`, {
     usageId,
@@ -80,7 +79,7 @@ function logUsage(request: NextRequest, response: Record<string, unknown>) {
     userAgent,
     timestamp: new Date().toISOString(),
     endpoint: '/api/valuation/intent-reality',
-    responseSize: JSON.stringify(response).length
+    responseSize: JSON.stringify(response).length,
   });
 
   // In production, store this in database for audit trail
@@ -97,16 +96,17 @@ export async function GET(request: NextRequest) {
           status: 401,
           headers: {
             'WWW-Authenticate': 'Bearer',
-            'X-IP-Protected': 'true'
-          }
+            'X-IP-Protected': 'true',
+          },
         }
       );
     }
 
     // IP Protection: Rate Limiting
-    const clientIP = request.headers.get('X-Forwarded-For') ||
-                     request.headers.get('CF-Connecting-IP') ||
-                     'unknown';
+    const clientIP =
+      request.headers.get('X-Forwarded-For') ||
+      request.headers.get('CF-Connecting-IP') ||
+      'unknown';
     const usageId = request.headers.get('X-Usage-ID') || 'anonymous';
 
     const rateLimitKey = `${clientIP}:${usageId}`;
@@ -117,8 +117,8 @@ export async function GET(request: NextRequest) {
           status: 429,
           headers: {
             'Retry-After': '60',
-            'X-Rate-Limit-Reset': new Date(Date.now() + RATE_LIMIT.windowMs).toISOString()
-          }
+            'X-Rate-Limit-Reset': new Date(Date.now() + RATE_LIMIT.windowMs).toISOString(),
+          },
         }
       );
     }
@@ -148,16 +148,16 @@ export async function GET(request: NextRequest) {
         intentToReality: intentValue,
         enhanced: enhancedValuation,
         timestamp: new Date().toISOString(),
-        company: "Bickford Technologies"
+        company: 'Bickford Technologies',
       },
       _metadata: {
         generated: new Date().toISOString(),
-        version: "1.0.0",
-        license: "Proprietary - Bickford Technologies LLC",
-        patent: "Patent Pending",
+        version: '1.0.0',
+        license: 'Proprietary - Bickford Technologies LLC',
+        patent: 'Patent Pending',
         usageId: usageId,
-        rateLimitRemaining: RATE_LIMIT.maxRequests - (rateLimitStore.get(rateLimitKey)?.count || 0)
-      }
+        rateLimitRemaining: RATE_LIMIT.maxRequests - (rateLimitStore.get(rateLimitKey)?.count || 0),
+      },
     };
 
     // IP Protection: Usage Logging
@@ -172,15 +172,16 @@ export async function GET(request: NextRequest) {
         'X-License': 'Proprietary - Confidential',
         'X-Usage-ID': usageId,
         'Cache-Control': 'private, no-cache, no-store',
-        'X-Content-Type-Options': 'nosniff'
-      }
+        'X-Content-Type-Options': 'nosniff',
+      },
     });
-
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Intent-to-reality valuation error:', error);
 
     // IP Protection: Error Logging (without exposing sensitive details)
-    console.log(`[IP PROTECTION] API Error logged for usage ID: ${request.headers.get('X-Usage-ID')}`);
+    console.log(
+      `[IP PROTECTION] API Error logged for usage ID: ${request.headers.get('X-Usage-ID')}`
+    );
 
     return NextResponse.json(
       { message: `Access denied or system error. Contact support if this persists.` },
@@ -188,8 +189,8 @@ export async function GET(request: NextRequest) {
         status: 500,
         headers: {
           'X-IP-Protected': 'true',
-          'X-Error-Type': 'protected'
-        }
+          'X-Error-Type': 'protected',
+        },
       }
     );
   }

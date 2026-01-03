@@ -10,9 +10,7 @@ import crypto from 'crypto';
  * Write a decision to the Bickford ledger.
  * This is the append-only log of all Bickford decisions.
  */
-export async function writeLedgerEntry(
-  decision: BickfordDecision
-): Promise<string> {
+export async function writeLedgerEntry(decision: BickfordDecision): Promise<string> {
   // Validate decision structure
   validateDecision(decision);
 
@@ -45,7 +43,7 @@ export async function writeLedgerEntry(
     });
 
     return entry.id;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Failed to write ledger entry', {
       error: error.message,
       decision,
@@ -64,8 +62,8 @@ export async function queryLedger(opts: {
   before?: string;
   limit?: number;
 }) {
-  const where: any = {};
-  
+  const where: unknown = {};
+
   if (opts.kind) where.kind = opts.kind;
   if (opts.subject) where.subject = { contains: opts.subject };
   if (opts.after || opts.before) {
@@ -101,6 +99,6 @@ export async function verifyLedgerIntegrity(entryId: string): Promise<boolean> {
   });
 
   const expectedHash = crypto.createHash('sha256').update(content).digest('hex');
-  
+
   return entry.hash === expectedHash;
 }

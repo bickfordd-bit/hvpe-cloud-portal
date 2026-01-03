@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
 
 export interface BickfordMode {
   ts: string;
-  mode: "BICKFORD";
+  mode: 'BICKFORD';
   flags: {
     AUTO: boolean;
     PROMPTS_AS_STORAGE: boolean;
@@ -50,11 +50,11 @@ export function loadBickfordMode(): BickfordMode | null {
     _modeCache = config;
     logger.info('Bickford mode activated', {
       ts: config.ts,
-      flags: config.flags
+      flags: config.flags,
     });
 
     return config;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Failed to load Bickford mode', { error: error.message });
     // Fail-closed: if mode config is corrupt, don't activate
     return null;
@@ -66,7 +66,7 @@ export function loadBickfordMode(): BickfordMode | null {
  */
 export function isBickfordMode(): boolean {
   const mode = loadBickfordMode();
-  return mode?.mode === "BICKFORD";
+  return mode?.mode === 'BICKFORD';
 }
 
 /**
@@ -81,7 +81,7 @@ export function getBickfordFlag(flag: keyof BickfordMode['flags']): boolean {
  * Enforce Bickford guardrails on incoming data.
  * Use this in API routes to validate requests follow Bickford protocol.
  */
-export function enforceBickford(data: any, context: string): void {
+export function enforceBickford(data: unknown, context: string): void {
   if (!isBickfordMode()) return; // Only enforce when mode is active
 
   if (getBickfordFlag('MANDATORY_TIMESTAMPS')) {

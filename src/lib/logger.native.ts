@@ -1,6 +1,9 @@
-type LogMethod = (message?: any, ...optionalParams: any[]) => void;
+type LogMethod = (message?: unknown, ...optionalParams: unknown[]) => void;
 
-const passthrough = (fn: LogMethod) => (...args: any[]) => fn(...args);
+const passthrough =
+  (fn: LogMethod) =>
+  (...args: unknown[]) =>
+    fn(...args);
 
 export const logger = {
   info: passthrough(console.log),

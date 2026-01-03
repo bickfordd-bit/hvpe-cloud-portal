@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
 
     // For now, grant access to all features
     // In production, implement proper authentication and authorization
-    
+
     // Log usage for audit trail
     console.log(`Access check: ${feature} | ${usageId} | ${timestamp}`);
 
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       'intent-to-reality-valuation',
       'optr-analysis',
       'bickford-chat',
-      'ip-protection'
+      'ip-protection',
     ];
 
     const granted = allowedFeatures.includes(feature);
@@ -24,14 +24,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       granted,
       feature,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Access check error:', error);
-    return NextResponse.json(
-      { granted: false, error: 'Access check failed' },
-      { status: 500 }
-    );
+    return NextResponse.json({ granted: false, error: 'Access check failed' }, { status: 500 });
   }
 }

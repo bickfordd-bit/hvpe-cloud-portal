@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
 /**
  * Bickford Homepage — Zero-Approval Execution Runtime
- * 
+ *
  * Daily operating surface for intent-to-reality execution.
  * No human approval gates. Canon-verified, hash-chained ledger.
  */
@@ -28,10 +28,10 @@ export default function BickfordHomepage() {
   const [status, setStatus] = useState<ExecutionStatus>({
     stage: 'idle',
     message: 'Ready',
-    status: 'idle'
+    status: 'idle',
   });
   const [history, setHistory] = useState<LedgerEntry[]>([]);
-  const [canonInfo, setCanonInfo] = useState<any>(null);
+  const [canonInfo, setCanonInfo] = useState<unknown>(null);
   const [isExecuting, setIsExecuting] = useState(false);
 
   // Load canon info and history on mount
@@ -45,7 +45,7 @@ export default function BickfordHomepage() {
       const res = await fetch('/api/execute');
       const data = await res.json();
       setCanonInfo(data);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load canon info:', error);
     }
   }
@@ -57,7 +57,7 @@ export default function BickfordHomepage() {
         const data = await res.json();
         setHistory(data.entries || []);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load history:', error);
     }
   }
@@ -67,7 +67,7 @@ export default function BickfordHomepage() {
       setStatus({
         stage: 'error',
         message: 'Intent cannot be empty',
-        status: 'error'
+        status: 'error',
       });
       return;
     }
@@ -76,14 +76,14 @@ export default function BickfordHomepage() {
     setStatus({
       stage: 'parsing',
       message: 'Parsing intent...',
-      status: 'running'
+      status: 'running',
     });
 
     try {
       const res = await fetch('/api/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ intent, dryRun: false })
+        body: JSON.stringify({ intent, dryRun: false }),
       });
 
       const data = await res.json();
@@ -92,7 +92,7 @@ export default function BickfordHomepage() {
         setStatus({
           stage: 'complete',
           message: data.message || 'Execution successful',
-          status: 'success'
+          status: 'success',
         });
         setIntent(''); // Clear intent
         loadHistory(); // Refresh history
@@ -100,14 +100,14 @@ export default function BickfordHomepage() {
         setStatus({
           stage: 'failed',
           message: data.message || data.error || 'Execution failed',
-          status: 'error'
+          status: 'error',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setStatus({
         stage: 'error',
         message: `Network error: ${error.message}`,
-        status: 'error'
+        status: 'error',
       });
     } finally {
       setIsExecuting(false);
@@ -116,19 +116,27 @@ export default function BickfordHomepage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'success': return 'text-green-400';
-      case 'error': return 'text-red-400';
-      case 'running': return 'text-yellow-400';
-      default: return 'text-gray-400';
+      case 'success':
+        return 'text-green-400';
+      case 'error':
+        return 'text-red-400';
+      case 'running':
+        return 'text-yellow-400';
+      default:
+        return 'text-gray-400';
     }
   };
 
   const getOutcomeColor = (outcome: string) => {
     switch (outcome) {
-      case 'ALLOW': return 'bg-green-500/20 text-green-400';
-      case 'DENY': return 'bg-red-500/20 text-red-400';
-      case 'FAIL': return 'bg-yellow-500/20 text-yellow-400';
-      default: return 'bg-gray-500/20 text-gray-400';
+      case 'ALLOW':
+        return 'bg-green-500/20 text-green-400';
+      case 'DENY':
+        return 'bg-red-500/20 text-red-400';
+      case 'FAIL':
+        return 'bg-yellow-500/20 text-yellow-400';
+      default:
+        return 'bg-gray-500/20 text-gray-400';
     }
   };
 
@@ -164,9 +172,7 @@ export default function BickfordHomepage() {
 
         {/* Intent Input */}
         <div className="bg-gray-900 border border-gray-800 rounded p-6">
-          <label className="block text-sm text-gray-400 mb-2">
-            INTENT
-          </label>
+          <label className="block text-sm text-gray-400 mb-2">INTENT</label>
           <textarea
             value={intent}
             onChange={(e) => setIntent(e.target.value)}
@@ -174,7 +180,7 @@ export default function BickfordHomepage() {
             className="w-full bg-black border border-gray-700 rounded p-4 text-white font-mono text-lg min-h-[150px] focus:outline-none focus:border-blue-500 transition-colors"
             disabled={isExecuting}
           />
-          
+
           {/* Execute Button */}
           <div className="mt-4 flex items-center justify-between">
             <button
@@ -184,13 +190,11 @@ export default function BickfordHomepage() {
             >
               {isExecuting ? 'EXECUTING...' : 'EXECUTE'}
             </button>
-            
+
             {/* Status Display */}
             <div className={`text-sm ${getStatusColor(status.status)}`}>
               <span className="font-semibold">{status.stage.toUpperCase()}</span>
-              {status.message && (
-                <span className="ml-2">— {status.message}</span>
-              )}
+              {status.message && <span className="ml-2">— {status.message}</span>}
             </div>
           </div>
         </div>
@@ -198,7 +202,7 @@ export default function BickfordHomepage() {
         {/* Execution History */}
         <div className="bg-gray-900 border border-gray-800 rounded p-6">
           <h2 className="text-xl font-bold mb-4">EXECUTION LEDGER</h2>
-          
+
           {history.length === 0 ? (
             <div className="text-gray-500 text-center py-8">
               No executions yet. Submit an intent to begin.
@@ -212,7 +216,9 @@ export default function BickfordHomepage() {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-3">
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${getOutcomeColor(entry.outcome)}`}>
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-semibold ${getOutcomeColor(entry.outcome)}`}
+                      >
                         {entry.outcome}
                       </span>
                       <span className="text-gray-500 text-sm">
@@ -223,9 +229,7 @@ export default function BickfordHomepage() {
                       {new Date(entry.timestamp).toLocaleString()}
                     </div>
                   </div>
-                  <div className="text-sm text-gray-300">
-                    {entry.reasoning}
-                  </div>
+                  <div className="text-sm text-gray-300">{entry.reasoning}</div>
                 </div>
               ))}
             </div>
@@ -239,9 +243,7 @@ export default function BickfordHomepage() {
           <div className="mb-2">
             Canon v{canonInfo?.canon?.version || '?'} | Hash: {canonInfo?.canon?.hash}
           </div>
-          <div>
-            If it can&apos;t be proven, it doesn&apos;t exist.
-          </div>
+          <div>If it can&apos;t be proven, it doesn&apos;t exist.</div>
         </div>
       </footer>
     </div>

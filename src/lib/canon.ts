@@ -1,6 +1,6 @@
 /**
  * Canon Integrity System
- * 
+ *
  * Loads and verifies the Bickford canon (CANON.md + CANON.meta.json).
  * Enforces hash-based integrity checking on every execution.
  */
@@ -28,7 +28,7 @@ export function computeHash(content: string): string {
 function loadCanonContent(): string {
   try {
     return fs.readFileSync(CANON_PATH, 'utf-8');
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Failed to load CANON.md', { error: error.message, path: CANON_PATH });
     throw new Error(`CANON.md not found at ${CANON_PATH}`);
   }
@@ -41,7 +41,7 @@ function loadCanonMeta(): CanonMeta {
   try {
     const content = fs.readFileSync(META_PATH, 'utf-8');
     return JSON.parse(content) as CanonMeta;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Failed to load CANON.meta.json', { error: error.message, path: META_PATH });
     throw new Error(`CANON.meta.json not found or invalid at ${META_PATH}`);
   }
@@ -53,15 +53,15 @@ function loadCanonMeta(): CanonMeta {
 export function verifyCanonIntegrity(content: string, meta: CanonMeta): boolean {
   const computedHash = computeHash(content);
   const isValid = computedHash === meta.sha256;
-  
+
   if (!isValid) {
     logger.error('Canon integrity violation', {
       expectedHash: meta.sha256,
       computedHash,
-      status: 'HASH_MISMATCH'
+      status: 'HASH_MISMATCH',
     });
   }
-  
+
   return isValid;
 }
 
@@ -72,7 +72,7 @@ export function verifyCanonIntegrity(content: string, meta: CanonMeta): boolean 
 function parseCanonRules(content: string) {
   // Simple rule extraction - looks for headers and key patterns
   const rules = [];
-  
+
   // Admissibility Laws
   const lawMatches = content.matchAll(/### Law \d+: (.+)\n(.+)/g);
   for (const match of lawMatches) {
@@ -80,10 +80,10 @@ function parseCanonRules(content: string) {
       id: `law-${match[1].toLowerCase().replace(/\s+/g, '-')}`,
       category: 'invariant' as const,
       description: `${match[1]}: ${match[2]}`,
-      enforcement: 'hard' as const
+      enforcement: 'hard' as const,
     });
   }
-  
+
   // Invariants
   const invMatches = content.matchAll(/### Invariant \d+: (.+)\n```\n([\s\S]+?)\n```/g);
   for (const match of invMatches) {
@@ -91,10 +91,10 @@ function parseCanonRules(content: string) {
       id: `invariant-${match[1].toLowerCase().replace(/\s+/g, '-')}`,
       category: 'invariant' as const,
       description: match[1],
-      enforcement: 'hard' as const
+      enforcement: 'hard' as const,
     });
   }
-  
+
   // Promotion Gates
   const gateMatches = content.matchAll(/### Gate \d+: (.+)\n([\s\S]+?)(?=###|\n---)/g);
   for (const match of gateMatches) {
@@ -102,61 +102,61 @@ function parseCanonRules(content: string) {
       id: `gate-${match[1].toLowerCase().replace(/\s+/g, '-')}`,
       category: 'gate' as const,
       description: match[1],
-      enforcement: 'hard' as const
+      enforcement: 'hard' as const,
     });
   }
-  
+
   return rules;
 }
 
 /**
  * Load and verify canon
- * 
+ *
  * @throws {Error} If canon cannot be loaded or integrity check fails
  * @returns {Canon} Verified canon object
  */
 export function loadCanon(): Canon {
   logger.info('Loading canon', { path: CANON_PATH });
-  
+
   const content = loadCanonContent();
   const meta = loadCanonMeta();
-  
+
   // Verify integrity
   const isValid = verifyCanonIntegrity(content, meta);
-  
+
   if (!isValid) {
     const error = new Error(
       'Canon integrity check FAILED. ' +
-      'Computed hash does not match CANON.meta.json. ' +
-      'Execution ABORTED per Invariant 2.'
+        'Computed hash does not match CANON.meta.json. ' +
+        'Execution ABORTED per Invariant 2.'
     );
     logger.error('Canon integrity failure - ABORT', {
       expectedHash: meta.sha256,
       computedHash: computeHash(content),
-      status: 'ABORT'
+      status: 'ABORT',
     });
     throw error;
   }
-  
+
   // Status check
   if (meta.status !== 'LOCKED') {
     logger.warn('Canon status is not LOCKED', { status: meta.status });
   }
-  
+
   // Parse rules
   const rules = parseCanonRules(content);
-  
+
   logger.info('Canon loaded and verified', {
     version: meta.version,
     hash: meta.sha256.substring(0, 16) + '...',
     rulesCount: rules.length,
-    status: 'VERIFIED'
+    status: 'VERIFIED',
   });
-  
+
   return {
     content,
     meta,
-    rules
+    rules,
   };
 }
 

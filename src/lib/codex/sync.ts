@@ -45,7 +45,7 @@ export async function syncCodexTasks(): Promise<SyncResult> {
       try {
         await syncTask(task);
         result.synced++;
-      } catch (error) {
+      } catch (error: unknown) {
         result.failed++;
         result.errors.push({
           taskId: task.id,
@@ -55,7 +55,7 @@ export async function syncCodexTasks(): Promise<SyncResult> {
     }
 
     result.success = result.failed === 0;
-  } catch (error) {
+  } catch (error: unknown) {
     result.success = false;
     result.errors.push({
       taskId: 'system',
@@ -105,7 +105,7 @@ async function syncTask(task: CodexTask): Promise<void> {
       id: ledgerEntryId,
     });
     */
-  } catch (error) {
+  } catch (error: unknown) {
     // Mark as failed
     const errorMessage = error instanceof Error ? error.message : String(error);
     await updateTaskStatus(task.id, 'failed', {
@@ -145,10 +145,7 @@ async function updateTaskStatus(
     ...additionalUpdates,
   };
 
-  const { error } = await supabase
-    .from('codex_tasks')
-    .update(updates)
-    .eq('id', taskId);
+  const { error } = await supabase.from('codex_tasks').update(updates).eq('id', taskId);
 
   if (error) {
     throw new Error(`Failed to update task status: ${error.message}`);
@@ -181,9 +178,7 @@ export async function getSyncStatus(): Promise<{
   synced: number;
   failed: number;
 }> {
-  const { data, error } = await supabase
-    .from('codex_tasks')
-    .select('sync_status');
+  const { data, error } = await supabase.from('codex_tasks').select('sync_status');
 
   if (error) {
     throw new Error(`Failed to get sync status: ${error.message}`);

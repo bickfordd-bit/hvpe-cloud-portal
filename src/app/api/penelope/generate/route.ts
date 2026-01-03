@@ -1,20 +1,25 @@
-import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-import { CINEMA_STORYLINES, CONTENT_TEMPLATES, VISUAL_PRESETS, AUDIO_TEMPLATES } from "@/lib/penelope/contentTemplates";
+import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
+import {
+  CINEMA_STORYLINES,
+  CONTENT_TEMPLATES,
+  VISUAL_PRESETS,
+  AUDIO_TEMPLATES,
+} from '@/lib/penelope/contentTemplates';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
 const getOpenAI = () => {
   const apiKey = process.env.OPENAI_API_KEY || process.env.HVPE_OPENAI_API_KEY;
   if (!apiKey) {
-    throw new Error("OpenAI API key not configured");
+    throw new Error('OpenAI API key not configured');
   }
   return new OpenAI({ apiKey });
 };
 
 /**
  * Penelope Content Generation API
- * 
+ *
  * Cinema-quality content creation with professional templates
  */
 export async function POST(request: NextRequest) {
@@ -24,24 +29,24 @@ export async function POST(request: NextRequest) {
       prompt,
       templateId,
       storylineId,
-      targetLength = "medium",
+      targetLength = 'medium',
       visualPreset,
       audioStyle,
-      additionalContext
+      additionalContext,
     } = body;
 
     if (!prompt) {
-      return NextResponse.json(
-        { error: "Prompt is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
     // Get template and storyline
-    const template = CONTENT_TEMPLATES.find(t => t.id === templateId) || CONTENT_TEMPLATES[0];
-    const storyline = CINEMA_STORYLINES.find(s => s.id === storylineId) || template.storyline;
-    const visual = VISUAL_PRESETS[visualPreset as keyof typeof VISUAL_PRESETS] || VISUAL_PRESETS.CINEMATIC_DRAMA;
-    const audio = AUDIO_TEMPLATES[audioStyle as keyof typeof AUDIO_TEMPLATES] || AUDIO_TEMPLATES.EPIC_ORCHESTRAL;
+    const template = CONTENT_TEMPLATES.find((t) => t.id === templateId) || CONTENT_TEMPLATES[0];
+    const storyline = CINEMA_STORYLINES.find((s) => s.id === storylineId) || template.storyline;
+    const visual =
+      VISUAL_PRESETS[visualPreset as keyof typeof VISUAL_PRESETS] || VISUAL_PRESETS.CINEMATIC_DRAMA;
+    const audio =
+      AUDIO_TEMPLATES[audioStyle as keyof typeof AUDIO_TEMPLATES] ||
+      AUDIO_TEMPLATES.EPIC_ORCHESTRAL;
 
     // Build comprehensive creative brief
     const systemPrompt = `You are PENELOPE, a cinema-quality content creation AI developed by Bickford Technologies.
@@ -57,13 +62,17 @@ STORY STRUCTURE:
 ${storyline.structure.map((s, i) => `${i + 1}. ${s}`).join('\n')}
 
 STORY BEATS:
-${storyline.beats.map(beat => `
+${storyline.beats
+  .map(
+    (beat) => `
 Beat ${beat.position}: ${beat.name}
 - Purpose: ${beat.purpose}
 - Duration: ${beat.duration}
 - Visual Cues: ${beat.visualCues.join(', ')}
 - Audio: ${beat.audioSuggestions.join(', ')}
-`).join('\n')}
+`
+  )
+  .join('\n')}
 
 VISUAL STYLE:
 - Cinematography: ${storyline.visualStyle.cinematography.join(', ')}
@@ -108,22 +117,22 @@ Make it production-ready and cinema-quality. Be specific with shot types, camera
     try {
       const openai = getOpenAI();
       const completion = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: 'gpt-4',
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: 'system', content: systemPrompt },
           {
-            role: "user",
-            content: `Create a cinema-quality content treatment for: ${prompt}${additionalContext ? `\n\nAdditional Context: ${additionalContext}` : ''}`
-          }
+            role: 'user',
+            content: `Create a cinema-quality content treatment for: ${prompt}${additionalContext ? `\n\nAdditional Context: ${additionalContext}` : ''}`,
+          },
         ],
         max_tokens: 2000,
-        temperature: 0.7
+        temperature: 0.7,
       });
 
-      content = completion.choices[0]?.message?.content || "Content generation failed";
-    } catch (openaiError: any) {
+      content = completion.choices[0]?.message?.content || 'Content generation failed';
+    } catch (openaiError: unknown) {
       // Fallback to structured template response
-      if (openaiError.message?.includes("API key")) {
+      if (openaiError.message?.includes('API key')) {
         content = generateFallbackTreatment(prompt, template, storyline, targetLength);
       } else {
         throw openaiError;
@@ -137,27 +146,26 @@ Make it production-ready and cinema-quality. Be specific with shot types, camera
         storyline: storyline.title,
         targetLength: storyline.targetLength[targetLength as keyof typeof storyline.targetLength],
         technicalSpecs: template.technicalSpecs,
-        visualPreset: visualPreset || "CINEMATIC_DRAMA",
-        audioStyle: audioStyle || "EPIC_ORCHESTRAL",
+        visualPreset: visualPreset || 'CINEMATIC_DRAMA',
+        audioStyle: audioStyle || 'EPIC_ORCHESTRAL',
         timestamp: new Date().toISOString(),
-        _penelope_version: "1.0.0"
+        _penelope_version: '1.0.0',
       },
       production: {
-        shots: storyline.beats.map(beat => ({
+        shots: storyline.beats.map((beat) => ({
           beatName: beat.name,
           duration: beat.duration,
           visualCues: beat.visualCues,
-          audioSuggestions: beat.audioSuggestions
+          audioSuggestions: beat.audioSuggestions,
         })),
         colorGrading: visual,
-        audioDirection: audio
-      }
+        audioDirection: audio,
+      },
     });
-
-  } catch (error: any) {
-    console.error("Penelope API Error:", error);
+  } catch (error: unknown) {
+    console.error('Penelope API Error:', error);
     return NextResponse.json(
-      { error: error.message || "Content generation failed" },
+      { error: error.message || 'Content generation failed' },
       { status: 500 }
     );
   }
@@ -165,8 +173,8 @@ Make it production-ready and cinema-quality. Be specific with shot types, camera
 
 function generateFallbackTreatment(
   prompt: string,
-  template: any,
-  storyline: any,
+  template: unknown,
+  storyline: unknown,
   targetLength: string
 ): string {
   return `# PENELOPE CREATIVE TREATMENT
@@ -182,12 +190,16 @@ A ${targetLength}-form ${template.category} piece using the ${storyline.title} s
 - Lighting: ${storyline.visualStyle.lighting}
 
 ### Shot List
-${storyline.beats.map((beat: any, i: number) => `
+${storyline.beats
+  .map(
+    (beat: unknown, i: number) => `
 **Shot ${i + 1}: ${beat.name}** (${beat.duration})
 - Purpose: ${beat.purpose}
 - Visual: ${beat.visualCues.join(', ')}
 - Audio: ${beat.audioSuggestions.join(', ')}
-`).join('\n')}
+`
+  )
+  .join('\n')}
 
 ### Audio Direction
 ${template.category === 'commercial' ? 'Bold, energetic score building to climax' : 'Atmospheric and emotional with purposeful silence'}
@@ -204,23 +216,23 @@ ${template.category === 'commercial' ? 'Bold, energetic score building to climax
 
 export async function GET() {
   return NextResponse.json({
-    message: "Penelope Content Creation API",
-    version: "1.0.0",
+    message: 'Penelope Content Creation API',
+    version: '1.0.0',
     endpoints: {
-      generate: "POST /api/penelope/generate"
+      generate: 'POST /api/penelope/generate',
     },
-    availableTemplates: CONTENT_TEMPLATES.map(t => ({
+    availableTemplates: CONTENT_TEMPLATES.map((t) => ({
       id: t.id,
       name: t.name,
       category: t.category,
-      description: t.description
+      description: t.description,
     })),
-    availableStorylines: CINEMA_STORYLINES.map(s => ({
+    availableStorylines: CINEMA_STORYLINES.map((s) => ({
       id: s.id,
       title: s.title,
-      genre: s.genre
+      genre: s.genre,
     })),
     visualPresets: Object.keys(VISUAL_PRESETS),
-    audioStyles: Object.keys(AUDIO_TEMPLATES)
+    audioStyles: Object.keys(AUDIO_TEMPLATES),
   });
 }

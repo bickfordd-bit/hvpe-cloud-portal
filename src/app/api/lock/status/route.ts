@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { loadLockSpec } from "@/lib/lock/spec";
-import { validateLockSpec } from "@/lib/lock/validate";
+import { NextResponse } from 'next/server';
+import { loadLockSpec } from '@/lib/lock/spec';
+import { validateLockSpec } from '@/lib/lock/validate';
 
 export async function GET() {
   try {
@@ -29,12 +29,12 @@ export async function GET() {
         billy_hard_cap_usd: spec.trading_controls?.billy?.hard_caps?.per_order_usd,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         ok: false,
         error: error.message,
-        type: "LOCK_SPEC_ERROR",
+        type: 'LOCK_SPEC_ERROR',
       },
       { status: 500 }
     );

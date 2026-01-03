@@ -49,7 +49,7 @@ export default function LinkedInPostButton({
         success: true,
         message: `Posted! View at: ${data.data.shareUrl}`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       setResult({
         success: false,
         message: error.message || 'Failed to post to LinkedIn',

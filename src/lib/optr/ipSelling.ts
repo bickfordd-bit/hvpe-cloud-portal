@@ -1,7 +1,7 @@
-import { prisma } from "@/lib/prisma";
-import type { Opportunity, DocumentRef } from "@/lib/optr/types";
-import type { BillionairePerson } from "@/lib/hvpeDashboardData";
-import { JsonValue } from "@prisma/client/runtime/library";
+import { prisma } from '@/lib/prisma';
+import type { Opportunity, DocumentRef } from '@/lib/optr/types';
+import type { BillionairePerson } from '@/lib/hvpeDashboardData';
+import { JsonValue } from '@prisma/client/runtime/library';
 
 export interface IPSaleOpportunity extends Opportunity {
   ipSource: string;
@@ -42,14 +42,14 @@ export class IPSellingEngine {
         id: `ip-${person.name.toLowerCase()}-overview`,
         type: 'pdf',
         sha256: '', // Would be calculated from actual document
-        filename: `${person.name}_IP_Portfolio_Overview.pdf`
+        filename: `${person.name}_IP_Portfolio_Overview.pdf`,
       },
       {
         id: `ip-${person.name.toLowerCase()}-valuation`,
         type: 'pdf',
         sha256: '',
-        filename: `${person.name}_IP_Valuation_Report.pdf`
-      }
+        filename: `${person.name}_IP_Valuation_Report.pdf`,
+      },
     ];
 
     const opportunity: IPSaleOpportunity = {
@@ -62,14 +62,14 @@ export class IPSellingEngine {
       deadline_iso: person.saleTimeline,
       links: [
         `https://hvpe-cloud-portal.com/ip/${person.name.toLowerCase()}/portfolio`,
-        `https://hvpe-cloud-portal.com/ip/${person.name.toLowerCase()}/valuation`
+        `https://hvpe-cloud-portal.com/ip/${person.name.toLowerCase()}/valuation`,
       ],
       documents,
       ipSource: person.name,
       ipValue: person.ipValue,
       ipType,
       targetBuyers,
-      saleStrategy
+      saleStrategy,
     };
 
     // Store in database
@@ -90,11 +90,11 @@ export class IPSellingEngine {
 
     // Default based on typical family IP distribution
     const typeMap: Record<string, IPSaleOpportunity['ipType']> = {
-      'derek': 'software',
-      'jenna': 'algorithm',
-      'penelope': 'data',
-      'xavier': 'patent',
-      'naomi': 'trade-secret'
+      derek: 'software',
+      jenna: 'algorithm',
+      penelope: 'data',
+      xavier: 'patent',
+      naomi: 'trade-secret',
     };
 
     return typeMap[nameLower] || 'software';
@@ -103,13 +103,26 @@ export class IPSellingEngine {
   /**
    * Identify potential buyers based on IP type and value
    */
-  private static identifyTargetBuyers(ipType: IPSaleOpportunity['ipType'], ipValue: number): string[] {
+  private static identifyTargetBuyers(
+    ipType: IPSaleOpportunity['ipType'],
+    ipValue: number
+  ): string[] {
     const buyers: Record<string, string[]> = {
       software: ['Microsoft', 'Google', 'Amazon', 'Meta', 'Apple', 'Tech Startups'],
-      algorithm: ['Quantitative Hedge Funds', 'AI Research Labs', 'FinTech Companies', 'Defense Contractors'],
-      data: ['Data Analytics Firms', 'Marketing Agencies', 'Research Institutions', 'Government Agencies'],
+      algorithm: [
+        'Quantitative Hedge Funds',
+        'AI Research Labs',
+        'FinTech Companies',
+        'Defense Contractors',
+      ],
+      data: [
+        'Data Analytics Firms',
+        'Marketing Agencies',
+        'Research Institutions',
+        'Government Agencies',
+      ],
       patent: ['Patent Holding Companies', 'Industry Leaders', 'Competitors', 'Licensing Firms'],
-      'trade-secret': ['Strategic Partners', 'Competitors', 'Private Equity', 'Family Offices']
+      'trade-secret': ['Strategic Partners', 'Competitors', 'Private Equity', 'Family Offices'],
     };
 
     const baseBuyers = buyers[ipType] || buyers.software;
@@ -154,7 +167,7 @@ export class IPSellingEngine {
       // Store IP-specific metadata (opportunity table not yet in schema - log for now)
       console.log(`IP Opportunity created: ${opportunity.id} - ${opportunity.title}`);
       // TODO: Add opportunity table to schema when ready
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to persist IP opportunity:', error);
     }
   }
@@ -165,67 +178,67 @@ export class IPSellingEngine {
   static generateIPSaleRequirements(ipType: IPSaleOpportunity['ipType']) {
     const baseRequirements = [
       {
-        id: "IP-REQ-001",
-        section: "1.1",
-        text: "Provide comprehensive IP portfolio documentation including ownership, patents, and licensing history.",
-        kind: "shall" as const,
-        priority: 5
+        id: 'IP-REQ-001',
+        section: '1.1',
+        text: 'Provide comprehensive IP portfolio documentation including ownership, patents, and licensing history.',
+        kind: 'shall' as const,
+        priority: 5,
       },
       {
-        id: "IP-REQ-002",
-        section: "1.2",
-        text: "Demonstrate IP value through financial projections and market analysis.",
-        kind: "shall" as const,
-        priority: 4
-      }
+        id: 'IP-REQ-002',
+        section: '1.2',
+        text: 'Demonstrate IP value through financial projections and market analysis.',
+        kind: 'shall' as const,
+        priority: 4,
+      },
     ];
 
     const typeSpecificRequirements = {
       software: [
         {
-          id: "IP-REQ-SW-001",
-          section: "2.1",
-          text: "Provide source code repositories, documentation, and deployment procedures.",
-          kind: "shall" as const,
-          priority: 5
-        }
+          id: 'IP-REQ-SW-001',
+          section: '2.1',
+          text: 'Provide source code repositories, documentation, and deployment procedures.',
+          kind: 'shall' as const,
+          priority: 5,
+        },
       ],
       algorithm: [
         {
-          id: "IP-REQ-ALG-001",
-          section: "2.1",
-          text: "Include algorithm specifications, performance benchmarks, and validation results.",
-          kind: "shall" as const,
-          priority: 5
-        }
+          id: 'IP-REQ-ALG-001',
+          section: '2.1',
+          text: 'Include algorithm specifications, performance benchmarks, and validation results.',
+          kind: 'shall' as const,
+          priority: 5,
+        },
       ],
       data: [
         {
-          id: "IP-REQ-DATA-001",
-          section: "2.1",
-          text: "Provide data schemas, quality metrics, and privacy compliance documentation.",
-          kind: "shall" as const,
-          priority: 4
-        }
+          id: 'IP-REQ-DATA-001',
+          section: '2.1',
+          text: 'Provide data schemas, quality metrics, and privacy compliance documentation.',
+          kind: 'shall' as const,
+          priority: 4,
+        },
       ],
       patent: [
         {
-          id: "IP-REQ-PAT-001",
-          section: "2.1",
-          text: "Include patent filings, examination history, and freedom-to-operate analysis.",
-          kind: "shall" as const,
-          priority: 5
-        }
+          id: 'IP-REQ-PAT-001',
+          section: '2.1',
+          text: 'Include patent filings, examination history, and freedom-to-operate analysis.',
+          kind: 'shall' as const,
+          priority: 5,
+        },
       ],
       'trade-secret': [
         {
-          id: "IP-REQ-TS-001",
-          section: "2.1",
-          text: "Demonstrate protection measures and provide non-disclosure agreements.",
-          kind: "must" as const,
-          priority: 5
-        }
-      ]
+          id: 'IP-REQ-TS-001',
+          section: '2.1',
+          text: 'Demonstrate protection measures and provide non-disclosure agreements.',
+          kind: 'must' as const,
+          priority: 5,
+        },
+      ],
     };
 
     return [...baseRequirements, ...(typeSpecificRequirements[ipType] || [])];

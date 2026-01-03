@@ -33,7 +33,7 @@ async function main() {
     const res = await searchSamOpportunities(params);
     const rows = res.opportunities || [];
     console.log(JSON.stringify({ total: res.totalRecords, rows }, null, 2));
-  } catch (err) {
+  } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     logger.error('Failed to fetch SAM opportunities', { error: msg, params });
     process.exitCode = 1;
