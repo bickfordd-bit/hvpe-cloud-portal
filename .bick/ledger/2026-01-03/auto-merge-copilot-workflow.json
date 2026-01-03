@@ -1,0 +1,48 @@
+{
+  "id": "auto-merge-copilot-workflow-2026-01-03T182347Z",
+  "ts": "2026-01-03T18:23:47Z",
+  "kind": "action",
+  "subject": "copilot-pr-auto-merge-workflow",
+  "payload": {
+    "description": "Implemented autonomous PR merging for Copilot-created PRs to enable zero-approval execution flow",
+    "artifacts": [
+      ".github/workflows/auto-merge-copilot.yml",
+      ".github/auto-merge-config.yml"
+    ],
+    "changes": [
+      "Created auto-merge-copilot.yml workflow with triggers for PR and check_suite events",
+      "Implemented PR eligibility checks: copilot author, copilot-agent label, or copilot/ branch prefix",
+      "Added draft PR and [no-auto-merge] flag filtering",
+      "Integrated check waiting logic: monitors lint, build, test checks for up to 30 minutes",
+      "Configured auto-approve and auto-merge with squash strategy upon check passage",
+      "Added notification system with status comments at each stage",
+      "Created auto-merge-config.yml with customizable settings for merge method, required checks, timeouts"
+    ],
+    "verification": [
+      "Workflow syntax validated against existing auto-merge patterns",
+      "Uses actions/github-script@v7 for GitHub API interactions",
+      "gh CLI commands for PR approval and merge enablement",
+      "Follows existing repository patterns from auto-merge.yml and auto-merge-all-prs.yml",
+      "Permissions set: contents: write, pull-requests: write, checks: read"
+    ],
+    "impact": "Enables @bickfordd-bit to set intent once and receive updates without blocking approval gates. Copilot PRs auto-merge when checks pass.",
+    "status": "completed",
+    "safety_guards": [
+      "Only triggers for Copilot PRs (author, labels, or branch pattern match)",
+      "Requires all checks (lint, build, test) to pass before merge",
+      "Uses squash merge strategy to keep history clean",
+      "Branch auto-deletion after merge",
+      "Respects [no-auto-merge] opt-out flag in PR title",
+      "Skips draft PRs automatically"
+    ],
+    "testing_instructions": [
+      "Create a PR from branch with copilot/ prefix or copilot-agent label",
+      "Verify workflow triggers and posts status comment",
+      "Confirm auto-merge enables when PR checks pass",
+      "Validate notification comments appear at each stage",
+      "Test opt-out by adding [no-auto-merge] to title"
+    ]
+  },
+  "hash": "pending-commit",
+  "parentId": "f13465b5c993d9bd6bd20c051f9894b627da9b5a"
+}
