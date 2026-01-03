@@ -1,0 +1,46 @@
+{
+  "id": "dead-code-analysis-2026-01-03",
+  "ts": "2026-01-03T19:17:00Z",
+  "kind": "documentation",
+  "subject": "dead-code-false-positives",
+  "intent": "Address auto-heal dead code report by documenting false positives and improving workflow",
+  "executionContract": {
+    "scope": "Documentation and workflow improvements only, no code removal",
+    "plan": [
+      "Analyze ts-prune output to categorize findings",
+      "Create comprehensive dead code analysis guide",
+      "Update auto-heal workflow to filter Next.js framework false positives",
+      "Improve issue reporting with guidance and verification checklist"
+    ],
+    "risk": "Low - documentation and configuration changes only",
+    "rollback": "Git revert if needed"
+  },
+  "proof": {
+    "artifacts": [
+      "docs/DEAD_CODE_ANALYSIS.md - Comprehensive analysis guide",
+      ".github/workflows/auto-heal.yml - Improved filtering logic",
+      ".github/workflows/ts-prune-ignore.txt - Pattern documentation",
+      ".ts-prunerc - ts-prune configuration"
+    ],
+    "verificationCommands": [
+      "npm run build - Passes with no errors",
+      "git diff d7d118d..HEAD - Shows documentation and workflow changes only"
+    ]
+  },
+  "result": {
+    "whatChanged": [
+      "Added DEAD_CODE_ANALYSIS.md explaining ts-prune false positives",
+      "Updated auto-heal workflow to filter framework-required exports",
+      "Improved dead code issue reporting with verification guidance",
+      "Documented 200+ false positives (Next.js pages, API routes, middleware)"
+    ],
+    "whatRemains": [
+      "Manual verification needed for ~50 genuinely unused utility functions",
+      "Decision on whether to remove unused functions (minimal T2V benefit)",
+      "Consideration of future feature use cases for exported APIs"
+    ]
+  },
+  "decision": "Conservative approach: Document and filter rather than remove. Rationale: (1) Most flagged exports are Next.js framework requirements, (2) Some unused exports may be intentional API surface for future features, (3) Risk of breaking something > T2V benefit of removal, (4) Follows Bickford principle of minimal changes",
+  "hash": "d826cbb",
+  "parentId": "d7d118d"
+}
