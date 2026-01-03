@@ -1,0 +1,20 @@
+{
+  "id": "fix-master-deploy-permissions",
+  "ts": "2026-01-03T17:38:24Z",
+  "kind": "workflow-fix",
+  "subject": "master-deploy-permissions",
+  "payload": {
+    "problem": "HttpError: Resource not accessible by integration",
+    "solution": "Added permissions block to workflow",
+    "file": ".github/workflows/master-deploy.yml",
+    "permissions_added": [
+      "contents: read",
+      "statuses: write",
+      "pull-requests: write",
+      "issues: write"
+    ],
+    "t2v_impact": "Eliminates manual intervention for deployment status tracking"
+  },
+  "hash": "db779d7",
+  "parentId": "2c8b6d7"
+}

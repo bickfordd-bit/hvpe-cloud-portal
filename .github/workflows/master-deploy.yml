@@ -16,6 +16,13 @@ on:
       - mobile
       - ui-redesign-v1
 
+# Permissions required for deployment workflow
+permissions:
+  contents: read          # Standard permission for checking out code
+  statuses: write         # Allows commit status updates (fixes the error)
+  pull-requests: write    # Enables PR comments for deployment notifications
+  issues: write           # Allows issue comments if needed
+
 # Concurrency control - queue deployments instead of canceling
 concurrency:
   group: deploy-${{ github.ref }}
