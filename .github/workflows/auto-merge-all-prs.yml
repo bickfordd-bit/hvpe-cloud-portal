@@ -93,33 +93,38 @@ jobs:
                 return;
               }
               
-              // Enable auto-merge with squash strategy
+              // Update branch if possible
               await github.rest.pulls.updateBranch({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: prNumber
-              }).catch(() => {
-                console.log('Branch already up to date or cannot be updated');
+              }).catch((updateError) => {
+                console.log('Branch update not needed or failed:', updateError.message || updateError);
               });
               
               // Enable auto-merge
-              await github.graphql(`
-                mutation {
-                  enablePullRequestAutoMerge(input: {
-                    pullRequestId: "${pr.data.node_id}",
-                    mergeMethod: SQUASH
-                  }) {
-                    pullRequest {
-                      autoMergeRequest {
-                        enabledAt
-                        mergeMethod
+              try {
+                await github.graphql(`
+                  mutation {
+                    enablePullRequestAutoMerge(input: {
+                      pullRequestId: "${pr.data.node_id}",
+                      mergeMethod: SQUASH
+                    }) {
+                      pullRequest {
+                        autoMergeRequest {
+                          enabledAt
+                          mergeMethod
+                        }
                       }
                     }
                   }
-                }
-              `);
-              
-              console.log('✅ Auto-merge enabled with squash strategy');
+                `);
+                
+                console.log('✅ Auto-merge enabled with squash strategy');
+              } catch (graphqlError) {
+                console.error('GraphQL error enabling auto-merge:', graphqlError);
+                throw new Error(`Failed to enable auto-merge: ${graphqlError.message}`);
+              }
               
               // Add comment to PR
               await github.rest.issues.createComment({
@@ -132,7 +137,16 @@ jobs:
             } catch (error) {
               console.error('Error enabling auto-merge:', error);
               // Non-critical error - PR can still be manually merged
-              console.log('⚠️ Could not enable auto-merge. This may be due to repository settings.');
+              const errorMsg = error.message || JSON.stringify(error);
+              console.log(`⚠️ Could not enable auto-merge: ${errorMsg}`);
+              console.log('Possible causes: repository settings, permissions, or branch protection rules');
+              // Add comment to PR about the issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: `⚠️ **Note:** Could not automatically enable auto-merge.\n\nPossible reasons:\n- Repository auto-merge setting not enabled\n- Insufficient permissions\n- Branch protection rules conflict\n\nYou can manually enable auto-merge or merge the PR when checks pass.\n\nError: \`${errorMsg}\``
+              }).catch(e => console.log('Could not post error comment:', e.message));
             }
 
   notify-on-merge:
@@ -184,6 +198,7 @@ jobs:
     if: |
       github.event_name == 'check_suite' &&
       github.event.check_suite.conclusion == 'failure' &&
+      github.event.check_suite.pull_requests &&
       github.event.check_suite.pull_requests[0] != null
     steps:
       - name: Create failure notification issue

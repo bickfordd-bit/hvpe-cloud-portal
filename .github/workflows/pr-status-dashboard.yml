@@ -9,7 +9,7 @@ on:
   check_run:
     types: [completed, created, requested_action]
   workflow_run:
-    workflows: ["CI/CD Pipeline"]
+    workflows: ["CI/CD Pipeline"]  # This references the workflow NAME from ci-cd.yml
     types: [completed, requested]
 
 permissions:
@@ -72,7 +72,10 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: pr.head.sha
-            }).catch(() => ({ data: { statuses: [], state: 'pending' } }));
+            }).catch((statusError) => {
+              console.log('Could not fetch commit statuses:', statusError.message || statusError);
+              return { data: { statuses: [], state: 'pending' } };
+            });
             
             // Categorize checks
             const checks = {
@@ -130,7 +133,10 @@ jobs:
               repo: context.repo.repo,
               ref: pr.head.ref,
               per_page: 5
-            }).catch(() => ({ data: [] }));
+            }).catch((deployError) => {
+              console.log('Could not fetch deployments:', deployError.message || deployError);
+              return { data: [] };
+            });
             
             let deploymentInfo = '';
             if (deployments.data.length > 0) {
