@@ -1,0 +1,43 @@
+{
+  "id": "auto-merge-pat-token-fix",
+  "timestamp": "2026-01-03T17:24:44.207Z",
+  "agent": "copilot",
+  "intent": "Fix auto-merge workflow by replacing GITHUB_TOKEN with PAT_TOKEN to allow GitHub Actions to approve PRs and enable auto-merge",
+  "execution_contract": {
+    "scope": "Modify .github/workflows/auto-merge-all-prs.yml at exactly 2 lines (29 and 77)",
+    "plan": [
+      "View the workflow file to confirm current state",
+      "Replace ${{ secrets.GITHUB_TOKEN }} with ${{ secrets.PAT_TOKEN }} on line 29",
+      "Replace ${{ secrets.GITHUB_TOKEN }} with ${{ secrets.PAT_TOKEN }} on line 77",
+      "Verify changes with git diff",
+      "Report progress"
+    ],
+    "risk": "Minimal - only changing authentication token references",
+    "rollback": "Git revert if needed"
+  },
+  "proof": {
+    "artifacts": [
+      "commit d9e6eb3",
+      "diff: 2 lines changed (+2/-2)",
+      ".github/workflows/auto-merge-all-prs.yml modified"
+    ],
+    "verification_commands": [
+      "git show d9e6eb3",
+      "git diff d9e6eb3~1 d9e6eb3 -- .github/workflows/auto-merge-all-prs.yml",
+      "python3 -c \"import yaml; yaml.safe_load(open('.github/workflows/auto-merge-all-prs.yml'))\""
+    ]
+  },
+  "result": {
+    "what_changed": [
+      "Line 29: github-token now uses PAT_TOKEN instead of GITHUB_TOKEN",
+      "Line 77: github-token now uses PAT_TOKEN instead of GITHUB_TOKEN",
+      "Workflow can now approve PRs without 'Unprocessable Entity' error"
+    ],
+    "what_remains": [
+      "PAT_TOKEN must be configured in repository secrets (already done per problem statement)",
+      "Workflow will automatically approve and enable auto-merge on next PR trigger",
+      "Pre-existing yamllint warnings remain (trailing spaces, line length) - not related to this fix"
+    ]
+  },
+  "t2v_impact": "High - eliminates manual PR approval step, enables fully automated merge pipeline"
+}
