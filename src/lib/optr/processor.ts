@@ -99,22 +99,26 @@ export async function processOpportunity(
 async function fetchOpportunity(opportunityId: string) {
   const opportunity = await prisma.opportunity.findUnique({
     where: { id: opportunityId },
-    include: { requirements: true },
+    include: { documents: true },
   });
 
   if (!opportunity) {
     throw new Error(`Opportunity ${opportunityId} not found`);
   }
 
+  // Extract requirements from metadata if available
+  const metadata = opportunity.metadata as any;
+  const requirements = metadata?.requirements || [];
+
   return {
     id: opportunity.id,
     title: opportunity.title,
-    description: opportunity.description || '',
-    requirements: opportunity.requirements.map(r => ({
-      id: r.id,
-      text: r.text,
-      priority: r.priority as 'high' | 'medium' | 'low',
-    })),
+    description: metadata?.description || opportunity.title,
+    requirements: Array.isArray(requirements) ? requirements.map((r: any) => ({
+      id: r.id || `req-${Math.random()}`,
+      text: r.text || r,
+      priority: r.priority || 'medium' as 'high' | 'medium' | 'low',
+    })) : [],
   };
 }
 

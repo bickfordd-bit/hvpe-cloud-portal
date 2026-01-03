@@ -62,8 +62,8 @@ export async function persistForever(entry: PersistenceEntry): Promise<Persisten
   const results = await Promise.allSettled([
     // Layer 1: Bickford Ledger (immutable, file-based, SHA256 hashed)
     writeLedgerEntry({
-      id,
-      kind: entry.kind,
+      ts: timestamp,
+      kind: (entry.kind as "intent" | "plan" | "action" | "observe" | "persist" | "guardrail"),
       subject: entry.subject,
       payload: {
         ...entry.payload,
@@ -134,9 +134,10 @@ async function persistToDatabase(id: string, entry: PersistenceEntry): Promise<s
     // Use BickfordLedger table as universal storage
     const record = await prisma.bickfordLedger.create({
       data: {
+        ts: new Date().toISOString(),
         kind: entry.kind,
         subject: entry.subject,
-        payload: entry.payload,
+        payloadJson: JSON.stringify(entry.payload),
         hash: `db-${id}`,
         parentId: entry.metadata?.parentId || null,
       },
@@ -148,12 +149,9 @@ async function persistToDatabase(id: string, entry: PersistenceEntry): Promise<s
       const fallback = await prisma.aiUsageLog.create({
         data: {
           userId: entry.metadata?.userId || 'system',
-          action: entry.kind,
-          metadata: {
-            subject: entry.subject,
-            payload: entry.payload,
-            originalId: id,
-          },
+          mode: entry.kind,
+          taskType: entry.subject,
+          success: true,
         },
       });
       return fallback.id;
@@ -243,7 +241,7 @@ export async function retrieve(id: string): Promise<PersistenceEntry | null> {
       return {
         kind: record.kind,
         subject: record.subject,
-        payload: record.payload as any,
+        payload: JSON.parse(record.payloadJson) as any,
       };
     }
   } catch (error) {
@@ -253,7 +251,8 @@ export async function retrieve(id: string): Promise<PersistenceEntry | null> {
   // Fallback to file system (ledger or backup)
   try {
     const { readFile } = await import('fs/promises');
-    const { glob } = await import('glob');
+    const globModule = await import('glob');
+    const { join } = await import('path');
     
     // Search in .bick/ledger and .persistence
     const patterns = [
@@ -262,8 +261,9 @@ export async function retrieve(id: string): Promise<PersistenceEntry | null> {
     ];
 
     for (const pattern of patterns) {
-      const files = await glob(pattern, { cwd: process.cwd() });
-      if (files.length > 0) {
+      // Use glob.sync for simplicity in this context
+      const files = globModule.sync(pattern, { cwd: process.cwd() });
+      if (files && files.length > 0) {
         const content = await readFile(join(process.cwd(), files[0]), 'utf-8');
         return JSON.parse(content);
       }
@@ -306,7 +306,7 @@ export async function query(opts: {
       ...records.map((r) => ({
         kind: r.kind,
         subject: r.subject,
-        payload: r.payload as any,
+        payload: JSON.parse(r.payloadJson) as any,
       }))
     );
   } catch (error) {

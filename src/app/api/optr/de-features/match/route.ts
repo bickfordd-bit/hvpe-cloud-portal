@@ -89,6 +89,6 @@ export async function POST(req: NextRequest) {
       stack: (error as Error).stack,
     });
 
-    return NextResponse.json(apiError(error), { status: 500 });
+    return NextResponse.json(apiError(error as Error), { status: 500 });
   }
 }

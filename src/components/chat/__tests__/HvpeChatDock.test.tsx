@@ -268,8 +268,8 @@ describe('Archive Rotation Logic', () => {
   });
 
   it('should rotate messages to new day when interval triggers', () => {
-    const oldDateKey = '2026-01-02';
-    const newDateKey = '2026-01-03';
+    const oldDateKey: string = '2026-01-02';
+    const newDateKey: string = '2026-01-03';
 
     // Setup old day messages
     const oldMessages: ChatMessage[] = [
@@ -283,6 +283,9 @@ describe('Archive Rotation Logic', () => {
     const currentKey = newDateKey;
     const activeDateKey = oldDateKey;
 
+    // TypeScript now correctly sees these as different dates
+    expect(currentKey).not.toBe(activeDateKey);
+    
     if (currentKey !== activeDateKey) {
       // Archive old messages
       const messages = window.localStorage.getItem(storageKeyFor(activeDateKey));

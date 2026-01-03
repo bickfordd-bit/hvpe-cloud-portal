@@ -8,7 +8,7 @@ export interface ScoredDocument {
 }
 
 export interface VectorStore {
-  upsert(id: string, embedding: number[], metadata: object): Promise<void>;
+  upsert(id: string, embedding: number[], metadata: Record<string, unknown>): Promise<void>;
   query(embedding: number[], topK: number): Promise<ScoredDocument[]>;
   delete(id: string): Promise<void>;
 }
@@ -18,9 +18,9 @@ export interface VectorStore {
  * TODO: Implement with pgvector, Pinecone, or Weaviate
  */
 export class InMemoryVectorStore implements VectorStore {
-  private vectors: Map<string, { embedding: number[]; metadata: object }> = new Map();
+  private vectors: Map<string, { embedding: number[]; metadata: Record<string, unknown> }> = new Map();
 
-  async upsert(id: string, embedding: number[], metadata: object): Promise<void> {
+  async upsert(id: string, embedding: number[], metadata: Record<string, unknown>): Promise<void> {
     logger.debug('Vector upsert', { id, dimensions: embedding.length });
     this.vectors.set(id, { embedding, metadata });
   }
@@ -36,7 +36,7 @@ export class InMemoryVectorStore implements VectorStore {
       results.push({
         id,
         score,
-        text: (data.metadata as { text?: string }).text || '',
+        text: (data.metadata as Record<string, unknown> & { text?: string }).text || '',
         metadata: data.metadata,
       });
     }
