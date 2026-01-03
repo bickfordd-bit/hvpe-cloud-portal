@@ -1,0 +1,56 @@
+{
+  "id": "unified-deployment-pipeline-2026-01-03",
+  "ts": "2026-01-03T03:00:00Z",
+  "kind": "infrastructure-improvement",
+  "subject": "ci-cd-unification",
+  "payload": {
+    "description": "Bulletproof unified deployment pipeline implementation",
+    "changes": [
+      "Created master-deploy.yml workflow with preflight, build, deploy, verify, notify jobs",
+      "Created preflight-check.sh for pre-deployment validation and auto-fixes",
+      "Created deploy-with-retry.sh with exponential backoff retry logic",
+      "Created verify-deployment.sh for post-deployment smoke tests",
+      "Created deployment-config.yml as single source of truth",
+      "Archived old workflows (ci-cd.yml, deploy-vercel.yml, ci-deploy.yml)",
+      "Added deprecation notices to legacy workflows (Phase 1)",
+      "Created comprehensive CI_CD_GUIDE.md documentation",
+      "Updated README.md and DEPLOYMENT.md with new workflow info"
+    ],
+    "features": [
+      "Single entry point for all deployments",
+      "Branch-aware (production vs preview)",
+      "Concurrency protection (queues deployments)",
+      "Automatic retries (3x with exponential backoff)",
+      "Preflight validation catches issues early",
+      "Post-deployment verification with smoke tests",
+      "Real-time status updates via GitHub commit API",
+      "Auto-fixes (cache clearing, dependency resolution)"
+    ],
+    "scripts_created": [
+      "scripts/preflight-check.sh",
+      "scripts/deploy-with-retry.sh",
+      "scripts/verify-deployment.sh"
+    ],
+    "workflows_created": [
+      ".github/workflows/master-deploy.yml"
+    ],
+    "workflows_archived": [
+      ".github/workflows/archive/ci-cd.yml",
+      ".github/workflows/archive/deploy-vercel.yml",
+      ".github/workflows/archive/ci-deploy.yml"
+    ],
+    "documentation_created": [
+      "docs/CI_CD_GUIDE.md",
+      ".github/workflows/archive/README.md"
+    ],
+    "documentation_updated": [
+      "README.md",
+      "DEPLOYMENT.md"
+    ],
+    "rollout_phase": 1,
+    "rollout_status": "parallel-operation",
+    "next_milestone": "Monitor for 1 week, collect feedback"
+  },
+  "hash": "unified-deploy-pipeline-2026-01-03",
+  "parentId": null
+}

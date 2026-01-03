@@ -1,206 +1,107 @@
-import { supabase } from '$lib/supabase';
+import { supabase } from '$lib/supabaseClient';
 import type { Database } from '$lib/database.types';
-import { writeLedgerEntry } from '$lib/ledger';
 
-type CodexTask = Database['public']['Tables']['codex_tasks']['Row'];
-type CodexTaskUpdate = Database['public']['Tables']['codex_tasks']['Update'];
+type CodexSyncStatus = Database['public']['Tables']['codex_sync_status']['Row'];
 
-interface SyncResult {
-  success: boolean;
-  synced: number;
-  failed: number;
-  errors: Array<{ taskId: string; error: string }>;
+/**
+ * Fetches the current Codex sync status
+ * @returns Promise resolving to the sync status or null
+ */
+export async function getSyncStatus(): Promise<CodexSyncStatus | null> {
+	try {
+		const { data, error } = await supabase
+			.from('codex_sync_status')
+			.select('*')
+			.single();
+
+		if (error) {
+			console.error('Error fetching sync status:', error);
+			return null;
+		}
+
+		return data;
+	} catch (err) {
+		console.error('Unexpected error fetching sync status:', err);
+		return null;
+	}
 }
 
 /**
- * Synchronizes codex tasks with external systems
+ * Triggers a manual sync of Codex data
+ * @returns Promise resolving to success status
  */
-export async function syncCodexTasks(): Promise<SyncResult> {
-  const result: SyncResult = {
-    success: true,
-    synced: 0,
-    failed: 0,
-    errors: [],
-  };
+/*
+export async function triggerSync(): Promise<boolean> {
+	try {
+		// Call the Edge Function to trigger sync
+		const { data, error } = await supabase.functions.invoke('sync-codex-data', {
+			method: 'POST'
+		});
 
-  try {
-    // Fetch pending tasks
-    const { data: tasks, error: fetchError } = await supabase
-      .from('codex_tasks')
-      .select('*')
-      .eq('sync_status', 'pending')
-      .order('created_at', { ascending: true })
-      .limit(100);
+		if (error) {
+			console.error('Error triggering sync:', error);
+			return false;
+		}
 
-    if (fetchError) {
-      throw new Error(`Failed to fetch tasks: ${fetchError.message}`);
-    }
-
-    if (!tasks || tasks.length === 0) {
-      return result;
-    }
-
-    // Process each task
-    for (const task of tasks) {
-      try {
-        await syncTask(task);
-        result.synced++;
-      } catch (error) {
-        result.failed++;
-        result.errors.push({
-          taskId: task.id,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    }
-
-    result.success = result.failed === 0;
-  } catch (error) {
-    result.success = false;
-    result.errors.push({
-      taskId: 'system',
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-
-  return result;
+		return true;
+	} catch (err) {
+		console.error('Unexpected error triggering sync:', err);
+		return false;
+	}
 }
+*/
 
 /**
- * Syncs a single codex task
+ * Subscribes to real-time updates of the sync status
+ * @param callback Function to call when sync status changes
+ * @returns Unsubscribe function
  */
-async function syncTask(task: CodexTask): Promise<void> {
-  const startTime = Date.now();
-  const ledgerEntryId = `codex-sync-${task.id}-${startTime}`;
+/*
+export function subscribeSyncStatus(
+	callback: (status: CodexSyncStatus | null) => void
+): () => void {
+	const channel = supabase
+		.channel('codex_sync_status_changes')
+		.on(
+			'postgres_changes',
+			{
+				event: '*',
+				schema: 'public',
+				table: 'codex_sync_status'
+			},
+			async (payload) => {
+				// Fetch the latest status after any change
+				const status = await getSyncStatus();
+				callback(status);
+			}
+		)
+		.subscribe();
 
-  try {
-    // Validate task data
-    if (!task.description || task.description.trim().length === 0) {
-      throw new Error('Task description is required');
-    }
-
-    // Mark as syncing
-    await updateTaskStatus(task.id, 'syncing');
-
-    // Perform the actual sync operation
-    // This is a placeholder - implement actual sync logic here
-    await performExternalSync(task);
-
-    // Mark as synced
-    await updateTaskStatus(task.id, 'synced', {
-      synced_at: new Date().toISOString(),
-      sync_error: null,
-    });
-
-    // Write success to ledger
-    // TODO: Fix ledger entry type mismatch
-    /*
-    await writeLedgerEntry({
-      kind: 'codex-sync-success',
-      subject: task.id,
-      payload: {
-        description: task.description,
-        duration: Date.now() - startTime,
-      },
-      id: ledgerEntryId,
-    });
-    */
-  } catch (error) {
-    // Mark as failed
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    await updateTaskStatus(task.id, 'failed', {
-      sync_error: errorMessage,
-    });
-
-    // Write failure to ledger
-    // TODO: Fix ledger entry type mismatch
-    /*
-    await writeLedgerEntry({
-      kind: 'codex-sync-failure',
-      subject: task.taskId,
-      payload: {
-        description: task.description,
-        error: error.message,
-        duration: Date.now() - startTime,
-      },
-      id: `${ledgerEntryId}-failure`,
-    });
-    */
-
-    throw error;
-  }
+	// Return unsubscribe function
+	return () => {
+		supabase.removeChannel(channel);
+	};
 }
+*/
 
 /**
- * Updates the sync status of a task
+ * Gets the last successful sync timestamp
+ * @returns Promise resolving to the timestamp or null
  */
-async function updateTaskStatus(
-  taskId: string,
-  status: 'pending' | 'syncing' | 'synced' | 'failed',
-  additionalUpdates?: Partial<CodexTaskUpdate>
-): Promise<void> {
-  const updates: CodexTaskUpdate = {
-    sync_status: status,
-    updated_at: new Date().toISOString(),
-    ...additionalUpdates,
-  };
-
-  const { error } = await supabase
-    .from('codex_tasks')
-    .update(updates)
-    .eq('id', taskId);
-
-  if (error) {
-    throw new Error(`Failed to update task status: ${error.message}`);
-  }
+/*
+export async function getLastSyncTime(): Promise<string | null> {
+	const status = await getSyncStatus();
+	return status?.last_successful_sync || null;
 }
+*/
 
 /**
- * Performs the actual external sync operation
- * This is a placeholder implementation
+ * Checks if a sync is currently in progress
+ * @returns Promise resolving to boolean indicating sync status
  */
-async function performExternalSync(task: CodexTask): Promise<void> {
-  // Simulate async operation
-  await new Promise((resolve) => setTimeout(resolve, 100));
-
-  // Add actual sync logic here
-  // For example: calling external APIs, updating remote systems, etc.
-
-  // Simulate random failures for testing
-  if (Math.random() < 0.1) {
-    throw new Error('Simulated sync failure');
-  }
+/*
+export async function isSyncInProgress(): Promise<boolean> {
+	const status = await getSyncStatus();
+	return status?.is_syncing || false;
 }
-
-/**
- * Gets the current sync status summary
- */
-export async function getSyncStatus(): Promise<{
-  pending: number;
-  syncing: number;
-  synced: number;
-  failed: number;
-}> {
-  const { data, error } = await supabase
-    .from('codex_tasks')
-    .select('sync_status');
-
-  if (error) {
-    throw new Error(`Failed to get sync status: ${error.message}`);
-  }
-
-  const status = {
-    pending: 0,
-    syncing: 0,
-    synced: 0,
-    failed: 0,
-  };
-
-  data?.forEach((task) => {
-    if (task.sync_status in status) {
-      status[task.sync_status as keyof typeof status]++;
-    }
-  });
-
-  return status;
-}
+*/
