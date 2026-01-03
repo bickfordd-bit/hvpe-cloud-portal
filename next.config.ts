@@ -1,39 +1,26 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-
-  // Enable standalone output for Docker deployment
+  // Enable standalone output for optimal Vercel deployment
   output: "standalone",
 
   // Temporarily ignore TypeScript errors during build
-  // TODO: Remove this once all pre-existing TS errors are resolved
+  // These will be fixed by PR #79
   typescript: {
     ignoreBuildErrors: true,
   },
 
-  // Optimize for Vercel
+  // Optimize for Vercel deployment
   reactStrictMode: true,
 
-  // Turbopack configuration (Next.js 16 default bundler)
+  // Configure Turbopack (Next.js 16 default)
   // Empty config to silence webpack compatibility warning
   turbopack: {},
 
-  // Handle Prisma in serverless environment (for webpack builds)
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      // Externalize Prisma client to prevent bundling issues
-      config.externals = config.externals || [];
-      if (Array.isArray(config.externals)) {
-        config.externals.push("@prisma/client");
-      } else {
-        // Handle other externals formats
-        const originalExternals = config.externals;
-        config.externals = ["@prisma/client", originalExternals];
-      }
-    }
-    return config;
-  },
+  // Note: Next.js 16 uses Turbopack by default
+  // ESLint config moved to eslint.config.mjs (no longer supported in next.config)
+  // experimental.missingSuspenseWithCSRBailout removed (deprecated in Next.js 16)
+  // swcMinify is default and no longer configurable
 };
 
 export default nextConfig;

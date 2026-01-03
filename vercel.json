@@ -6,8 +6,7 @@
   "regions": ["iad1"],
   "env": {
     "NEXT_TELEMETRY_DISABLED": "1",
-    "SKIP_ENV_VALIDATION": "1",
-    "CHECKPOINT_DISABLE": "1"
+    "SKIP_ENV_VALIDATION": "1"
   },
   "headers": [
     {

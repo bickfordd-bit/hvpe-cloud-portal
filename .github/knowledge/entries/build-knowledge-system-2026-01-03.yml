@@ -1,0 +1,163 @@
+action:
+  id: "build-knowledge-system-2026-01-03"
+  timestamp: "2026-01-03T18:25:36Z"
+  type: "feature"
+  
+intent:
+  description: "Build Knowledge Persistence System for coaching-style learning"
+  context: "Team needs persistent memory of 'why' behind decisions to avoid repeating mistakes and accelerate learning. Ledger captures 'what happened' but not the reasoning, lessons, or coaching context."
+  
+enables:
+  - "Persistent memory of decision reasoning"
+  - "Dependency tracking showing what unlocks what"
+  - "Pattern recognition for recurring issues"
+  - "Coaching-style explanations for future reference"
+  - "Query interface to search historical decisions"
+  - "Onboarding acceleration for new team members"
+  
+depends_on:
+  - action: "bick-ledger-system"
+    why: "Knowledge system extends ledger with coaching context"
+    
+unlocks:
+  - action: "ai-powered-coaching-agent"
+    why: "Knowledge base provides training data for AI coach"
+  - action: "automated-pattern-detection"
+    why: "Structured knowledge entries enable pattern mining"
+  - action: "decision-tree-builder"
+    why: "Dependency graphs reveal common decision paths"
+    
+implementation:
+  approach: "Create .github/knowledge/ directory with YAML entries, CLI tools, API endpoints, and web dashboard"
+  why_this_sequence:
+    - "Define schema first → establishes contract for all tools"
+    - "Build CLI before API → simpler, validates schema quickly"
+    - "Create API endpoints → enables programmatic access"
+    - "Seed with examples → validates entire pipeline"
+    - "Add automation last → manual process must work first"
+    - "Web dashboard final → requires API working"
+    
+proof:
+  - "Schema created: .github/knowledge/schema.json"
+  - "CLI tool works: scripts/knowledge-cli.js"
+  - "API endpoints respond: /api/knowledge/*"
+  - "Seed entries created (3 entries)"
+  - "Index auto-updates on new entries"
+  - "Validation script passes"
+  
+lessons:
+  - "Schema-first design prevents integration issues downstream"
+  - "CLI tools excellent for validating concepts before building APIs"
+  - "Self-documenting systems (meta-entries) demonstrate value immediately"
+  - "Start with manual workflows, automate after validation"
+  - "Coaching notes most valuable when written as if teaching someone"
+  
+coaching_notes: |
+  This knowledge system is itself an example of coaching-oriented design.
+  
+  Key design principles applied:
+  
+  1. **Schema-first development**
+     - Define data structure before building tools
+     - Validate schema with real examples early
+     - Use TypeScript interfaces matching schema
+     - Enables parallel development of CLI/API/UI
+  
+  2. **Progressive enhancement**
+     - Manual entry creation works first
+     - CLI query tools next
+     - API endpoints after CLI validated
+     - Automation workflows last
+     - Web dashboard final layer
+  
+  3. **Self-documenting systems**
+     - This entry documents its own creation
+     - Demonstrates value immediately
+     - Meta-knowledge validates the approach
+  
+  4. **Integration patterns**
+     - Extend existing systems (ledger) rather than replace
+     - Maintain clear boundaries (ledger=immutable, knowledge=coaching)
+     - Link bidirectionally for cross-reference
+  
+  5. **Coaching-first writing**
+     - Write as if teaching someone new
+     - Explain "why" not just "what"
+     - Include prevention strategies
+     - Provide evolution paths
+  
+  Architecture decisions explained:
+  
+  **Why YAML over JSON?**
+  - Human-readable and writable
+  - Better for coaching notes (multi-line strings)
+  - Git-friendly diffs
+  - Comments supported
+  
+  **Why file-based over database?**
+  - Git version control built-in
+  - No deployment dependencies
+  - Easy to backup and replicate
+  - Simple to query with fs + yaml
+  
+  **Why separate from ledger?**
+  - Ledger is immutable audit log
+  - Knowledge is mutable coaching content
+  - Different access patterns
+  - Different retention policies
+  
+  **Why API + CLI + Web?**
+  - CLI for quick developer access
+  - API for programmatic integration
+  - Web for non-technical stakeholders
+  - Each serves different use case
+  
+  Common pitfalls to avoid:
+  
+  ❌ **Don't make it bureaucratic**
+     - Keep entry creation lightweight
+     - Auto-generate when possible
+     - Manual only for high-value decisions
+  
+  ❌ **Don't duplicate ledger**
+     - Link to ledger entries, don't copy
+     - Knowledge adds context, not facts
+  
+  ❌ **Don't write boring coaching notes**
+     - Good: "This demonstrates unblock-first principle"
+     - Bad: "Changed file X to fix error Y"
+  
+  ❌ **Don't skip the "why"**
+     - "What" is in git log
+     - "Why" is the value-add here
+  
+  Evolution roadmap:
+  
+  Phase 1 (Current): Manual knowledge capture
+  - CLI tools working
+  - API endpoints live
+  - Seed entries demonstrate value
+  
+  Phase 2 (Next): Semi-automated capture
+  - GitHub Actions workflow
+  - PR merge triggers template generation
+  - Human adds coaching context
+  
+  Phase 3 (Future): AI-powered coaching
+  - GPT analyzes knowledge base
+  - Suggests coaching for new PRs
+  - Auto-detects patterns
+  
+  Phase 4 (Vision): Predictive guidance
+  - "This change will unlock X"
+  - "Consider Y based on similar pattern"
+  - "Z team solved this differently"
+  
+  Success metrics:
+  - Time to onboard new developer (decreases)
+  - Repeated mistakes frequency (decreases)
+  - Query usage (increases)
+  - Knowledge entry quality (improves)
+
+related_ledger_entries:
+  - ".bick/ledger/2026-01-03/build-knowledge-system.json"

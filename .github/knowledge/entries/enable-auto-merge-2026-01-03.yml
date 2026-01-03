@@ -1,0 +1,91 @@
+action:
+  id: "enable-auto-merge-2026-01-03"
+  timestamp: "2026-01-03T18:20:00Z"
+  type: "deployment"
+  
+intent:
+  description: "Enable auto-merge workflow for automated PR merging"
+  context: "Manual PR approval and merging creates bottlenecks for deployment velocity. Team needs ability to ship faster while maintaining quality gates."
+  
+enables:
+  - "Automated PR merging after checks pass"
+  - "Faster deployment cycles"
+  - "Reduced manual intervention overhead"
+  - "Consistent merge process"
+  
+depends_on:
+  - action: "fix-codex-sync-2026-01-03"
+    why: "Build must pass before auto-merge can safely merge PRs"
+    
+unlocks:
+  - action: "continuous-deployment-pipeline"
+    why: "Auto-merge enables true CD - commits to main trigger automatic production deployment"
+  - action: "feature-flag-rollouts"
+    why: "Fast merge cycles enable incremental feature releases"
+    
+implementation:
+  approach: "Configure GitHub Actions workflow with approval rules and quality gates"
+  why_this_sequence:
+    - "Ensure builds pass first → prevents auto-merging broken code"
+    - "Configure approval rules → maintain code review standards"
+    - "Add quality gates (tests, linting) → automated quality enforcement"
+    - "Enable auto-merge → only after all safety checks in place"
+    
+proof:
+  - "GitHub Actions workflow file created: .github/workflows/auto-merge-all-prs.yml"
+  - "Workflow runs successfully on test PR"
+  - "PR auto-merged after all checks pass"
+  - "No manual intervention required"
+  
+lessons:
+  - "Auto-merge requires trust in CI/CD pipeline quality gates"
+  - "Start with conservative rules, relax gradually as confidence builds"
+  - "Monitor first auto-merges closely to catch edge cases"
+  - "Clear rollback strategy required before enabling automation"
+  
+coaching_notes: |
+  Auto-merge workflows are powerful but require careful setup to avoid shipping broken code.
+  
+  Prerequisites for safe auto-merge:
+  1. ✅ Comprehensive test suite with high coverage
+  2. ✅ Linting and type checking enforced
+  3. ✅ Build passes consistently
+  4. ✅ Code review process in place (even if automated)
+  5. ✅ Rollback mechanism ready
+  
+  Quality gates to include:
+  - All tests pass (unit, integration, e2e)
+  - No TypeScript errors
+  - Linting passes
+  - Security scans pass (no new vulnerabilities)
+  - Code review approval (1+ reviewers)
+  - Branch up-to-date with base
+  
+  Monitoring requirements:
+  - Track merge frequency and success rate
+  - Alert on failed auto-merges
+  - Review merged PRs periodically
+  - Track production incidents correlated with auto-merged PRs
+  
+  Red flags that indicate auto-merge not ready:
+  - ❌ Flaky tests (intermittent failures)
+  - ❌ Inconsistent build results
+  - ❌ Manual testing still required
+  - ❌ No rollback process
+  - ❌ Team lacks confidence in CI
+  
+  Rollback strategy:
+  - Immediate: Revert commit + force push (breaks history, use sparingly)
+  - Safe: Create revert PR + auto-merge it (preserves history)
+  - Feature flags: Disable feature without code change
+  
+  Evolution path:
+  1. Start: Manual review + manual merge
+  2. Level 1: Manual review + auto-merge after approval
+  3. Level 2: Auto-review + auto-merge for low-risk changes
+  4. Level 3: Continuous deployment to production
+  
+  This repo is at Level 2 - manual review still required, but merge is automated after approval + checks pass.
+
+related_ledger_entries:
+  - ".bick/ledger/2026-01-03/enable-auto-merge.json"
