@@ -49,3 +49,17 @@ body {
     transform: translateY(0);
   }
 }
+
+/* Ledger entry highlight animation */
+@keyframes highlight {
+  0%, 100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(34, 197, 94, 0.2);
+  }
+}
+
+.animate-highlight {
+  animation: highlight 1s ease-in-out 3;
+}

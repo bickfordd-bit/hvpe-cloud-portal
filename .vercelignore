@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+*.test.ts
+*.test.tsx
+__tests__/
+
+# Development
+.git/
+.github/
+.vscode/
+.idea/
+
+# Bickford Ledger (too large for deployment)
+.bick/ledger/
+
+# Vercel
+.vercel/
+.now/
+
+# Environment
+.env.local
+.env.*.local
+
+# Temporary
+*.tmp
+*.log
+.DS_Store
