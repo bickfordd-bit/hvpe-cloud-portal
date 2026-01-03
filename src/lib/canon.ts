@@ -29,7 +29,8 @@ function loadCanonContent(): string {
   try {
     return fs.readFileSync(CANON_PATH, 'utf-8');
   } catch (error: unknown) {
-    logger.error('Failed to load CANON.md', { error: error.message, path: CANON_PATH });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error('Failed to load CANON.md', { error: errorMessage, path: CANON_PATH });
     throw new Error(`CANON.md not found at ${CANON_PATH}`);
   }
 }
@@ -42,7 +43,8 @@ function loadCanonMeta(): CanonMeta {
     const content = fs.readFileSync(META_PATH, 'utf-8');
     return JSON.parse(content) as CanonMeta;
   } catch (error: unknown) {
-    logger.error('Failed to load CANON.meta.json', { error: error.message, path: META_PATH });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error('Failed to load CANON.meta.json', { error: errorMessage, path: META_PATH });
     throw new Error(`CANON.meta.json not found or invalid at ${META_PATH}`);
   }
 }

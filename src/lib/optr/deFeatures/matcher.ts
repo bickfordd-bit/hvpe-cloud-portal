@@ -3,6 +3,7 @@ import type {
   FeatureMatchResult,
   DEFeatureAnalysisResult,
   ChoiceIndex,
+  FeatureId,
 } from './types';
 import { DEFeaturesParser } from './parser';
 import { logger } from '@/lib/logger';

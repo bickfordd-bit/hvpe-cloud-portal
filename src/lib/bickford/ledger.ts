@@ -63,7 +63,14 @@ export async function queryLedger(opts: {
   before?: string;
   limit?: number;
 }) {
-  const where: unknown = {};
+  const where: {
+    kind?: string;
+    subject?: { contains: string };
+    ts?: {
+      gte?: string;
+      lte?: string;
+    };
+  } = {};
 
   if (opts.kind) where.kind = opts.kind;
   if (opts.subject) where.subject = { contains: opts.subject };

@@ -55,7 +55,8 @@ export function loadBickfordMode(): BickfordMode | null {
 
     return config;
   } catch (error: unknown) {
-    logger.error('Failed to load Bickford mode', { error: error.message });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error('Failed to load Bickford mode', { error: errorMessage });
     // Fail-closed: if mode config is corrupt, don't activate
     return null;
   }

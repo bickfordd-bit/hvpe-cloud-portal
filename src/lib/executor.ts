@@ -13,6 +13,7 @@ import {
   CommitInfo,
   InvariantCheck,
   InvariantResult,
+  LedgerEntry,
 } from './types';
 import { loadCanon } from './canon';
 import { appendLedger } from './ledger';
@@ -94,12 +95,13 @@ export function checkInvariants(plan: ExecutionPlan): InvariantResult {
       evidence: { hash: canon.meta.sha256, version: canon.meta.version },
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     checks.push({
       name: 'Canon Integrity',
       type: 'canon_compliance',
       passed: false,
-      message: `Canon verification failed: ${error.message}`,
-      evidence: { error: error.message },
+      message: `Canon verification failed: ${errorMessage}`,
+      evidence: { error: errorMessage },
     });
   }
 
@@ -231,8 +233,9 @@ ${changes.map((c) => `${c.operation}: ${c.path}`).join('\n')}
 
     return commitInfo;
   } catch (error: unknown) {
-    logger.error('GitHub commit failed', { error: error.message });
-    throw new Error(`GitHub commit failed: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error('GitHub commit failed', { error: errorMessage });
+    throw new Error(`GitHub commit failed: ${errorMessage}`);
   }
 }
 
@@ -309,7 +312,7 @@ export async function executePolicy(binding: PolicyBinding): Promise<ExecutionRe
       policyBinding: binding,
       executionPlan: plan,
       commits,
-      ledgerEntry: {} as unknown, // Will be filled next
+      ledgerEntry: {} as LedgerEntry, // Will be filled next
       timestamp: new Date().toISOString(),
       durationMs: Date.now() - startTime,
     };
