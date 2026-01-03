@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Knowledge Entry Schema",
+  "description": "Schema for capturing why behind every action for coaching-style learning",
+  "type": "object",
+  "required": ["action", "intent", "enables", "implementation", "proof"],
+  "properties": {
+    "action": {
+      "type": "object",
+      "required": ["id", "timestamp", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this action"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "build_fix",
+            "feature",
+            "refactor",
+            "bug_fix",
+            "deployment",
+            "configuration",
+            "documentation",
+            "test",
+            "security",
+            "performance"
+          ],
+          "description": "Category of action"
+        }
+      }
+    },
+    "intent": {
+      "type": "object",
+      "required": ["description"],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "What this action accomplishes"
+        },
+        "context": {
+          "type": "string",
+          "description": "Why this action was needed"
+        }
+      }
+    },
+    "enables": {
+      "type": "array",
+      "description": "What downstream capabilities this unlocks",
+      "items": {
+        "type": "string"
+      }
+    },
+    "depends_on": {
+      "type": "array",
+      "description": "Upstream requirements",
+      "items": {
+        "type": "object",
+        "required": ["action", "why"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "ID of dependent action"
+          },
+          "why": {
+            "type": "string",
+            "description": "Why this dependency exists"
+          }
+        }
+      }
+    },
+    "unlocks": {
+      "type": "array",
+      "description": "Future actions that can now proceed",
+      "items": {
+        "type": "object",
+        "required": ["action", "why"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "ID of unlocked action"
+          },
+          "why": {
+            "type": "string",
+            "description": "Why this is now possible"
+          }
+        }
+      }
+    },
+    "implementation": {
+      "type": "object",
+      "required": ["approach"],
+      "properties": {
+        "approach": {
+          "type": "string",
+          "description": "High-level implementation strategy"
+        },
+        "why_this_sequence": {
+          "type": "array",
+          "description": "Reasoning behind implementation order",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "proof": {
+      "type": "array",
+      "description": "Verifiable artifacts",
+      "items": {
+        "type": "string"
+      }
+    },
+    "lessons": {
+      "type": "array",
+      "description": "Learnings from this action",
+      "items": {
+        "type": "string"
+      }
+    },
+    "coaching_notes": {
+      "type": "string",
+      "description": "Detailed coaching guidance for similar situations"
+    },
+    "related_ledger_entries": {
+      "type": "array",
+      "description": "Links to .bick/ledger entries",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
