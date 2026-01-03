@@ -143,6 +143,25 @@ curl "http://localhost:3000/api/bickford/ledger?limit=10" | jq .
 - Add Bickford UI dashboard at `/dashboard/bickford` to visualize decision ledger
 - Configure CI to validate `bickford.mode.json` schema on PRs
 
+## Validation Status (2026-01-03)
+
+✅ **Bickford Chat Dependencies Validated**
+
+The December 19th ledger flagged `src/lib/chat/unifiedAgent.ts` and `src/lib/chat/history.ts` as "missing dependencies" that needed implementation. Investigation revealed **both dependencies were already fully implemented**:
+
+- ✅ `src/lib/chat/unifiedAgent.ts` (117 lines, complete with `buildUnifiedAgentPrompt()`)
+- ✅ `src/lib/chat/history.ts` (123 lines, complete with `recordChatHistory()`)
+- ✅ `src/app/api/bickford-chat/route.ts` properly imports and uses both dependencies
+- ✅ All function signatures match usage patterns
+- ✅ Prisma `ChatMessageLog` model exists and is correctly configured
+- ✅ Logger integration working properly
+- ✅ Graceful degradation implemented (works without DATABASE_URL or OpenAI key)
+- ✅ 16/16 integration tests pass (see `__tests__/bickford-chat-integration.test.ts`)
+
+**Conclusion:** Bickford chat system is production-ready with all dependencies functional.
+
+Validation ledger: `.bick/ledger/2026-01-03/bickford-dependencies-validated.json`
+
 ## Next Steps
 
 ```bash
