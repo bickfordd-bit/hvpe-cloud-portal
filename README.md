@@ -42,6 +42,99 @@ The canonical specification is stored in `/canon/`:
 
 ---
 
+## 🤖 Auto-Merge Workflow
+
+This repository implements zero-approval auto-merge for owner PRs. No manual merge button clicking required.
+
+### How It Works
+
+When the repository owner (`bickfordd-bit`) creates a PR:
+
+1. **Automatic Check Execution**: PR checks workflow runs lint, build, and test
+2. **Auto-Approval**: Once checks pass, the PR is automatically approved
+3. **Auto-Merge**: PR merges automatically with squash strategy
+4. **Branch Cleanup**: Source branch is deleted after merge
+5. **Notifications**: Status updates posted as PR comments at each stage
+
+### Requirements
+
+For auto-merge to trigger, the PR must:
+- ✅ Be created by repository owner (`bickfordd-bit`)
+- ✅ Not be in draft state
+- ✅ Not have `[no-auto-merge]` in the title
+- ✅ Pass all required checks (lint, build, test)
+
+### Required Status Checks
+
+Auto-merge waits for these checks to pass:
+- **Lint** - ESLint validation
+- **Build** - Next.js build verification  
+- **Test** - Jest test suite
+
+### Disabling Auto-Merge
+
+To disable auto-merge for a specific PR, add `[no-auto-merge]` anywhere in the PR title:
+
+```
+[no-auto-merge] WIP: Experimental feature
+```
+
+### Monitoring PR Progress
+
+**GitHub Notifications:**
+- Watch repository → Custom → Select "Pull requests"
+- Enable email notifications for PR activity
+
+**PR Comments:**
+The auto-merge workflow posts status updates:
+- 🤖 "Auto-merge initiated" - When workflow starts
+- ⏱️ "Waiting for checks" - While checks are running
+- ✅ "Auto-merge enabled" - When checks pass and merge is queued
+- ❌ "Auto-merge blocked" - If checks fail
+- 🎉 "Auto-merged successfully" - After successful merge
+
+**Workflow Logs:**
+View detailed execution logs at:
+```
+https://github.com/bickfordd-bit/hvpe-cloud-portal/actions
+```
+
+### Branch Protection
+
+To configure branch protection rules:
+
+1. Go to **Actions** tab in GitHub
+2. Select **Setup Branch Protection** workflow
+3. Click **Run workflow**
+4. Select target branch (main/mobile)
+5. Click **Run workflow** button
+
+This configures:
+- Required status checks (lint, build, test)
+- Force push protection
+- Branch deletion protection
+- No required PR reviews (owner can self-merge)
+
+### Troubleshooting
+
+**Auto-merge didn't trigger:**
+- Check PR author is `bickfordd-bit`
+- Ensure PR is not in draft
+- Verify title doesn't contain `[no-auto-merge]`
+- Check workflow logs for errors
+
+**Checks are failing:**
+- Review workflow run logs
+- Fix failing tests/lints locally
+- Push fixes - auto-merge will retry
+
+**Workflow timed out:**
+- Checks took longer than 30 minutes
+- Auto-merge will retry on next push
+- Check for stuck/hanging tests
+
+---
+
 ## Canon + Sale Architecture
 - **Executable canon** lives in [`src/lib/btiCanon.ts`](./src/lib/btiCanon.ts) and drives the proof-gated $1B sale plan.
 - Human-readable mirror: [`docs/BICKFORD_CANON.md`](./docs/BICKFORD_CANON.md).

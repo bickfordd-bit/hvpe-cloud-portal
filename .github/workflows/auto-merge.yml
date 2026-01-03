@@ -1,0 +1,239 @@
+name: Auto-Merge Owner PRs
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main, mobile]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  auto-merge:
+    name: Auto-Merge for Repository Owner
+    runs-on: ubuntu-latest
+    # Only run for owner PRs, not draft PRs, and exclude PRs with [no-auto-merge] in title
+    if: |
+      github.event.pull_request.user.login == 'bickfordd-bit' &&
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.title, '[no-auto-merge]')
+
+    steps:
+      - name: Check PR author
+        id: check-author
+        run: |
+          echo "PR author: ${{ github.event.pull_request.user.login }}"
+          echo "Expected owner: bickfordd-bit"
+          if [ "${{ github.event.pull_request.user.login }}" != "bickfordd-bit" ]; then
+            echo "❌ Not owner PR, skipping auto-merge"
+            exit 1
+          fi
+          echo "✅ Owner PR confirmed"
+
+      - name: Comment - Auto-merge initiated
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('🤖 Auto-merge status')
+            );
+
+            const message = `## 🤖 Auto-merge status
+
+            ✅ Auto-merge initiated for owner PR
+
+            **Status**: Waiting for required checks to pass
+            - ✓ Quality checks (lint, TypeScript)
+            - ✓ Tests
+            - ✓ Build verification
+
+            Once all checks pass, this PR will be automatically approved and merged with squash strategy.
+
+            > To disable auto-merge, add \`[no-auto-merge]\` to the PR title.`;
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: message
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: message
+              });
+            }
+
+      - name: Wait for required checks
+        uses: actions/github-script@v7
+        id: wait-checks
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const requiredChecks = ['quality', 'test', 'build'];
+            const maxAttempts = 60; // 30 minutes max wait
+            const delayMs = 30000; // 30 seconds between checks
+
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+              const { data: checkRuns } = await github.rest.checks.listForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: context.payload.pull_request.head.sha,
+              });
+
+              console.log(`Attempt ${attempt + 1}/${maxAttempts}: Checking status...`);
+
+              const relevantChecks = checkRuns.check_runs.filter(run =>
+                requiredChecks.some(req => run.name.toLowerCase().includes(req))
+              );
+
+              if (relevantChecks.length === 0) {
+                console.log('No checks found yet, waiting...');
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+                continue;
+              }
+
+              const allCompleted = relevantChecks.every(run =>
+                run.status === 'completed'
+              );
+
+              if (!allCompleted) {
+                console.log('Checks still running, waiting...');
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+                continue;
+              }
+
+              const allPassed = relevantChecks.every(run =>
+                run.conclusion === 'success'
+              );
+
+              if (!allPassed) {
+                const failedChecks = relevantChecks
+                  .filter(run => run.conclusion !== 'success')
+                  .map(run => `- ${run.name}: ${run.conclusion}`)
+                  .join('\n');
+
+                core.setOutput('checks_passed', 'false');
+                core.setOutput('failed_checks', failedChecks);
+                console.log('❌ Some checks failed:\n' + failedChecks);
+                return;
+              }
+
+              console.log('✅ All required checks passed!');
+              core.setOutput('checks_passed', 'true');
+              return;
+            }
+
+            core.setOutput('checks_passed', 'timeout');
+            console.log('⏱️ Timeout waiting for checks');
+
+      - name: Comment - Checks failed
+        if: steps.wait-checks.outputs.checks_passed == 'false'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## ❌ Auto-merge blocked
+
+              Required checks failed. Please review the workflow logs:
+
+              ${{ steps.wait-checks.outputs.failed_checks }}
+
+              [View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`
+            });
+            core.setFailed('Required checks failed');
+
+      - name: Comment - Timeout
+        if: steps.wait-checks.outputs.checks_passed == 'timeout'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## ⏱️ Auto-merge timeout
+
+              Checks are taking longer than expected. Auto-merge will retry on next push.
+
+              [View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`
+            });
+
+      - name: Auto-approve PR
+        if: steps.wait-checks.outputs.checks_passed == 'true'
+        run: |
+          gh pr review "$PR_URL" --approve --body "✅ Auto-approved by workflow - all checks passed"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge
+        if: steps.wait-checks.outputs.checks_passed == 'true'
+        run: |
+          gh pr merge "$PR_URL" --auto --squash --delete-branch
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment - Auto-merge enabled
+        if: steps.wait-checks.outputs.checks_passed == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## ✅ Auto-merge enabled
+
+              All required checks passed! This PR will merge automatically.
+
+              **Merge strategy**: Squash and merge
+              **Branch cleanup**: Branch will be deleted after merge
+
+              🎉 No manual intervention required!`
+            });
+
+  notify-merge-success:
+    name: Notify Merge Success
+    runs-on: ubuntu-latest
+    needs: auto-merge
+    if: success()
+    steps:
+      - name: Comment - Merge successful
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## 🎉 Auto-merged successfully!
+
+              Changes have been merged to \`${{ github.event.pull_request.base.ref }}\`.
+
+              **Commit**: ${{ github.event.pull_request.head.sha }}
+              **Merged by**: Auto-merge workflow
+
+              Thank you for your contribution!`
+            });
