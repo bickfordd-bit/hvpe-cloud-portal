@@ -10,7 +10,7 @@ export interface ChatHistoryEntry {
   timestamp: string;
   source: string; // 'hvpe-chat', 'bickford-chat', etc.
   agent: string; // 'bigfern-unified', 'optr', etc.
-  payload: any; // Mode, messages, reply, etc.
+  payload: unknown; // Mode, messages, reply, etc.
   sessionId?: string;
   userId?: string;
 }
@@ -46,7 +46,7 @@ export async function recordChatHistory(entry: ChatHistoryEntry): Promise<void> 
     });
 
     logger.debug('Chat history persisted to database', { source: entry.source });
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Don't fail the request if history recording fails
     logger.error('Failed to record chat history', {
       error: error.message,
@@ -58,10 +58,7 @@ export async function recordChatHistory(entry: ChatHistoryEntry): Promise<void> 
 /**
  * Query chat history for a session
  */
-export async function getChatHistory(
-  sessionId: string,
-  limit: number = 50
-): Promise<any[]> {
+export async function getChatHistory(sessionId: string, limit: number = 50): Promise<unknown[]> {
   if (!process.env.DATABASE_URL) {
     logger.warn('DATABASE_URL not set - returning empty chat history');
     return [];
@@ -81,7 +78,7 @@ export async function getChatHistory(
       content: entry.content,
       mode: entry.mode,
     }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Failed to query chat history', {
       error: error.message,
       sessionId,
@@ -113,7 +110,7 @@ export async function archiveChatHistory(beforeDate: Date): Promise<number> {
     });
 
     return result.count;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Failed to archive chat history', {
       error: error.message,
       beforeDate: beforeDate.toISOString(),

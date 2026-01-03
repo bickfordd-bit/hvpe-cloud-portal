@@ -20,10 +20,7 @@ export async function POST(req: NextRequest) {
       logger.warn('Codex sync: unauthorized attempt', {
         ip: req.headers.get('x-forwarded-for'),
       });
-      return NextResponse.json(
-        apiError(new Error('Unauthorized')),
-        { status: 401 }
-      );
+      return NextResponse.json(apiError(new Error('Unauthorized')), { status: 401 });
     }
 
     const body = await req.json();
@@ -60,10 +57,7 @@ export async function POST(req: NextRequest) {
     const result = await syncCodexChanges(task);
 
     if (!result.success) {
-      return NextResponse.json(
-        apiError(new Error(result.error || 'Sync failed')),
-        { status: 500 }
-      );
+      return NextResponse.json(apiError(new Error(result.error || 'Sync failed')), { status: 500 });
     }
 
     return NextResponse.json(
@@ -72,7 +66,7 @@ export async function POST(req: NextRequest) {
         ...result,
       })
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Codex sync endpoint error', { error: error.message });
     return NextResponse.json(apiError(error), { status: 500 });
   }

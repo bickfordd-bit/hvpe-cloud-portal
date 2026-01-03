@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 import {
   defaultTradingEngineData,
@@ -6,11 +6,11 @@ import {
   type TradingEngineState,
   type TradingPosition,
   type RiskMode,
-} from "@/lib/tradingEngineData";
+} from '@/lib/tradingEngineData';
 
 type WealthPosition = {
   symbol: string;
-  side: "long" | "short";
+  side: 'long' | 'short';
   qty: number;
   entry_price?: number;
   current_price?: number;
@@ -25,24 +25,23 @@ type WealthResponse = {
   positions?: WealthPosition[];
 };
 
-const BASE_URL =
-  (process.env.HVPE_PORTAL_API_BASE_URL ?? "http://localhost:8000").replace(
-    /\/$/,
-    "",
-  );
+const BASE_URL = (process.env.HVPE_PORTAL_API_BASE_URL ?? 'http://localhost:8000').replace(
+  /\/$/,
+  ''
+);
 
 function mapRiskMode(raw?: string): RiskMode {
-  const mode = raw?.toLowerCase() ?? "";
-  if (mode === "acceleration" || mode === "aggressive") {
-    return "aggressive";
+  const mode = raw?.toLowerCase() ?? '';
+  if (mode === 'acceleration' || mode === 'aggressive') {
+    return 'aggressive';
   }
-  if (mode === "steady" || mode === "balanced") {
-    return "balanced";
+  if (mode === 'steady' || mode === 'balanced') {
+    return 'balanced';
   }
-  if (mode === "preserve" || mode === "conservative") {
-    return "conservative";
+  if (mode === 'preserve' || mode === 'conservative') {
+    return 'conservative';
   }
-  return "aggressive";
+  return 'aggressive';
 }
 
 function mapPosition(position: WealthPosition): TradingPosition {
@@ -58,27 +57,19 @@ function mapPosition(position: WealthPosition): TradingPosition {
 }
 
 export async function GET() {
-  const fallback = structuredClone(
-    defaultTradingEngineData,
-  ) as TradingEngineData;
+  const fallback = structuredClone(defaultTradingEngineData) as TradingEngineData;
 
   try {
     const res = await fetch(`${BASE_URL}/wealth`, {
-      cache: "no-store",
+      cache: 'no-store',
     });
     if (!res.ok) {
-      console.warn(
-        "hvpe-trading API could not fetch wealth data",
-        res.status,
-        res.statusText,
-      );
+      console.warn('hvpe-trading API could not fetch wealth data', res.status, res.statusText);
       return NextResponse.json(fallback);
     }
 
     const payload = (await res.json()) as WealthResponse;
-    const positions = payload.positions
-      ? payload.positions.map(mapPosition)
-      : fallback.positions;
+    const positions = payload.positions ? payload.positions.map(mapPosition) : fallback.positions;
 
     const engineState: TradingEngineState = {
       running: true,
@@ -94,8 +85,8 @@ export async function GET() {
     };
 
     return NextResponse.json(response);
-  } catch (error) {
-    console.error("hvpe-trading API failed", error);
+  } catch (error: unknown) {
+    console.error('hvpe-trading API failed', error);
     return NextResponse.json(fallback);
   }
 }

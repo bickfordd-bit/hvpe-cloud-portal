@@ -16,12 +16,12 @@ const execAsync = promisify(exec);
 export interface PersistenceEntry {
   kind: string;
   subject: string;
-  payload: any;
+  payload: unknown;
   metadata?: {
     userId?: string;
     sessionId?: string;
     timestamp?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -46,7 +46,7 @@ export interface PersistenceProof {
 export async function persistForever(entry: PersistenceEntry): Promise<PersistenceProof> {
   const timestamp = new Date().toISOString();
   const id = `${entry.kind}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  
+
   const proof: PersistenceProof = {
     ledgerId: '',
     timestamp,
@@ -102,14 +102,16 @@ export async function persistForever(entry: PersistenceEntry): Promise<Persisten
   ]);
 
   // Log results
-  const successes = results.filter(r => r.status === 'fulfilled').length;
-  const failures = results.filter(r => r.status === 'rejected');
+  const successes = results.filter((r) => r.status === 'fulfilled').length;
+  const failures = results.filter((r) => r.status === 'rejected');
 
   if (failures.length > 0) {
     logger.warn('Some persistence layers failed', {
       successes,
       failures: failures.length,
-      errors: failures.map((f: any) => f.reason?.message),
+      errors: failures.map(
+        (f: unknown) => (f as { reason?: { message?: string } }).reason?.message
+      ),
     });
   }
 
@@ -142,7 +144,7 @@ async function persistToDatabase(id: string, entry: PersistenceEntry): Promise<s
       },
     });
     return record.id;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Fallback to AiUsageLog if BickfordLedger fails
     if (error.code === 'P2002' || error.message?.includes('BickfordLedger')) {
       const fallback = await prisma.aiUsageLog.create({
@@ -191,14 +193,14 @@ async function persistToGit(id: string, entry: PersistenceEntry): Promise<string
     const message = `persistence: ${entry.kind} - ${entry.subject.substring(0, 50)}`;
     const { stdout } = await execAsync(`git commit -m "${message}"`);
     const commitSha = stdout.match(/\[mobile ([a-f0-9]+)\]/)?.[1];
-    
+
     // Push async (don't wait)
     execAsync('git push origin mobile').catch((err) =>
       logger.warn('Git push failed (non-fatal)', { error: err.message })
     );
 
     return commitSha || 'committed';
-  } catch (error: any) {
+  } catch (error: unknown) {
     // If git fails, at least we have the file
     if (error.message?.includes('nothing to commit')) {
       return 'no-changes';
@@ -243,10 +245,10 @@ export async function retrieve(id: string): Promise<PersistenceEntry | null> {
       return {
         kind: record.kind,
         subject: record.subject,
-        payload: record.payload as any,
+        payload: record.payload,
       };
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.warn('Database retrieval failed', { id, error });
   }
 
@@ -254,12 +256,9 @@ export async function retrieve(id: string): Promise<PersistenceEntry | null> {
   try {
     const { readFile } = await import('fs/promises');
     const { glob } = await import('glob');
-    
+
     // Search in .bick/ledger and .persistence
-    const patterns = [
-      `.bick/ledger/**/${id}.json`,
-      `.persistence/**/${id}.json`,
-    ];
+    const patterns = [`.bick/ledger/**/${id}.json`, `.persistence/**/${id}.json`];
 
     for (const pattern of patterns) {
       const files = await glob(pattern, { cwd: process.cwd() });
@@ -268,7 +267,7 @@ export async function retrieve(id: string): Promise<PersistenceEntry | null> {
         return JSON.parse(content);
       }
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.warn('File retrieval failed', { id, error });
   }
 
@@ -306,10 +305,10 @@ export async function query(opts: {
       ...records.map((r) => ({
         kind: r.kind,
         subject: r.subject,
-        payload: r.payload as any,
+        payload: r.payload,
       }))
     );
-  } catch (error) {
+  } catch (error: unknown) {
     logger.warn('Database query failed', { opts, error });
   }
 

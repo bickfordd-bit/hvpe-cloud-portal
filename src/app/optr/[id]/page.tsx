@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { OptrShell } from "@/components/optr/OptrShell";
-import { OptrRunPanel } from "@/components/optr/OptrRunPanel";
-import { OptrStatusPanel } from "@/components/optr/OptrStatusPanel";
-import { OptrTraceTable } from "@/components/optr/OptrTraceTable";
-import { OptrRequirements } from "@/components/optr/OptrRequirements";
-import { OptrVoiceAssistant } from "@/components/optr/OptrVoiceAssistant";
-import { optrClient } from "@/lib/optr/client";
-import type { OPTRState, Requirement, Trace, RunResult } from "@/lib/optr/types";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { OptrShell } from '@/components/optr/OptrShell';
+import { OptrRunPanel } from '@/components/optr/OptrRunPanel';
+import { OptrStatusPanel } from '@/components/optr/OptrStatusPanel';
+import { OptrTraceTable } from '@/components/optr/OptrTraceTable';
+import { OptrRequirements } from '@/components/optr/OptrRequirements';
+import { OptrVoiceAssistant } from '@/components/optr/OptrVoiceAssistant';
+import { optrClient } from '@/lib/optr/client';
+import type { OPTRState, Requirement, Trace, RunResult } from '@/lib/optr/types';
 
 export default function OptrOpportunityPage() {
   const params = useParams<{ id?: string }>();
-  const id = params?.id ? decodeURIComponent(params.id) : "";
+  const id = params?.id ? decodeURIComponent(params.id) : '';
 
   const [state, setState] = useState<OPTRState | null>(null);
   const [requirements, setRequirements] = useState<Requirement[]>([]);
@@ -27,12 +27,13 @@ export default function OptrOpportunityPage() {
     try {
       const s = await optrClient.status(id);
       setState(s);
-    } catch (e: any) {
-      setErr(e.message || "Failed to load status.");
+    } catch (e: unknown) {
+      setErr(e.message || 'Failed to load status.');
     }
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     loadStatus();
   }, [id]);
 
@@ -44,12 +45,12 @@ export default function OptrOpportunityPage() {
       setRequirements(rr.requirements || []);
       setTraces(rr.traces || []);
       // setPackageUrl(rr.package?.url || null); // RunResult doesn't have package property
-    } catch (e: any) {
-      setErr(e.message || "OPTR run failed.");
+    } catch (e: unknown) {
+      setErr(e.message || 'OPTR run failed.');
     }
   }
 
-  function handleVoiceResult(result: any) {
+  function handleVoiceResult(result: unknown) {
     if (result.state) setState(result.state);
     if (result.requirements) setRequirements(result.requirements);
     if (result.traces) setTraces(result.traces);
@@ -61,34 +62,34 @@ export default function OptrOpportunityPage() {
       <OptrShell
         title={`Opportunity: ${id}`}
         subtitle="Run OPTR to compute coverage, blockers, and traceability. Use voice commands on mobile."
-      right={
-        <Link
-          href="/optr"
-          className="rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm hover:bg-neutral-800"
-        >
-          ← Back
-        </Link>
-      }
-    >
-      {err ? (
-        <div className="mb-4 rounded-xl border border-red-900 bg-red-950/40 p-3 text-sm text-red-200">
-          {err}
+        right={
+          <Link
+            href="/optr"
+            className="rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm hover:bg-neutral-800"
+          >
+            ← Back
+          </Link>
+        }
+      >
+        {err ? (
+          <div className="mb-4 rounded-xl border border-red-900 bg-red-950/40 p-3 text-sm text-red-200">
+            {err}
+          </div>
+        ) : null}
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <OptrRunPanel onRun={run} onRefresh={loadStatus} packageUrl={packageUrl} />
+          <OptrStatusPanel state={state} />
         </div>
-      ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <OptrRunPanel onRun={run} onRefresh={loadStatus} packageUrl={packageUrl} />
-        <OptrStatusPanel state={state} />
-      </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <OptrRequirements requirements={requirements} />
+          <OptrTraceTable traces={traces} />
+        </div>
+      </OptrShell>
 
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <OptrRequirements requirements={requirements} />
-        <OptrTraceTable traces={traces} />
-      </div>
-    </OptrShell>
-    
-    {/* Voice Assistant for Mobile */}
-    <OptrVoiceAssistant opportunityId={id} onResult={handleVoiceResult} />
+      {/* Voice Assistant for Mobile */}
+      <OptrVoiceAssistant opportunityId={id} onResult={handleVoiceResult} />
     </>
   );
 }

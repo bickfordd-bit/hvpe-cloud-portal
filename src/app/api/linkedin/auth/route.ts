@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     });
 
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       { error: 'Failed to initiate LinkedIn auth', details: error.message },
       { status: 500 }

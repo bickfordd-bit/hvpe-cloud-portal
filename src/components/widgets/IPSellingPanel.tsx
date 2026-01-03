@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Card } from "@/components/ui/Card";
-import { IPSellingEngine, type IPSaleOpportunity } from "@/lib/optr/ipSelling";
-import { defaultDashboardData } from "@/lib/hvpeDashboardData";
+import { useState } from 'react';
+import { Card } from '@/components/ui/Card';
+import { IPSellingEngine, type IPSaleOpportunity } from '@/lib/optr/ipSelling';
+import { defaultDashboardData } from '@/lib/hvpeDashboardData';
 
 export function IPSellingPanel() {
   const [isLoading, setIsLoading] = useState(false);
@@ -20,7 +20,7 @@ export function IPSellingPanel() {
     try {
       const response = await fetch('/api/optr/ip-sell', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
@@ -29,7 +29,7 @@ export function IPSellingPanel() {
 
       const data = await response.json();
       setResults(data);
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setIsLoading(false);
@@ -37,7 +37,7 @@ export function IPSellingPanel() {
   };
 
   const portfolio = defaultDashboardData.billionaires.people;
-  const sellableIP = portfolio.filter(p => p.ipCreated && p.ipValue > 0);
+  const sellableIP = portfolio.filter((p) => p.ipCreated && p.ipValue > 0);
   const totalIPValue = sellableIP.reduce((sum, p) => sum + p.ipValue, 0);
 
   return (
@@ -79,11 +79,14 @@ export function IPSellingPanel() {
               {sellableIP.length > 0
                 ? Math.round(
                     sellableIP.reduce((sum, p) => {
-                      const days = Math.ceil((new Date(p.saleTimeline).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                      const days = Math.ceil(
+                        (new Date(p.saleTimeline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+                      );
                       return sum + Math.max(0, days);
                     }, 0) / sellableIP.length
                   )
-                : 0} days
+                : 0}{' '}
+              days
             </div>
           </div>
         </div>
@@ -92,15 +95,21 @@ export function IPSellingPanel() {
         <div className="space-y-2">
           <div className="text-xs text-neutral-500 uppercase tracking-wide">IP Portfolio</div>
           {sellableIP.map((person) => {
-            const daysUntilSale = Math.ceil((new Date(person.saleTimeline).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            const daysUntilSale = Math.ceil(
+              (new Date(person.saleTimeline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+            );
             const ipType = 'patent'; // Simplified - can be enhanced later
 
             return (
-              <div key={person.name} className="flex items-center justify-between p-3 bg-neutral-900/50 rounded-lg">
+              <div
+                key={person.name}
+                className="flex items-center justify-between p-3 bg-neutral-900/50 rounded-lg"
+              >
                 <div>
                   <div className="font-medium text-neutral-100">{person.name}</div>
                   <div className="text-xs text-neutral-400">
-                    {ipType.charAt(0).toUpperCase() + ipType.slice(1)} • ${person.ipValue.toLocaleString()}
+                    {ipType.charAt(0).toUpperCase() + ipType.slice(1)} • $
+                    {person.ipValue.toLocaleString()}
                   </div>
                 </div>
                 <div className="text-right">

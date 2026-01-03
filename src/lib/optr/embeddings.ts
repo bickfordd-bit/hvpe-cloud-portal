@@ -3,15 +3,12 @@ import { logger } from '../logger';
 
 /**
  * Generate embeddings for text using OpenAI API
- * 
+ *
  * @param text - Text to embed
  * @param apiKey - OpenAI API key
  * @returns Embedding vector (1536 dimensions for text-embedding-3-small)
  */
-export async function generateEmbeddings(
-  text: string,
-  apiKey: string
-): Promise<number[]> {
+export async function generateEmbeddings(text: string, apiKey: string): Promise<number[]> {
   const openai = new OpenAI({ apiKey });
 
   try {
@@ -21,7 +18,7 @@ export async function generateEmbeddings(
     });
 
     return response.data[0].embedding;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('OpenAI embeddings failed', { error, text: text.slice(0, 100) });
     throw new Error(`Failed to generate embeddings: ${error}`);
   }
@@ -30,7 +27,7 @@ export async function generateEmbeddings(
 /**
  * Generate embeddings for multiple texts in batch
  * OpenAI supports up to 2048 inputs per request
- * 
+ *
  * @param texts - Array of texts to embed
  * @param apiKey - OpenAI API key
  * @returns Array of embedding vectors
@@ -68,7 +65,7 @@ export async function generateEmbeddingsBatch(
     });
 
     return allEmbeddings;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Batch embeddings generation failed', {
       error: error instanceof Error ? error.message : String(error),
     });
@@ -78,7 +75,7 @@ export async function generateEmbeddingsBatch(
 
 /**
  * Calculate cosine similarity between two vectors
- * 
+ *
  * @param a - First vector
  * @param b - Second vector
  * @returns Cosine similarity value

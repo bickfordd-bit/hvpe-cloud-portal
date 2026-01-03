@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Sparkles, Zap, Target, Rocket, Shield, ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { Sparkles, Zap, Target, Rocket, Shield, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export default function HowItWorksPage() {
   return (
@@ -10,7 +10,7 @@ export default function HowItWorksPage() {
       <div className="border-b border-white/20 bg-gradient-to-r from-purple-900/50 to-blue-900/50 backdrop-blur-md">
         <div className="mx-auto max-w-5xl px-6 py-6">
           <div className="flex items-center justify-between">
-            <Link 
+            <Link
               href="/bickford"
               className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
             >
@@ -22,7 +22,9 @@ export default function HowItWorksPage() {
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-pink-200">Bickford</h1>
+                <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-pink-200">
+                  Bickford
+                </h1>
               </div>
             </div>
             <div className="w-24"></div>
@@ -37,7 +39,8 @@ export default function HowItWorksPage() {
           <div className="text-center space-y-4 pb-8">
             <h2 className="text-4xl font-bold text-white">Not Chat — Reality Transformation</h2>
             <p className="text-xl text-purple-200 max-w-2xl mx-auto">
-              Bickford doesn't just respond to your questions. It transforms your intentions into actionable reality.
+              Bickford doesn&apos;t just respond to your questions. It transforms your intentions
+              into actionable reality.
             </p>
           </div>
 
@@ -99,40 +102,51 @@ export default function HowItWorksPage() {
               <Target className="h-6 w-6 text-pink-400" />
               The Bickford Difference
             </h3>
-            
+
             <div className="space-y-4 text-white/80 leading-relaxed">
               <p>
-                When you express an intention to Bickford, it doesn't just understand your words — 
-                it analyzes the <strong className="text-white">reality-shifting potential</strong> of your goal.
+                When you express an intention to Bickford, it doesn&apos;t just understand your
+                words — it analyzes the{' '}
+                <strong className="text-white">reality-shifting potential</strong> of your goal.
               </p>
-              
-              <p>
-                Using proprietary algorithms, Bickford instantly calculates:
-              </p>
-              
+
+              <p>Using proprietary algorithms, Bickford instantly calculates:</p>
+
               <ul className="space-y-2 pl-6">
                 <li className="flex items-start gap-2">
                   <span className="text-purple-400 mt-1">•</span>
-                  <span><strong className="text-white">Reality Acceleration Factor</strong> — How quickly your intention can manifest</span>
+                  <span>
+                    <strong className="text-white">Reality Acceleration Factor</strong> — How
+                    quickly your intention can manifest
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-purple-400 mt-1">•</span>
-                  <span><strong className="text-white">Manifestation Probability</strong> — The likelihood of successful execution</span>
+                  <span>
+                    <strong className="text-white">Manifestation Probability</strong> — The
+                    likelihood of successful execution
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-purple-400 mt-1">•</span>
-                  <span><strong className="text-white">Value Multiplier</strong> — The potential impact and ROI</span>
+                  <span>
+                    <strong className="text-white">Value Multiplier</strong> — The potential impact
+                    and ROI
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-purple-400 mt-1">•</span>
-                  <span><strong className="text-white">Opportunity Alignment</strong> — Matches your intention with real-world opportunities</span>
+                  <span>
+                    <strong className="text-white">Opportunity Alignment</strong> — Matches your
+                    intention with real-world opportunities
+                  </span>
                 </li>
               </ul>
 
               <p>
-                The result? You don't just get a conversation — you get a 
-                <strong className="text-white"> transformation pathway</strong> from 
-                intention to reality.
+                The result? You don&apos;t just get a conversation — you get a
+                <strong className="text-white"> transformation pathway</strong> from intention to
+                reality.
               </p>
             </div>
           </div>
@@ -144,9 +158,9 @@ export default function HowItWorksPage() {
               <div className="space-y-2 text-white/80">
                 <h4 className="font-bold text-white">Patent-Pending Technology</h4>
                 <p className="text-sm">
-                  The specific algorithms and methodologies that power Bickford's reality 
-                  transformation engine are proprietary and protected. What you experience 
-                  is the result of years of research into intent-to-reality acceleration.
+                  The specific algorithms and methodologies that power Bickford&apos;s reality
+                  transformation engine are proprietary and protected. What you experience is the
+                  result of years of research into intent-to-reality acceleration.
                 </p>
               </div>
             </div>
@@ -154,7 +168,7 @@ export default function HowItWorksPage() {
 
           {/* Call to Action */}
           <div className="text-center pt-4">
-            <Link 
+            <Link
               href="/bickford"
               className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 text-white font-semibold rounded-xl hover:from-purple-600 hover:via-pink-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-purple-500/50 hover:scale-105"
             >

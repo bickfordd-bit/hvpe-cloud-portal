@@ -1,13 +1,13 @@
-import OpenAI from "openai";
-import { buildUnifiedAgentPrompt } from "@/lib/chat/unifiedAgent";
-import { recordChatHistory } from "@/lib/chat/history";
+import OpenAI from 'openai';
+import { buildUnifiedAgentPrompt } from '@/lib/chat/unifiedAgent';
+import { recordChatHistory } from '@/lib/chat/history';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-type Role = "user" | "assistant" | "system";
+type Role = 'user' | 'assistant' | 'system';
 type ChatMessage = { role: Role; content: string };
-type Persona = "trader" | "founder" | "investor" | "dod";
-type Mode = "general" | "optr" | "bic" | "ovtr";
+type Persona = 'trader' | 'founder' | 'investor' | 'dod';
+type Mode = 'general' | 'optr' | 'bic' | 'ovtr';
 
 const BASE_SYSTEM_PROMPT = `
 You are the HVPE Cloud Portal copilot named "BIC Copilot".
@@ -89,50 +89,45 @@ export async function POST(req: Request) {
   try {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      return json(
-        { error: "OPENAI_API_KEY is not configured in environment variables." },
-        500
-      );
+      return json({ error: 'OPENAI_API_KEY is not configured in environment variables.' }, 500);
     }
     const client = getOpenAIClient(apiKey);
 
-    const body = (await req.json().catch(() => null)) as
-      | {
-          message?: string;
-          mode?: Mode;
-          context?: any;
-          messages?: ChatMessage[];
-          persona?: Persona;
-        }
-      | null;
+    const body = (await req.json().catch(() => null)) as {
+      message?: string;
+      mode?: Mode;
+      context?: unknown;
+      messages?: ChatMessage[];
+      persona?: Persona;
+    } | null;
 
     // New contract (message + mode)
     if (body?.message) {
-      const mode: Mode = body.mode || "general";
+      const mode: Mode = body.mode || 'general';
       const hvpeContext = await getHvpePortalContext();
       const systemPrompt = buildUnifiedAgentPrompt({
-        specialization: buildSystemPrompt(mode, body.context, hvpeContext)
+        specialization: buildSystemPrompt(mode, body.context, hvpeContext),
       });
 
       const completion = await client.chat.completions.create({
-        model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+        model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
         messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: body.message }
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: body.message },
         ],
-        temperature: 0.2
+        temperature: 0.2,
       });
 
-      const content = completion.choices[0]?.message?.content || "";
+      const content = completion.choices[0]?.message?.content || '';
       await recordChatHistory({
         timestamp: new Date().toISOString(),
-        source: "hvpe-chat",
-        agent: "bigfern-unified",
+        source: 'hvpe-chat',
+        agent: 'bigfern-unified',
         payload: {
           mode,
           message: body.message,
-          reply: content
-        }
+          reply: content,
+        },
       });
       return json({ reply: content, mode }, 200);
     }
@@ -140,32 +135,32 @@ export async function POST(req: Request) {
     // Backward compatibility for persona + messages array
     if (body?.messages && Array.isArray(body.messages)) {
       if (body.persona && !body.mode) {
-        const persona: Persona = body.persona ?? "trader";
+        const persona: Persona = body.persona ?? 'trader';
         const hvpeContext = await getHvpePortalContext();
 
         let personaPrompt = TRADER_MODE_PROMPT;
-        if (persona === "founder") personaPrompt = FOUNDER_MODE_PROMPT;
-        else if (persona === "investor") personaPrompt = INVESTOR_MODE_PROMPT;
-        else if (persona === "dod") personaPrompt = DOD_MODE_PROMPT;
+        if (persona === 'founder') personaPrompt = FOUNDER_MODE_PROMPT;
+        else if (persona === 'investor') personaPrompt = INVESTOR_MODE_PROMPT;
+        else if (persona === 'dod') personaPrompt = DOD_MODE_PROMPT;
 
         const systemContent = buildUnifiedAgentPrompt({
-          specialization: BASE_SYSTEM_PROMPT + "\n" + personaPrompt,
-          context: hvpeContext || undefined
+          specialization: BASE_SYSTEM_PROMPT + '\n' + personaPrompt,
+          context: hvpeContext || undefined,
         });
 
         const messages: ChatMessage[] = [
-          { role: "system", content: systemContent },
+          { role: 'system', content: systemContent },
           ...body.messages.map((m) => ({
             role: m.role,
-            content: m.content
-          }))
+            content: m.content,
+          })),
         ];
 
         const completion = await client.chat.completions.create({
-          model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+          model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
           messages,
           temperature: 0.5,
-          max_tokens: 400
+          max_tokens: 400,
         });
 
         const reply =
@@ -174,38 +169,38 @@ export async function POST(req: Request) {
 
         await recordChatHistory({
           timestamp: new Date().toISOString(),
-          source: "hvpe-chat",
-          agent: "bigfern-unified",
+          source: 'hvpe-chat',
+          agent: 'bigfern-unified',
           payload: {
-            mode: "persona",
+            mode: 'persona',
             persona,
             messages: body.messages,
-            reply
-          }
+            reply,
+          },
         });
 
         return json({ reply }, 200);
       }
 
-      const mode: Mode = body.mode || "general";
+      const mode: Mode = body.mode || 'general';
       const hvpeContext = await getHvpePortalContext();
       const systemPrompt = buildUnifiedAgentPrompt({
-        specialization: buildSystemPrompt(mode, body.context, hvpeContext)
+        specialization: buildSystemPrompt(mode, body.context, hvpeContext),
       });
 
       const messages: ChatMessage[] = [
-        { role: "system", content: systemPrompt },
+        { role: 'system', content: systemPrompt },
         ...body.messages.map((m) => ({
           role: m.role,
-          content: m.content
-        }))
+          content: m.content,
+        })),
       ];
 
       const completion = await client.chat.completions.create({
-        model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+        model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
         messages,
         temperature: 0.4,
-        max_tokens: 400
+        max_tokens: 400,
       });
 
       const reply =
@@ -214,35 +209,35 @@ export async function POST(req: Request) {
 
       await recordChatHistory({
         timestamp: new Date().toISOString(),
-        source: "hvpe-chat",
-        agent: "bigfern-unified",
+        source: 'hvpe-chat',
+        agent: 'bigfern-unified',
         payload: {
           mode,
           messages: body.messages,
-          reply
-        }
+          reply,
+        },
       });
 
       return json({ reply, mode }, 200);
     }
 
     return json({ error: "Missing 'message' in request body." }, 400);
-  } catch (err: any) {
-    console.error("hvpe-chat error:", err);
-    return json({ error: err?.message || "Unknown error" }, 500);
+  } catch (err: unknown) {
+    console.error('hvpe-chat error:', err);
+    return json({ error: err?.message || 'Unknown error' }, 500);
   }
 }
 
-function json(data: any, status = 200): Response {
+function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json" }
+    headers: { 'Content-Type': 'application/json' },
   });
 }
 
-function buildSystemPrompt(mode: Mode, context: any, hvpeContext: string): string {
+function buildSystemPrompt(mode: Mode, context: unknown, hvpeContext: string): string {
   switch (mode) {
-    case "optr":
+    case 'optr':
       return `
 You are OPTR, the Opportunity Targeting engine for BIC (B-I-C-K).
 You operate like a DoD capture and proposal analyst with a four-phase model:
@@ -261,10 +256,10 @@ Context (may be partial):
 ${formatContext(context)}
 
 HVPE Snapshot:
-${hvpeContext || "No HVPE metrics provided."}
+${hvpeContext || 'No HVPE metrics provided.'}
       `.trim();
 
-    case "bic":
+    case 'bic':
       return `
 You are the BIC (B-I-C-K) engine: an objectives-completion system designed to plug
 into legacy systems and deliver measurable value quickly.
@@ -279,10 +274,10 @@ Context:
 ${formatContext(context)}
 
 HVPE Snapshot:
-${hvpeContext || "No HVPE metrics provided."}
+${hvpeContext || 'No HVPE metrics provided.'}
       `.trim();
 
-    case "ovtr":
+    case 'ovtr':
       return `
 You are OVTR, the orchestration and arbitration layer above OPTR and BIC.
 Your job:
@@ -295,10 +290,10 @@ Context:
 ${formatContext(context)}
 
 HVPE Snapshot:
-${hvpeContext || "No HVPE metrics provided."}
+${hvpeContext || 'No HVPE metrics provided.'}
       `.trim();
 
-    case "general":
+    case 'general':
     default:
       return `
 ${GENERAL_MODE_PROMPT}
@@ -307,21 +302,21 @@ Context:
 ${formatContext(context)}
 
 HVPE Snapshot:
-${hvpeContext || "No HVPE metrics provided."}
+${hvpeContext || 'No HVPE metrics provided.'}
       `.trim();
   }
 }
 
 async function getHvpePortalContext(): Promise<string> {
   const url = process.env.HVPE_METRICS_URL;
-  if (!url) return "";
+  if (!url) return '';
 
   try {
-    const res = await fetch(url, { method: "GET", cache: "no-store" });
+    const res = await fetch(url, { method: 'GET', cache: 'no-store' });
 
     if (!res.ok) {
-      console.error("HVPE metrics endpoint error:", await res.text());
-      return "";
+      console.error('HVPE metrics endpoint error:', await res.text());
+      return '';
     }
 
     const data = (await res.json()) as {
@@ -342,48 +337,47 @@ async function getHvpePortalContext(): Promise<string> {
 
     if (data.mode) parts.push(`Mode: ${data.mode}`);
     if (data.riskMode) parts.push(`Risk: ${data.riskMode}`);
-    if (typeof data.moneyVelocity === "number")
+    if (typeof data.moneyVelocity === 'number')
       parts.push(`Money Velocity: ${(data.moneyVelocity * 100).toFixed(1)}%`);
-    if (typeof data.dynastyHorizonYears === "number")
+    if (typeof data.dynastyHorizonYears === 'number')
       parts.push(`Dynasty Horizon: ${data.dynastyHorizonYears}+ years`);
-    if (typeof data.dailyPL === "number")
+    if (typeof data.dailyPL === 'number')
       parts.push(
         `Daily P/L: $${data.dailyPL.toLocaleString(undefined, {
-          maximumFractionDigits: 2
+          maximumFractionDigits: 2,
         })}`
       );
-    if (typeof data.equity === "number")
+    if (typeof data.equity === 'number')
       parts.push(
         `Equity: $${data.equity.toLocaleString(undefined, {
-          maximumFractionDigits: 2
+          maximumFractionDigits: 2,
         })}`
       );
-    if (typeof data.cashAvailable === "number")
+    if (typeof data.cashAvailable === 'number')
       parts.push(
         `Cash: $${data.cashAvailable.toLocaleString(undefined, {
-          maximumFractionDigits: 2
+          maximumFractionDigits: 2,
         })}`
       );
-    if (typeof data.positions === "number")
-      parts.push(`Open Positions: ${data.positions}`);
-    if (typeof data.winRate30d === "number")
+    if (typeof data.positions === 'number') parts.push(`Open Positions: ${data.positions}`);
+    if (typeof data.winRate30d === 'number')
       parts.push(`Win Rate (30d): ${(data.winRate30d * 100).toFixed(1)}%`);
-    if (typeof data.roi30d === "number")
+    if (typeof data.roi30d === 'number')
       parts.push(`ROI (30d): ${(data.roi30d * 100).toFixed(1)}%`);
-    if (typeof data.sharpeSim === "number")
+    if (typeof data.sharpeSim === 'number')
       parts.push(`Sharpe (sim): ${data.sharpeSim.toFixed(2)}`);
 
-    if (!parts.length) return "";
+    if (!parts.length) return '';
 
-    return parts.join("\n");
-  } catch (err) {
-    console.error("Failed to load HVPE metrics:", err);
-    return "";
+    return parts.join('\n');
+  } catch (err: unknown) {
+    console.error('Failed to load HVPE metrics:', err);
+    return '';
   }
 }
 
-function formatContext(context: any): string {
-  if (!context) return "No additional context provided.";
+function formatContext(context: unknown): string {
+  if (!context) return 'No additional context provided.';
   try {
     return JSON.stringify(context, null, 2);
   } catch {

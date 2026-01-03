@@ -1,15 +1,15 @@
-import crypto from "crypto";
-import { prisma } from "@/lib/prisma";
-import { loadLockSpec } from "@/lib/lock/spec";
-import { validateLockSpec } from "@/lib/lock/validate";
+import crypto from 'crypto';
+import { prisma } from '@/lib/prisma';
+import { loadLockSpec } from '@/lib/lock/spec';
+import { validateLockSpec } from '@/lib/lock/validate';
 
-export type LedgerEventType = "CREATE" | "AMEND" | "SUPERSEDE";
+export type LedgerEventType = 'CREATE' | 'AMEND' | 'SUPERSEDE';
 
 export type AppendLedgerArgs = {
   tenant: string; // e.g., "jake", "billy"
   command: string; // e.g., "DEFINE", "GAP", "FREEZE", "SIM", "SCORE", "OPTR", "T2V", "LEDGER", "PROOF", "SHIP"
   event_type: LedgerEventType;
-  payload: any;
+  payload: unknown;
   prev_hash?: string | null;
 };
 
@@ -26,7 +26,7 @@ export async function appendLedgerEvent(args: AppendLedgerArgs) {
 
   // Enforce PROMPTS_EQUALS_STORAGE axiom
   if (spec.axioms?.PROMPTS_EQUALS_STORAGE !== true) {
-    throw new Error("LOCK violation: PROMPTS_EQUALS_STORAGE must be true");
+    throw new Error('LOCK violation: PROMPTS_EQUALS_STORAGE must be true');
   }
 
   // Validate command exists in defines
@@ -36,14 +36,16 @@ export async function appendLedgerEvent(args: AppendLedgerArgs) {
   }
 
   // Validate event type
-  const validEventTypes = spec.storage_rules?.events || ["CREATE", "AMEND", "SUPERSEDE"];
+  const validEventTypes = spec.storage_rules?.events || ['CREATE', 'AMEND', 'SUPERSEDE'];
   if (!validEventTypes.includes(args.event_type)) {
-    throw new Error(`Invalid event_type "${args.event_type}": must be one of ${validEventTypes.join(", ")}`);
+    throw new Error(
+      `Invalid event_type "${args.event_type}": must be one of ${validEventTypes.join(', ')}`
+    );
   }
 
   // Serialize payload and compute hash
   const payloadStr = JSON.stringify(args.payload);
-  const hash = crypto.createHash("sha256").update(payloadStr).digest("hex");
+  const hash = crypto.createHash('sha256').update(payloadStr).digest('hex');
 
   // Create ledger entry
   const entry = await prisma.ledger.create({
@@ -76,13 +78,13 @@ export async function getLedgerEvents(filters?: {
 }) {
   const { tenant, command, limit = 100 } = filters || {};
 
-  const where: any = {};
+  const where: unknown = {};
   if (tenant) where.tenant = tenant;
   if (command) where.command = command;
 
   const entries = await prisma.ledger.findMany({
     where,
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: 'desc' },
     take: limit,
   });
 
@@ -102,10 +104,12 @@ export async function getLedgerEvents(filters?: {
 /**
  * Verify ledger chain integrity: each event's prevHash must match previous event's hash.
  */
-export async function verifyLedgerChain(tenant: string): Promise<{ valid: boolean; errors: string[] }> {
+export async function verifyLedgerChain(
+  tenant: string
+): Promise<{ valid: boolean; errors: string[] }> {
   const entries = await prisma.ledger.findMany({
     where: { tenant },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: 'asc' },
   });
 
   const errors: string[] = [];
@@ -134,10 +138,10 @@ export async function verifyLedgerChain(tenant: string): Promise<{ valid: boolea
 export async function getCurrentChainHash(tenant: string): Promise<string> {
   const entries = await prisma.ledger.findMany({
     where: { tenant },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: 'asc' },
     select: { hash: true },
   });
 
-  const combined = entries.map((e) => e.hash).join(":");
-  return crypto.createHash("sha256").update(combined).digest("hex");
+  const combined = entries.map((e) => e.hash).join(':');
+  return crypto.createHash('sha256').update(combined).digest('hex');
 }

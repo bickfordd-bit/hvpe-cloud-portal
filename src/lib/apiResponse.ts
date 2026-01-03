@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server';
 import { apiLogger } from './logger';
 
-export interface APIResponse<T = any> {
+export interface APIResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: {
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
   };
   metadata?: {
     timestamp: string;
     requestId?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -21,7 +21,7 @@ export class APIError extends Error {
     public code: string,
     message: string,
     public status: number = 500,
-    public details?: any
+    public details?: unknown
   ) {
     super(message);
     this.name = 'APIError';
@@ -31,7 +31,7 @@ export class APIError extends Error {
 export function createSuccessResponse<T>(
   data: T,
   status: number = 200,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): NextResponse<APIResponse<T>> {
   return NextResponse.json(
     {
@@ -39,8 +39,8 @@ export function createSuccessResponse<T>(
       data,
       metadata: {
         timestamp: new Date().toISOString(),
-        ...metadata
-      }
+        ...metadata,
+      },
     },
     { status }
   );
@@ -53,7 +53,7 @@ export function createErrorResponse(
 ): NextResponse<APIResponse> {
   let errorCode = code || 'INTERNAL_ERROR';
   let message = 'An unexpected error occurred';
-  let details: any = undefined;
+  let details: unknown = undefined;
   let statusCode = status;
 
   if (error instanceof APIError) {
@@ -72,7 +72,7 @@ export function createErrorResponse(
 
   apiLogger.error(`API Error: ${errorCode}`, error instanceof Error ? error : undefined, {
     code: errorCode,
-    status: statusCode
+    status: statusCode,
   });
 
   return NextResponse.json(
@@ -81,11 +81,11 @@ export function createErrorResponse(
       error: {
         code: errorCode,
         message,
-        details
+        details,
       },
       metadata: {
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     },
     { status: statusCode }
   );
@@ -98,29 +98,29 @@ export const ErrorCodes = {
   INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
   TOKEN_EXPIRED: 'TOKEN_EXPIRED',
   INSUFFICIENT_PERMISSIONS: 'INSUFFICIENT_PERMISSIONS',
-  
+
   // Validation
   INVALID_INPUT: 'INVALID_INPUT',
   MISSING_REQUIRED_FIELD: 'MISSING_REQUIRED_FIELD',
   VALIDATION_ERROR: 'VALIDATION_ERROR',
-  
+
   // Resources
   NOT_FOUND: 'NOT_FOUND',
   ALREADY_EXISTS: 'ALREADY_EXISTS',
   RESOURCE_CONFLICT: 'RESOURCE_CONFLICT',
-  
+
   // Rate Limiting
   RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
   QUOTA_EXCEEDED: 'QUOTA_EXCEEDED',
-  
+
   // External Services
   EXTERNAL_SERVICE_ERROR: 'EXTERNAL_SERVICE_ERROR',
   OPENAI_ERROR: 'OPENAI_ERROR',
   DATABASE_ERROR: 'DATABASE_ERROR',
-  
+
   // General
   INTERNAL_ERROR: 'INTERNAL_ERROR',
-  NOT_IMPLEMENTED: 'NOT_IMPLEMENTED'
+  NOT_IMPLEMENTED: 'NOT_IMPLEMENTED',
 };
 
 export interface ApiResponse<T = unknown> {

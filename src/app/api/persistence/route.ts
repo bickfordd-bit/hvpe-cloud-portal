@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
         proof,
       })
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(apiError(error), { status: 500 });
   }
 }
@@ -54,13 +54,10 @@ export async function GET(req: NextRequest) {
         const integrity = await verifyIntegrity(id);
         return NextResponse.json(apiSuccess(integrity));
       }
-      
+
       const data = await retrieve(id);
       if (!data) {
-        return NextResponse.json(
-          apiError(new Error('Not found')),
-          { status: 404 }
-        );
+        return NextResponse.json(apiError(new Error('Not found')), { status: 404 });
       }
       return NextResponse.json(apiSuccess(data));
     }
@@ -73,7 +70,7 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(apiSuccess(results));
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(apiError(error), { status: 500 });
   }
 }

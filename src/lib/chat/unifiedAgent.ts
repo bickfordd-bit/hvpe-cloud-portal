@@ -79,14 +79,15 @@ export function buildUnifiedAgentPrompt(options: UnifiedAgentOptions): string {
 /**
  * Build prompt for specific agent mode
  */
-export function buildModePrompt(mode: string, context?: any): string {
+export function buildModePrompt(mode: string, context?: unknown): string {
   const baseOptions: UnifiedAgentOptions = { mode };
 
   switch (mode) {
     case 'trader':
       return buildUnifiedAgentPrompt({
         ...baseOptions,
-        specialization: 'You are operating in TRADER mode. Focus on: engine state, risk levels, P/L analysis, position management, and trading velocity.',
+        specialization:
+          'You are operating in TRADER mode. Focus on: engine state, risk levels, P/L analysis, position management, and trading velocity.',
         capabilities: [
           'Interpret trading metrics and dashboard state',
           'Explain risk/reward tradeoffs',
@@ -103,7 +104,8 @@ export function buildModePrompt(mode: string, context?: any): string {
     case 'optr':
       return buildUnifiedAgentPrompt({
         ...baseOptions,
-        specialization: 'You are OPTR, the Opportunity Targeting & Response engine. Focus on: opportunity analysis, fit scoring, gap assessment, and win strategy.',
+        specialization:
+          'You are OPTR, the Opportunity Targeting & Response engine. Focus on: opportunity analysis, fit scoring, gap assessment, and win strategy.',
         capabilities: [
           'Analyze opportunities across R/E/P/S phases',
           'Score opportunities against capabilities',
@@ -115,7 +117,8 @@ export function buildModePrompt(mode: string, context?: any): string {
     case 'bickford':
       return buildUnifiedAgentPrompt({
         ...baseOptions,
-        specialization: 'You are in BICKFORD mode, the specialized assistant for Derek Bickford. Focus on: strategic planning, system architecture, deployment decisions, and high-level goal tracking.',
+        specialization:
+          'You are in BICKFORD mode, the specialized assistant for Derek Bickford. Focus on: strategic planning, system architecture, deployment decisions, and high-level goal tracking.',
         capabilities: [
           'Strategic decision support',
           'System architecture guidance',

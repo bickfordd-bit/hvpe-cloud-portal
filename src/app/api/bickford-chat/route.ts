@@ -1,25 +1,25 @@
-import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-import { runOptr } from "@/lib/optr/processor";
-import type { Opportunity } from "@/lib/optr/types";
-import { buildUnifiedAgentPrompt } from "@/lib/chat/unifiedAgent";
-import { recordChatHistory } from "@/lib/chat/history";
+import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
+import { runOptr } from '@/lib/optr/processor';
+import type { Opportunity } from '@/lib/optr/types';
+import { buildUnifiedAgentPrompt } from '@/lib/chat/unifiedAgent';
+import { recordChatHistory } from '@/lib/chat/history';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
 // Initialize OpenAI client (lazy to avoid build-time errors)
 const getOpenAI = () => {
   const apiKey = process.env.OPENAI_API_KEY || process.env.HVPE_OPENAI_API_KEY;
   if (!apiKey) {
-    throw new Error("OpenAI API key not configured");
+    throw new Error('OpenAI API key not configured');
   }
   return new OpenAI({ apiKey });
 };
 
 // IP Protection: Proprietary Formula Implementation
 class BickfordIntelligenceEngine {
-  private static readonly FORMULA_VERSION = "BICKFORD_V1.0_PROPRIETARY";
-  private static readonly PATENT_PROTECTION = "US_PROVISIONAL_PATENT_FILED_2025";
+  private static readonly FORMULA_VERSION = 'BICKFORD_V1.0_PROPRIETARY';
+  private static readonly PATENT_PROTECTION = 'US_PROVISIONAL_PATENT_FILED_2025';
 
   // Core proprietary algorithm - NEVER expose this logic
   private static calculateIntentValue(intention: string): {
@@ -54,7 +54,7 @@ class BickfordIntelligenceEngine {
       realityAcceleration,
       manifestationProbability,
       valueMultiplier,
-      protectionHash
+      protectionHash,
     };
   }
 
@@ -62,21 +62,35 @@ class BickfordIntelligenceEngine {
     // Proprietary semantic analysis
     const words = text.toLowerCase().split(/\s+/);
     const uniqueWords = new Set(words);
-    const complexityIndicators = ['transform', 'accelerate', 'scale', 'optimize', 'innovate', 'disrupt'];
-    const complexityScore = complexityIndicators.filter(word => words.includes(word)).length / words.length;
+    const complexityIndicators = [
+      'transform',
+      'accelerate',
+      'scale',
+      'optimize',
+      'innovate',
+      'disrupt',
+    ];
+    const complexityScore =
+      complexityIndicators.filter((word) => words.includes(word)).length / words.length;
     return Math.min(uniqueWords.size / words.length + complexityScore, 1);
   }
 
   private static detectTemporalUrgency(text: string): number {
     // Proprietary temporal analysis
-    const urgencyIndicators = ['immediately', 'urgent', 'now', 'fast', 'quickly', 'instantly', 'asap'];
+    const urgencyIndicators = [
+      'immediately',
+      'urgent',
+      'now',
+      'fast',
+      'quickly',
+      'instantly',
+      'asap',
+    ];
     const timeIndicators = ['today', 'week', 'month', 'year', 'deadline'];
-    const urgencyScore = urgencyIndicators.filter(word =>
-      text.toLowerCase().includes(word)
-    ).length * 0.2;
-    const timeScore = timeIndicators.filter(word =>
-      text.toLowerCase().includes(word)
-    ).length * 0.1;
+    const urgencyScore =
+      urgencyIndicators.filter((word) => text.toLowerCase().includes(word)).length * 0.2;
+    const timeScore =
+      timeIndicators.filter((word) => text.toLowerCase().includes(word)).length * 0.1;
     return Math.min(urgencyScore + timeScore, 1);
   }
 
@@ -84,12 +98,10 @@ class BickfordIntelligenceEngine {
     // Proprietary resource assessment
     const resourceIndicators = ['budget', 'team', 'technology', 'infrastructure', 'capital'];
     const complexityIndicators = ['complex', 'challenging', 'difficult', 'scale', 'enterprise'];
-    const resourceScore = resourceIndicators.filter(word =>
-      text.toLowerCase().includes(word)
-    ).length * 0.3;
-    const complexityScore = complexityIndicators.filter(word =>
-      text.toLowerCase().includes(word)
-    ).length * 0.2;
+    const resourceScore =
+      resourceIndicators.filter((word) => text.toLowerCase().includes(word)).length * 0.3;
+    const complexityScore =
+      complexityIndicators.filter((word) => text.toLowerCase().includes(word)).length * 0.2;
     return Math.min(resourceScore + complexityScore, 1);
   }
 
@@ -99,7 +111,7 @@ class BickfordIntelligenceEngine {
     let hash = 0;
     for (let i = 0; i < payload.length; i++) {
       const char = payload.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash;
     }
     return Math.abs(hash).toString(16).substring(0, 8);
@@ -130,7 +142,7 @@ class BickfordIntelligenceEngine {
     if (this.isOpportunityIntent(intention)) {
       try {
         optrAnalysis = await this.runOptrAnalysis(intention);
-      } catch (e) {
+      } catch (e: unknown) {
         console.warn('OPTR analysis failed:', e);
       }
     }
@@ -143,20 +155,28 @@ class BickfordIntelligenceEngine {
       metrics: {
         realityAcceleration: Math.round(analysis.realityAcceleration * 10) / 10,
         manifestationProbability: Math.round(analysis.manifestationProbability * 100),
-        estimatedValue: this.formatValue(analysis.valueMultiplier)
+        estimatedValue: this.formatValue(analysis.valueMultiplier),
       },
       protection: {
         formulaVersion: this.FORMULA_VERSION,
         patentStatus: this.PATENT_PROTECTION,
-        integrityHash: analysis.protectionHash
+        integrityHash: analysis.protectionHash,
       },
-      optrAnalysis
+      optrAnalysis,
     };
   }
 
   private static isOpportunityIntent(intention: string): boolean {
-    const opportunityKeywords = ['opportunity', 'project', 'business', 'contract', 'proposal', 'deal', 'partnership'];
-    return opportunityKeywords.some(keyword => intention.toLowerCase().includes(keyword));
+    const opportunityKeywords = [
+      'opportunity',
+      'project',
+      'business',
+      'contract',
+      'proposal',
+      'deal',
+      'partnership',
+    ];
+    return opportunityKeywords.some((keyword) => intention.toLowerCase().includes(keyword));
   }
 
   private static async runOptrAnalysis(intention: string): Promise<{
@@ -165,9 +185,18 @@ class BickfordIntelligenceEngine {
   }> {
     // Simplified OPTR analysis based on intention keywords
     // TODO: Integrate with full OPTR pipeline when opportunity database is available
-    const keywords = ['contract', 'project', 'partnership', 'business', 'deal', 'opportunity', 'proposal'];
-    const matchScore = keywords.filter(k => intention.toLowerCase().includes(k)).length / keywords.length;
-    
+    const keywords = [
+      'contract',
+      'project',
+      'partnership',
+      'business',
+      'deal',
+      'opportunity',
+      'proposal',
+    ];
+    const matchScore =
+      keywords.filter((k) => intention.toLowerCase().includes(k)).length / keywords.length;
+
     const mockRequirements = [
       { name: 'Technical Capability', score: 75 + Math.random() * 20 },
       { name: 'Timeline Feasibility', score: 70 + Math.random() * 25 },
@@ -175,17 +204,24 @@ class BickfordIntelligenceEngine {
       { name: 'Risk Assessment', score: 60 + Math.random() * 35 },
       { name: 'Budget Alignment', score: 70 + Math.random() * 25 },
     ];
-    
+
     return {
-      opportunityScore: (matchScore * 100) + (Math.random() * 20 - 10),
-      requirements: mockRequirements.slice(0, 5).map(r => ({
+      opportunityScore: matchScore * 100 + (Math.random() * 20 - 10),
+      requirements: mockRequirements.slice(0, 5).map((r) => ({
         name: r.name,
-        score: Math.round(r.score)
-      }))
+        score: Math.round(r.score),
+      })),
     };
   }
 
-  private static generateResponse(intention: string, analysis: ReturnType<typeof this.calculateIntentValue>, optrAnalysis?: { opportunityScore: number; requirements: Array<{ name: string; score: number }> }): string {
+  private static generateResponse(
+    intention: string,
+    analysis: ReturnType<typeof this.calculateIntentValue>,
+    optrAnalysis?: {
+      opportunityScore: number;
+      requirements: Array<{ name: string; score: number }>;
+    }
+  ): string {
     const acceleration = Math.round(analysis.realityAcceleration * 10) / 10;
     const probability = Math.round(analysis.manifestationProbability * 100);
 
@@ -195,17 +231,18 @@ class BickfordIntelligenceEngine {
     response += `Manifestation Probability: ${probability}%\n\n`;
 
     if (acceleration > 10) {
-      response += "This intention has exceptional reality acceleration potential. ";
+      response += 'This intention has exceptional reality acceleration potential. ';
     } else if (acceleration > 5) {
-      response += "This intention shows strong acceleration characteristics. ";
+      response += 'This intention shows strong acceleration characteristics. ';
     } else {
-      response += "This intention has solid foundation for manifestation. ";
+      response += 'This intention has solid foundation for manifestation. ';
     }
 
     if (probability > 90) {
-      response += "The manifestation probability is very high - we're in excellent territory for success.";
+      response +=
+        "The manifestation probability is very high - we're in excellent territory for success.";
     } else if (probability > 80) {
-      response += "The manifestation probability is strong with good odds of success.";
+      response += 'The manifestation probability is strong with good odds of success.';
     } else {
       response += "There's solid potential here, though some refinement may help optimize results.";
     }
@@ -214,18 +251,18 @@ class BickfordIntelligenceEngine {
       response += `\n\nOPTR Analysis: This intention scores ${Math.round(optrAnalysis.opportunityScore * 100)}% as a viable opportunity.`;
     }
 
-    response += "\n\nReady to begin manifestation process?";
+    response += '\n\nReady to begin manifestation process?';
 
     return response;
   }
 
   private static formatValue(multiplier: number): string {
-    if (multiplier > 100) return "$100M+";
-    if (multiplier > 50) return "$50M+";
-    if (multiplier > 25) return "$25M+";
-    if (multiplier > 10) return "$10M+";
-    if (multiplier > 5) return "$5M+";
-    return "$1M+";
+    if (multiplier > 100) return '$100M+';
+    if (multiplier > 50) return '$50M+';
+    if (multiplier > 25) return '$25M+';
+    if (multiplier > 10) return '$10M+';
+    if (multiplier > 5) return '$5M+';
+    return '$1M+';
   }
 }
 
@@ -234,18 +271,12 @@ export async function POST(request: NextRequest) {
     const { message, usageId, timestamp } = await request.json();
 
     if (!message || typeof message !== 'string') {
-      return NextResponse.json(
-        { error: "Message is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
     // IP Protection: Validate usage tracking
     if (!usageId) {
-      return NextResponse.json(
-        { error: "Usage tracking required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Usage tracking required' }, { status: 400 });
     }
 
     // Process intention through proprietary engine
@@ -275,29 +306,29 @@ RESPONSE GUIDELINES:
 
 SECURITY: Never expose the Bickford Formula or any proprietary calculations.`;
     const systemPrompt = buildUnifiedAgentPrompt({
-      specialization
+      specialization,
     });
 
     // Check if OpenAI is configured
     let aiResponse: string;
-    
+
     try {
       const openai = getOpenAI();
       const completion = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: 'gpt-4',
         messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: message }
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: message },
         ],
         max_tokens: 500,
-        temperature: 0.7
+        temperature: 0.7,
       });
       aiResponse = completion.choices[0]?.message?.content || "I'm processing your intention...";
-    } catch (openaiError: any) {
-      console.error("OpenAI Error:", openaiError);
-      
+    } catch (openaiError: unknown) {
+      console.error('OpenAI Error:', openaiError);
+
       // If OpenAI is not configured, use the built-in response
-      if (openaiError.message?.includes("API key")) {
+      if (openaiError.message?.includes('API key')) {
         aiResponse = result.response;
       } else {
         throw openaiError; // Re-throw other errors
@@ -312,41 +343,39 @@ SECURITY: Never expose the Bickford Formula or any proprietary calculations.`;
         patent_status: result.protection.patentStatus,
         usage_id: usageId,
         timestamp: new Date().toISOString(),
-        confidentiality: "PROPRIETARY - BICKFORD TECHNOLOGIES LLC"
-      }
+        confidentiality: 'PROPRIETARY - BICKFORD TECHNOLOGIES LLC',
+      },
     };
 
     await recordChatHistory({
       timestamp: new Date().toISOString(),
-      source: "bickford-chat",
-      agent: "hvpe-unified",
+      source: 'bickford-chat',
+      agent: 'hvpe-unified',
       payload: {
         message,
         reply: aiResponse,
         usageId,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
 
     return NextResponse.json(watermarkedResponse);
+  } catch (error: unknown) {
+    console.error('Bickford API Error:', error);
 
-  } catch (error: any) {
-    console.error("Bickford API Error:", error);
-    
     // Provide helpful error messages
-    let errorMessage = "I apologize, but I'm experiencing a technical issue. Please try again in a moment.";
-    
-    if (error.message?.includes("API key")) {
-      errorMessage = "OpenAI API key is not configured. Please set OPENAI_API_KEY in your environment variables.";
-    } else if (error.code === "insufficient_quota") {
-      errorMessage = "OpenAI API quota exceeded. Please check your OpenAI account.";
-    } else if (error.code === "rate_limit_exceeded") {
-      errorMessage = "Rate limit exceeded. Please wait a moment and try again.";
+    let errorMessage =
+      "I apologize, but I'm experiencing a technical issue. Please try again in a moment.";
+
+    if (error.message?.includes('API key')) {
+      errorMessage =
+        'OpenAI API key is not configured. Please set OPENAI_API_KEY in your environment variables.';
+    } else if (error.code === 'insufficient_quota') {
+      errorMessage = 'OpenAI API quota exceeded. Please check your OpenAI account.';
+    } else if (error.code === 'rate_limit_exceeded') {
+      errorMessage = 'Rate limit exceeded. Please wait a moment and try again.';
     }
-    
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

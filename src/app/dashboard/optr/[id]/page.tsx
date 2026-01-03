@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 export default function OPTRWorkspace({ params }: { params: { id: string } }) {
-  const [opp, setOpp] = useState<any>(null);
+  const [opp, setOpp] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -11,12 +11,12 @@ export default function OPTRWorkspace({ params }: { params: { id: string } }) {
     async function load() {
       try {
         const res = await fetch(`/api/optr/opportunity?id=${params.id}`);
-        if (!res.ok) throw new Error("Failed to load opportunity");
+        if (!res.ok) throw new Error('Failed to load opportunity');
         const data = await res.json();
         setOpp(data);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(err);
-        setError(err?.message || "Failed to load opportunity");
+        setError(err?.message || 'Failed to load opportunity');
       } finally {
         setLoading(false);
       }
@@ -47,31 +47,29 @@ export default function OPTRWorkspace({ params }: { params: { id: string } }) {
         <div>
           <p className="text-sm text-neutral-400">OPTR Status:</p>
           <p className="text-xl">{opp.status}</p>
-          {typeof opp.readinessScore === "number" && (
-            <p className="text-sm text-neutral-400">
-              Readiness Score: {opp.readinessScore}%
-            </p>
+          {typeof opp.readinessScore === 'number' && (
+            <p className="text-sm text-neutral-400">Readiness Score: {opp.readinessScore}%</p>
           )}
         </div>
 
         <button
           className="mt-4 rounded-full bg-white px-6 py-2 text-black"
           onClick={async () => {
-            const res = await fetch("/api/optr/submit", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id: params.id })
+            const res = await fetch('/api/optr/submit', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: params.id }),
             });
             const out = await res.json();
-            if (typeof out.pdfUrl === "string" && out.pdfUrl.startsWith("data:application/pdf")) {
-              const link = document.createElement("a");
+            if (typeof out.pdfUrl === 'string' && out.pdfUrl.startsWith('data:application/pdf')) {
+              const link = document.createElement('a');
               link.href = out.pdfUrl;
               link.download = out.fileName || `optr-submission-${params.id}.pdf`;
               document.body.appendChild(link);
               link.click();
               link.remove();
             } else {
-              alert("Submission generated: " + (out.pdfUrl || "No PDF URL"));
+              alert('Submission generated: ' + (out.pdfUrl || 'No PDF URL'));
             }
           }}
         >

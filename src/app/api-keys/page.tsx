@@ -1,15 +1,15 @@
 /**
  * Copyright (c) 2025 HVPE Inc. All rights reserved.
  * Proprietary - Patent Pending
- * 
+ *
  * API Keys Management Page
  */
 
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Key, Download, Copy, Check, Sparkles } from "lucide-react";
-import Link from "next/link";
+import { useState } from 'react';
+import { Key, Download, Copy, Check, Sparkles } from 'lucide-react';
+import Link from 'next/link';
 
 interface ApiKey {
   id: string;
@@ -23,14 +23,14 @@ interface ApiKey {
 
 export default function ApiKeysPage() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
-  const [newKeyName, setNewKeyName] = useState("");
+  const [newKeyName, setNewKeyName] = useState('');
   const [generating, setGenerating] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function generateKey() {
     if (!newKeyName.trim()) {
-      setError("Please enter a name for your API key");
+      setError('Please enter a name for your API key');
       return;
     }
 
@@ -38,25 +38,25 @@ export default function ApiKeysPage() {
     setError(null);
 
     try {
-      const res = await fetch("/api/api-keys/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/api-keys/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: newKeyName,
-          scopes: ["bickford:chat", "optr:run", "optr:status"]
-        })
+          scopes: ['bickford:chat', 'optr:run', 'optr:status'],
+        }),
       });
 
       const data = await res.json();
 
       if (data.success) {
         setKeys([data.apiKey, ...keys]);
-        setNewKeyName("");
+        setNewKeyName('');
       } else {
-        setError(data.error || "Failed to generate API key");
+        setError(data.error || 'Failed to generate API key');
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to generate API key");
+    } catch (err: unknown) {
+      setError(err.message || 'Failed to generate API key');
     } finally {
       setGenerating(false);
     }
@@ -79,7 +79,7 @@ export default function ApiKeysPage() {
 API_KEY=${apiKey.key}
 
 # Available Scopes:
-${apiKey.scopes.map(s => `# - ${s}`).join('\n')}
+${apiKey.scopes.map((s) => `# - ${s}`).join('\n')}
 
 # Example Usage (cURL):
 curl -X POST https://your-domain.com/api/bickford-chat \\
@@ -98,9 +98,9 @@ const response = await fetch('https://your-domain.com/api/bickford-chat', {
 });
 `;
 
-    const blob = new Blob([content], { type: "text/plain" });
+    const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
     a.download = `bickford-api-key-${apiKey.name.toLowerCase().replace(/\s+/g, '-')}.txt`;
     document.body.appendChild(a);
@@ -135,7 +135,7 @@ const response = await fetch('https://your-domain.com/api/bickford-chat', {
             <Sparkles className="w-5 h-5 text-emerald-500" />
             Generate New API Key
           </h2>
-          
+
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-red-950/50 border border-red-900 text-red-200 text-sm">
               {error}
@@ -147,7 +147,7 @@ const response = await fetch('https://your-domain.com/api/bickford-chat', {
               type="text"
               value={newKeyName}
               onChange={(e) => setNewKeyName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && generateKey()}
+              onKeyDown={(e) => e.key === 'Enter' && generateKey()}
               placeholder="API Key Name (e.g., Production, Mobile App, Testing)"
               className="flex-1 rounded-xl border border-neutral-700 bg-neutral-950 px-4 py-3 text-white placeholder-neutral-500 focus:border-emerald-500 focus:outline-none"
             />
@@ -156,12 +156,13 @@ const response = await fetch('https://your-domain.com/api/bickford-chat', {
               disabled={generating}
               className="rounded-xl bg-emerald-600 px-6 py-3 font-medium text-white hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {generating ? "Generating..." : "Generate"}
+              {generating ? 'Generating...' : 'Generate'}
             </button>
           </div>
 
           <div className="mt-4 text-sm text-neutral-400">
-            ⚠️ Save your API key immediately - you won't be able to see it again after leaving this page
+            ⚠️ Save your API key immediately - you won&apos;t be able to see it again after leaving
+            this page
           </div>
         </div>
 
@@ -234,16 +235,31 @@ const response = await fetch('https://your-domain.com/api/bickford-chat', {
         <div className="mt-6 rounded-2xl border border-neutral-800 bg-neutral-900/30 p-6">
           <h3 className="font-semibold mb-3">Quick Start</h3>
           <div className="text-sm text-neutral-300 space-y-2">
-            <p>Use your API key in the <code className="text-emerald-400">Authorization</code> header:</p>
+            <p>
+              Use your API key in the <code className="text-emerald-400">Authorization</code>{' '}
+              header:
+            </p>
             <pre className="bg-neutral-950 border border-neutral-800 p-4 rounded-lg overflow-x-auto">
-{`Authorization: Bearer bickford_your_api_key_here`}
+              {`Authorization: Bearer bickford_your_api_key_here`}
             </pre>
             <p className="pt-2">Available endpoints:</p>
             <ul className="list-disc list-inside space-y-1 text-neutral-400">
-              <li><code className="text-emerald-400">/api/bickford-chat</code> - Intent to reality chat</li>
-              <li><code className="text-emerald-400">/api/optr/opportunities</code> - List opportunities</li>
-              <li><code className="text-emerald-400">/api/optr/opportunities/[id]/run</code> - Run OPTR analysis</li>
-              <li><code className="text-emerald-400">/api/optr/opportunities/[id]/status</code> - Check status</li>
+              <li>
+                <code className="text-emerald-400">/api/bickford-chat</code> - Intent to reality
+                chat
+              </li>
+              <li>
+                <code className="text-emerald-400">/api/optr/opportunities</code> - List
+                opportunities
+              </li>
+              <li>
+                <code className="text-emerald-400">/api/optr/opportunities/[id]/run</code> - Run
+                OPTR analysis
+              </li>
+              <li>
+                <code className="text-emerald-400">/api/optr/opportunities/[id]/status</code> -
+                Check status
+              </li>
             </ul>
           </div>
         </div>

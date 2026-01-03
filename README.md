@@ -19,6 +19,33 @@ npm run dev
 # Open http://localhost:3000 - the Bickford Homepage will load
 ```
 
+## 🔧 Development Setup
+
+### Pre-commit Hooks
+
+This repository uses Husky and lint-staged to automatically fix lint and formatting issues before each commit:
+
+- **ESLint**: Automatically fixes TypeScript/JavaScript errors
+- **Prettier**: Formats all supported files (TS, JS, CSS, JSON, MD)
+- **Auto-staging**: Fixed files are automatically staged
+
+The pre-commit hook runs automatically on `git commit`. If linting fails, the commit will be aborted and you'll see the errors that need manual fixing.
+
+#### Bypassing Pre-commit Hooks
+
+In rare cases where you need to commit without running hooks (not recommended):
+```bash
+git commit --no-verify -m "your message"
+```
+
+#### Manual Linting
+
+```bash
+npm run lint              # Check for issues
+npx eslint . --fix        # Auto-fix issues
+npx prettier --write .    # Format all files
+```
+
 ### API Endpoints
 - `GET /api/execute` - Check canon status and capabilities
 - `POST /api/execute` - Submit intent for execution (body: `{ "intent": "your intent text" }`)

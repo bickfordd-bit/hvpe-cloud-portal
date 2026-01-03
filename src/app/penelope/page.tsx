@@ -1,22 +1,27 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Film, Sparkles, Download, Play } from "lucide-react";
-import { CONTENT_TEMPLATES, CINEMA_STORYLINES, VISUAL_PRESETS, AUDIO_TEMPLATES } from "@/lib/penelope/contentTemplates";
+import { useState } from 'react';
+import { Film, Sparkles, Download, Play } from 'lucide-react';
+import {
+  CONTENT_TEMPLATES,
+  CINEMA_STORYLINES,
+  VISUAL_PRESETS,
+  AUDIO_TEMPLATES,
+} from '@/lib/penelope/contentTemplates';
 
 export default function PenelopePage() {
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState('');
   const [templateId, setTemplateId] = useState(CONTENT_TEMPLATES[0].id);
-  const [storylineId, setStorylineId] = useState("");
-  const [targetLength, setTargetLength] = useState<"short" | "medium" | "feature">("medium");
-  const [visualPreset, setVisualPreset] = useState("CINEMATIC_DRAMA");
-  const [audioStyle, setAudioStyle] = useState("EPIC_ORCHESTRAL");
-  const [treatment, setTreatment] = useState<any>(null);
+  const [storylineId, setStorylineId] = useState('');
+  const [targetLength, setTargetLength] = useState<'short' | 'medium' | 'feature'>('medium');
+  const [visualPreset, setVisualPreset] = useState('CINEMATIC_DRAMA');
+  const [audioStyle, setAudioStyle] = useState('EPIC_ORCHESTRAL');
+  const [treatment, setTreatment] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
 
-  const selectedTemplate = CONTENT_TEMPLATES.find(t => t.id === templateId);
-  const selectedStoryline = storylineId 
-    ? CINEMA_STORYLINES.find(s => s.id === storylineId)
+  const selectedTemplate = CONTENT_TEMPLATES.find((t) => t.id === templateId);
+  const selectedStoryline = storylineId
+    ? CINEMA_STORYLINES.find((s) => s.id === storylineId)
     : selectedTemplate?.storyline;
 
   const handleGenerate = async () => {
@@ -24,26 +29,26 @@ export default function PenelopePage() {
 
     setLoading(true);
     try {
-      const response = await fetch("/api/penelope/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/penelope/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: prompt.trim(),
           templateId,
           storylineId: storylineId || undefined,
           targetLength,
           visualPreset,
-          audioStyle
-        })
+          audioStyle,
+        }),
       });
 
-      if (!response.ok) throw new Error("Generation failed");
+      if (!response.ok) throw new Error('Generation failed');
 
       const data = await response.json();
       setTreatment(data);
-    } catch (error) {
-      console.error("Generation error:", error);
-      alert("Failed to generate treatment. Please try again.");
+    } catch (error: unknown) {
+      console.error('Generation error:', error);
+      alert('Failed to generate treatment. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -124,7 +129,9 @@ export default function PenelopePage() {
                     onChange={(e) => setStorylineId(e.target.value)}
                     className="w-full rounded-xl bg-white/10 border border-white/30 px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-purple-400"
                   >
-                    <option value="" className="bg-slate-900">Use template default</option>
+                    <option value="" className="bg-slate-900">
+                      Use template default
+                    </option>
                     {CINEMA_STORYLINES.map((storyline) => (
                       <option key={storyline.id} value={storyline.id} className="bg-slate-900">
                         {storyline.title} ({storyline.genre})
@@ -251,15 +258,21 @@ export default function PenelopePage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-white/60">Length:</span>
-                      <span className="text-white font-medium">{treatment.metadata.targetLength}</span>
+                      <span className="text-white font-medium">
+                        {treatment.metadata.targetLength}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-white/60">Resolution:</span>
-                      <span className="text-white font-medium">{treatment.metadata.technicalSpecs.resolution}</span>
+                      <span className="text-white font-medium">
+                        {treatment.metadata.technicalSpecs.resolution}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-white/60">Frame Rate:</span>
-                      <span className="text-white font-medium">{treatment.metadata.technicalSpecs.frameRate}</span>
+                      <span className="text-white font-medium">
+                        {treatment.metadata.technicalSpecs.frameRate}
+                      </span>
                     </div>
                   </div>
                 </div>

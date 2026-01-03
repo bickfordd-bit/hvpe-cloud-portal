@@ -22,19 +22,15 @@ export async function POST(req: NextRequest) {
     const accessToken = req.cookies.get('linkedin_access_token')?.value;
 
     if (!accessToken) {
-      return NextResponse.json(
-        apiError(new Error('Not authenticated with LinkedIn')),
-        { status: 401 }
-      );
+      return NextResponse.json(apiError(new Error('Not authenticated with LinkedIn')), {
+        status: 401,
+      });
     }
 
     const body: PostRequest = await req.json();
 
     if (!body.text) {
-      return NextResponse.json(
-        apiError(new Error('Text content is required')),
-        { status: 400 }
-      );
+      return NextResponse.json(apiError(new Error('Text content is required')), { status: 400 });
     }
 
     // Set access token
@@ -51,10 +47,7 @@ export async function POST(req: NextRequest) {
         body.visibility || 'PUBLIC'
       );
     } else {
-      result = await linkedInClient.postText(
-        body.text,
-        body.visibility || 'PUBLIC'
-      );
+      result = await linkedInClient.postText(body.text, body.visibility || 'PUBLIC');
     }
 
     logger.info('LinkedIn post created via API', { postId: result.id });
@@ -66,7 +59,7 @@ export async function POST(req: NextRequest) {
         message: 'Posted to LinkedIn successfully',
       })
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('LinkedIn post API error', { error: error.message });
     return NextResponse.json(apiError(error), { status: 500 });
   }

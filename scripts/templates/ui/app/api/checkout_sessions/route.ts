@@ -1,41 +1,39 @@
-import { NextResponse } from "next/server";
-import Stripe from "stripe";
+import { NextResponse } from 'next/server';
+import Stripe from 'stripe';
 
 function getStripe() {
   const secret = process.env.STRIPE_SECRET_KEY;
   if (!secret) {
-    throw new Error("STRIPE_SECRET_KEY is not set");
+    throw new Error('STRIPE_SECRET_KEY is not set');
   }
   return new Stripe(secret, {
-    apiVersion: "2025-11-17.clover",
+    apiVersion: '2025-11-17.clover',
   });
 }
 
 const priceMap: Record<string, string> = {
-  FOUNDING_MONTHLY: process.env.STRIPE_PRICE_FOUNDING_MONTHLY ?? "",
-  PRO_MONTHLY: process.env.STRIPE_PRICE_PRO_MONTHLY ?? "",
-  PRO_YEARLY: process.env.STRIPE_PRICE_PRO_YEARLY ?? "",
+  FOUNDING_MONTHLY: process.env.STRIPE_PRICE_FOUNDING_MONTHLY ?? '',
+  PRO_MONTHLY: process.env.STRIPE_PRICE_PRO_MONTHLY ?? '',
+  PRO_YEARLY: process.env.STRIPE_PRICE_PRO_YEARLY ?? '',
 };
 
 export async function POST(req: Request) {
   const form = await req.formData();
-  const planRaw = form.get("plan");
-  const plan = typeof planRaw === "string" ? planRaw : planRaw?.toString() ?? "";
+  const planRaw = form.get('plan');
+  const plan = typeof planRaw === 'string' ? planRaw : (planRaw?.toString() ?? '');
 
   const priceId = priceMap[plan];
   if (!priceId) {
-    return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
   }
 
-  const origin =
-    req.headers.get("origin") ??
-    `https://${req.headers.get("host") ?? "localhost"}`;
+  const origin = req.headers.get('origin') ?? `https://${req.headers.get('host') ?? 'localhost'}`;
 
   try {
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      payment_method_types: ["card"],
+      mode: 'subscription',
+      payment_method_types: ['card'],
       line_items: [
         {
           price: priceId,
@@ -47,18 +45,12 @@ export async function POST(req: Request) {
     });
 
     if (!session.url) {
-      return NextResponse.json(
-        { error: "Stripe session created without URL" },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: 'Stripe session created without URL' }, { status: 500 });
     }
 
     return NextResponse.redirect(session.url, 303);
-  } catch (err) {
-    console.error("Stripe error:", err);
-    return NextResponse.json(
-      { error: "Stripe checkout creation failed" },
-      { status: 500 },
-    );
+  } catch (err: unknown) {
+    console.error('Stripe error:', err);
+    return NextResponse.json({ error: 'Stripe checkout creation failed' }, { status: 500 });
   }
 }

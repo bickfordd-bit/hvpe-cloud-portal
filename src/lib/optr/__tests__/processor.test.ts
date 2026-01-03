@@ -103,9 +103,7 @@ describe('OPTR Processor', () => {
   it('should create traces for all pipeline stages', async () => {
     const result = await processOpportunity(mockOpportunityId, mockState);
 
-    const stages = result.traces
-      .filter((t) => t.status === 'completed')
-      .map((t) => t.stage);
+    const stages = result.traces.filter((t) => t.status === 'completed').map((t) => t.stage);
 
     expect(stages).toContain('ingestion');
     expect(stages).toContain('embeddings');
@@ -132,7 +130,7 @@ describe('OPTR Processor', () => {
 
   it('should handle errors gracefully', async () => {
     // Mock an error by passing invalid state
-    const invalidState = { ...mockState, requirements: null as any };
+    const invalidState = { ...mockState, requirements: null as unknown };
 
     const result = await processOpportunity(mockOpportunityId, invalidState);
 
