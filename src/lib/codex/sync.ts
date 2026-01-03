@@ -144,7 +144,9 @@ Timestamp: ${task.timestamp}`;
     });
 
     // Write failure to ledger
-    // TODO: Fix type - await writeLedgerEntry({
+    // TODO: Fix type
+    /*
+    await writeLedgerEntry({
       kind: 'codex-sync-failure',
       subject: task.taskId,
       payload: {
@@ -154,6 +156,7 @@ Timestamp: ${task.timestamp}`;
       },
       id: `${ledgerEntryId}-failure`,
     });
+    */
 
     return {
       success: false,
