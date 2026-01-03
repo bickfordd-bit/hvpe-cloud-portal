@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Testing
+coverage/
+*.test.ts
+*.test.tsx
+*.test.js
+*.test.jsx
+__tests__/
+**/__tests__/**
+*.spec.ts
+*.spec.tsx
+
+# Development
+.git/
+.github/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Bickford Ledger (prevent deployment bloat)
+.bick/ledger/
+
+# Build artifacts
+.next/
+out/
+dist/
+build/
+
+# Vercel
+.vercel/
+.now/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+
+# Temporary
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Other repos config (nested projects)
+bickford/

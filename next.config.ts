@@ -23,6 +23,19 @@ const nextConfig: NextConfig = {
   experimental: {
     missingSuspenseWithCSRBailout: false,
   },
+
+  // Optimize for Vercel
+  swcMinify: true,
+  reactStrictMode: true,
+
+  // Handle Prisma in serverless environment
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Externalize Prisma client to prevent bundling issues
+      config.externals.push("@prisma/client");
+    }
+    return config;
+  },
 };
 
 export default nextConfig;
