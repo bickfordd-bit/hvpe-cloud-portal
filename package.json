@@ -38,7 +38,7 @@
     "expo-updates": "^29.0.15",
     "googleapis": "^168.0.0",
     "lucide-react": "^0.560.0",
-    "next": "16.0.7",
+    "next": "^16.1.1",
     "nodemailer": "^7.0.11",
     "openai": "^4.20.1",
     "pdfkit": "^0.17.2",
