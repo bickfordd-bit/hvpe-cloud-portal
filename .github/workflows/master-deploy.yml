@@ -28,6 +28,13 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false  # Queue instead of cancel
 
+permissions:
+  contents: read        # Read code
+  statuses: write       # Update progress indicators
+  deployments: write    # Record deployment events
+  pull-requests: write  # Comment on PRs with results
+  issues: write         # Post updates
+
 env:
   NODE_VERSION: '20'
   DEPLOYMENT_TIMEOUT: 600
