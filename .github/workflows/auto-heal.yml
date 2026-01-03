@@ -2,11 +2,11 @@ name: Auto-Heal System
 
 on:
   schedule:
-    # Run daily at 6 AM UTC
+    # Run once daily at 6 AM UTC (not on every push)
     - cron: '0 6 * * *'
-  push:
-    branches: [mobile, main]
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger only
+
+# Remove 'push:' trigger to stop the loop
 
 permissions:
   contents: write
