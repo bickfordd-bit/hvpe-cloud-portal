@@ -2,9 +2,9 @@ name: CI Build and Deploy
 
 on:
   push:
-    branches: [ ui-redesign-v1 ]
+    branches: [ main, mobile ]
   pull_request:
-    branches: [ ui-redesign-v1 ]
+    branches: [ main, mobile ]
 
 jobs:
   build:

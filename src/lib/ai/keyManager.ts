@@ -1,14 +1,14 @@
-import { logger } from '@/lib/logger';
+import { logger } from "@/lib/logger";
 
 /**
  * Mathematical representation of API key management
- * 
+ *
  * K_openai ∈ Σ*, K_openai ∉ 𝒟_persisted
  * Auth(service) = getenv("HVPE_OPENAI_API_KEY") | getenv("OPENAI_API_KEY")
  */
 
 export interface KeyMetadata {
-  source: 'HVPE_OPENAI_API_KEY' | 'OPENAI_API_KEY';
+  source: "HVPE_OPENAI_API_KEY" | "OPENAI_API_KEY";
   createdAt?: Date;
   expiresAt?: Date;
   lastRotated?: Date;
@@ -35,8 +35,8 @@ export class OpenAIKeyManager {
   private static instance: OpenAIKeyManager;
   private key: string | null = null;
   private metadata: KeyMetadata = {
-    source: 'HVPE_OPENAI_API_KEY',
-    usageCount: 0
+    source: "HVPE_OPENAI_API_KEY",
+    usageCount: 0,
   };
   private rateLimitState: {
     tpmUsed: number;
@@ -45,7 +45,7 @@ export class OpenAIKeyManager {
   } = {
     tpmUsed: 0,
     rpmUsed: 0,
-    windowStart: new Date()
+    windowStart: new Date(),
   };
 
   private constructor() {
@@ -68,24 +68,26 @@ export class OpenAIKeyManager {
     // Try HVPE key first (preferred)
     if (process.env.HVPE_OPENAI_API_KEY) {
       this.key = process.env.HVPE_OPENAI_API_KEY;
-      this.metadata.source = 'HVPE_OPENAI_API_KEY';
-      logger.info('OpenAI key loaded from HVPE_OPENAI_API_KEY');
+      this.metadata.source = "HVPE_OPENAI_API_KEY";
+      logger.info("OpenAI key loaded from HVPE_OPENAI_API_KEY");
       return;
     }
 
     // Fallback to standard OpenAI key
     if (process.env.OPENAI_API_KEY) {
       this.key = process.env.OPENAI_API_KEY;
-      this.metadata.source = 'OPENAI_API_KEY';
-      logger.warn('OpenAI key loaded from fallback OPENAI_API_KEY (prefer HVPE_OPENAI_API_KEY)');
+      this.metadata.source = "OPENAI_API_KEY";
+      logger.warn(
+        "OpenAI key loaded from fallback OPENAI_API_KEY (prefer HVPE_OPENAI_API_KEY)",
+      );
       return;
     }
 
-    logger.error('No OpenAI API key found in environment');
-    throw new Error(
-      'OpenAI API key not found. Set HVPE_OPENAI_API_KEY or OPENAI_API_KEY environment variable.\n' +
-      'Get your key from: https://platform.openai.com/api-keys'
+    // During build time, we don't have env vars - that's OK
+    logger.warn(
+      "No OpenAI API key found in environment (will fail at runtime if needed)",
     );
+    this.key = null;
   }
 
   /**
@@ -107,16 +109,19 @@ export class OpenAIKeyManager {
    */
   getKey(): string {
     if (!this.key) {
-      throw new Error('OpenAI API key not available');
+      throw new Error(
+        "OpenAI API key not found. Set HVPE_OPENAI_API_KEY or OPENAI_API_KEY environment variable.\n" +
+          "Get your key from: https://platform.openai.com/api-keys",
+      );
     }
 
     // Check if key is expired
     if (this.metadata.expiresAt && new Date() > this.metadata.expiresAt) {
-      logger.error('OpenAI API key has expired', {
+      logger.error("OpenAI API key has expired", {
         expiresAt: this.metadata.expiresAt,
-        source: this.metadata.source
+        source: this.metadata.source,
       });
-      throw new Error('OpenAI API key expired. Please rotate your key.');
+      throw new Error("OpenAI API key expired. Please rotate your key.");
     }
 
     // Track usage
@@ -143,7 +148,7 @@ export class OpenAIKeyManager {
   getMetadata(): KeyMetadata {
     return {
       ...this.metadata,
-      lastUsed: this.metadata.lastUsed
+      lastUsed: this.metadata.lastUsed,
     };
   }
 
@@ -152,24 +157,25 @@ export class OpenAIKeyManager {
    */
   trackUsage(tokensUsed: number): void {
     const now = new Date();
-    const minutesSinceWindow = (now.getTime() - this.rateLimitState.windowStart.getTime()) / 60000;
+    const minutesSinceWindow =
+      (now.getTime() - this.rateLimitState.windowStart.getTime()) / 60000;
 
     // Reset window if more than 1 minute has passed
     if (minutesSinceWindow >= 1) {
       this.rateLimitState = {
         tpmUsed: tokensUsed,
         rpmUsed: 1,
-        windowStart: now
+        windowStart: now,
       };
     } else {
       this.rateLimitState.tpmUsed += tokensUsed;
       this.rateLimitState.rpmUsed += 1;
     }
 
-    logger.debug('Rate limit usage tracked', {
+    logger.debug("Rate limit usage tracked", {
       tokensUsed,
       tpmTotal: this.rateLimitState.tpmUsed,
-      rpmTotal: this.rateLimitState.rpmUsed
+      rpmTotal: this.rateLimitState.rpmUsed,
     });
   }
 
@@ -185,13 +191,14 @@ export class OpenAIKeyManager {
     const percentageUsedRPM = (this.rateLimitState.rpmUsed / rpmLimit) * 100;
 
     const shouldThrottle = percentageUsedTPM > 90 || percentageUsedRPM > 90;
-    const shouldAlert = percentageUsedTPM > alertThreshold || percentageUsedRPM > alertThreshold;
+    const shouldAlert =
+      percentageUsedTPM > alertThreshold || percentageUsedRPM > alertThreshold;
 
     if (shouldAlert) {
-      logger.warn('OpenAI rate limit approaching threshold', {
+      logger.warn("OpenAI rate limit approaching threshold", {
         percentageUsedTPM,
         percentageUsedRPM,
-        alertThreshold
+        alertThreshold,
       });
     }
 
@@ -203,7 +210,7 @@ export class OpenAIKeyManager {
       percentageUsedTPM,
       percentageUsedRPM,
       shouldThrottle,
-      shouldAlert
+      shouldAlert,
     };
   }
 
@@ -220,10 +227,11 @@ export class OpenAIKeyManager {
 
     // Rotate if created more than 30 days ago
     if (metadata.createdAt) {
-      const daysSinceCreation = (Date.now() - metadata.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+      const daysSinceCreation =
+        (Date.now() - metadata.createdAt.getTime()) / (1000 * 60 * 60 * 24);
       if (daysSinceCreation > 30) {
-        logger.warn('OpenAI key is older than 30 days, consider rotating', {
-          daysSinceCreation
+        logger.warn("OpenAI key is older than 30 days, consider rotating", {
+          daysSinceCreation,
         });
         return true;
       }
@@ -236,10 +244,25 @@ export class OpenAIKeyManager {
    * Redact key for logging (show only prefix and suffix)
    */
   static redactKey(key: string): string {
-    if (!key || key.length < 10) return '***';
+    if (!key || key.length < 10) return "***";
     return `${key.substring(0, 7)}...${key.substring(key.length - 4)}`;
   }
 }
 
-// Export singleton instance
-export const keyManager = OpenAIKeyManager.getInstance();
+// Export lazy singleton getter to avoid build-time initialization
+let _keyManagerInstance: OpenAIKeyManager | null = null;
+export const keyManager = {
+  getInstance: () => {
+    if (!_keyManagerInstance) {
+      _keyManagerInstance = OpenAIKeyManager.getInstance();
+    }
+    return _keyManagerInstance;
+  },
+  getKey: () => keyManager.getInstance().getKey(),
+  getMetadata: () => keyManager.getInstance().getMetadata(),
+  getRateLimitStatus: () => keyManager.getInstance().getRateLimitStatus(),
+  trackUsage: (tokens: number) => keyManager.getInstance().trackUsage(tokens),
+  shouldRotateKey: () => keyManager.getInstance().shouldRotateKey(),
+  validateKeyFormat: (key?: string) =>
+    keyManager.getInstance().validateKeyFormat(key),
+};
