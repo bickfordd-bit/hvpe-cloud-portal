@@ -3,9 +3,9 @@ name: Comprehensive Health Dashboard
 on:
   schedule:
     # Run at 6 AM UTC daily (aligned with auto-heal)
-    - cron: '0 6 * * *'
+    - cron: "0 6 * * *"
     # Also run at 2 AM for continuous monitoring
-    - cron: '0 2 * * *'
+    - cron: "0 2 * * *"
   workflow_dispatch:
 
 permissions:
@@ -13,7 +13,7 @@ permissions:
   issues: write
 
 env:
-  NODE_VERSION: '18.x'
+  NODE_VERSION: "18.x"
 
 jobs:
   # Job 1: Production endpoint health checks
@@ -33,22 +33,22 @@ jobs:
             echo "❌ API returned $RESPONSE"
             exit 1
           fi
-      
+
       - name: Check Bickford endpoint
         run: |
           RESPONSE=$(curl -s https://hvpe-cloud-portal.vercel.app/api/bickford)
           echo "$RESPONSE" | jq .
-      
+
       - name: Check Codex sync endpoint
         run: |
           RESPONSE=$(curl -s https://hvpe-cloud-portal.vercel.app/api/codex/sync)
           echo "$RESPONSE" | jq .
-      
+
       - name: Check persistence endpoint
         run: |
           RESPONSE=$(curl -s https://hvpe-cloud-portal.vercel.app/api/persistence)
           echo "$RESPONSE" | jq .
-      
+
       - name: Notify on failure
         if: failure()
         uses: actions/github-script@v7
@@ -69,19 +69,19 @@ jobs:
     if: github.event.schedule == '0 6 * * *' || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Generate Prisma Client
         run: npx prisma generate
-      
+
       # Check dependency vulnerabilities
       - name: Check dependency vulnerabilities
         id: audit
@@ -92,14 +92,14 @@ jobs:
           HIGH=$(echo "$AUDIT_JSON" | jq '.metadata.vulnerabilities.high // 0')
           MODERATE=$(echo "$AUDIT_JSON" | jq '.metadata.vulnerabilities.moderate // 0')
           LOW=$(echo "$AUDIT_JSON" | jq '.metadata.vulnerabilities.low // 0')
-          
+
           echo "total=$TOTAL_VULNS" >> $GITHUB_OUTPUT
           echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
           echo "high=$HIGH" >> $GITHUB_OUTPUT
           echo "moderate=$MODERATE" >> $GITHUB_OUTPUT
           echo "low=$LOW" >> $GITHUB_OUTPUT
         continue-on-error: true
-      
+
       # Check build status
       - name: Test build
         id: build
@@ -111,13 +111,13 @@ jobs:
             echo "status=❌ failing" >> $GITHUB_OUTPUT
           fi
         continue-on-error: true
-      
+
       # Check test coverage
       - name: Run tests with coverage
         id: coverage
         run: |
           npm test -- --coverage --json --outputFile=coverage-report.json --passWithNoTests || true
-          
+
           if [ -f coverage/coverage-summary.json ]; then
             COVERAGE=$(jq '.total.lines.pct // 0' coverage/coverage-summary.json)
             echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
@@ -125,7 +125,7 @@ jobs:
             echo "percentage=0" >> $GITHUB_OUTPUT
           fi
         continue-on-error: true
-      
+
       # Check lint errors
       - name: Run linter
         id: lint
@@ -136,7 +136,7 @@ jobs:
           echo "errors=$ERROR_COUNT" >> $GITHUB_OUTPUT
           echo "warnings=$WARNING_COUNT" >> $GITHUB_OUTPUT
         continue-on-error: true
-      
+
       # Check bundle size
       - name: Check bundle size
         id: bundle
@@ -148,7 +148,7 @@ jobs:
             echo "size=N/A" >> $GITHUB_OUTPUT
           fi
         continue-on-error: true
-      
+
       # Check all branches build status
       - name: Check branch status
         id: branches
@@ -160,9 +160,9 @@ jobs:
               repo: context.repo.repo,
               protected: true
             });
-            
+
             const branchStatus = [];
-            
+
             for (const branch of branches.slice(0, 5)) {
               const { data: checks } = await github.rest.checks.listForRef({
                 owner: context.repo.owner,
@@ -178,102 +178,78 @@ jobs:
                 status: status === 'success' ? '✅' : status === 'failure' ? '❌' : '⚠️'
               });
             }
-            
+
             return branchStatus;
-      
+
       # Generate and post health report
       - name: Generate health report
         uses: actions/github-script@v7
         with:
           script: |
-            const branchStatus = ${{ steps.branches.outputs.result }};
-            
+            const criticalVulns = ${{ steps.audit.outputs.critical }};
+            const highVulns = ${{ steps.audit.outputs.high }};
+            const totalVulns = ${{ steps.audit.outputs.total }};
+            const lintErrors = ${{ steps.lint.outputs.errors }};
+            const coverage = parseFloat('${{ steps.coverage.outputs.percentage }}');
+
             const alertLevel = 
-              ${{ steps.audit.outputs.critical }} > 0 ? '🔴 CRITICAL' :
-              ${{ steps.audit.outputs.high }} > 0 ? '🟠 WARNING' :
-              ${{ steps.audit.outputs.total }} > 0 ? '🟡 INFO' :
+              criticalVulns > 0 ? '🔴 CRITICAL' :
+              highVulns > 0 ? '🟠 WARNING' :
+              totalVulns > 0 ? '🟡 INFO' :
               '🟢 HEALTHY';
-            
-            const report = `## 📊 Daily Health Report
-            
-**Generated:** ${new Date().toISOString()}
-**Overall Status:** ${alertLevel}
 
----
+            let report = '## 📊 Daily Health Report\n\n';
+            report += 'Generated: ' + new Date().toISOString() + '\n';
+            report += 'Overall Status: ' + alertLevel + '\n\n';
+            report += '---\n\n';
+            report += '### 🔒 Security\n';
+            report += '- Total Vulnerabilities: ${{ steps.audit.outputs.total }}\n';
+            report += '  - Critical: ${{ steps.audit.outputs.critical }}\n';
+            report += '  - High: ${{ steps.audit.outputs.high }}\n';
+            report += '  - Moderate: ${{ steps.audit.outputs.moderate }}\n';
+            report += '  - Low: ${{ steps.audit.outputs.low }}\n\n';
 
-### 🔒 Security
-- **Total Vulnerabilities:** ${{ steps.audit.outputs.total }}
-  - Critical: ${{ steps.audit.outputs.critical }}
-  - High: ${{ steps.audit.outputs.high }}
-  - Moderate: ${{ steps.audit.outputs.moderate }}
-  - Low: ${{ steps.audit.outputs.low }}
+            if (criticalVulns > 0) {
+              report += '⚠️ Action Required: Critical vulnerabilities detected.\n\n';
+            }
 
-${${{ steps.audit.outputs.critical }} > 0 ? '⚠️ **Action Required:** Critical vulnerabilities detected. Auto-heal should address these.' : ''}
+            report += '---\n\n';
+            report += '### 🏗️ Build Status\n';
+            report += '- Main Build: ${{ steps.build.outputs.status }}\n';
+            report += '- Bundle Size: ${{ steps.bundle.outputs.size }}\n\n';
+            report += '---\n\n';
+            report += '### 🧪 Test Coverage\n';
+            report += '- Coverage: ${{ steps.coverage.outputs.percentage }}%\n';
+            report += coverage < 80 ? '⚠️ Coverage below 80% threshold\n' : '✅ Coverage meets threshold\n';
+            report += '\n---\n\n';
+            report += '### 🔍 Code Quality\n';
+            report += '- Lint Errors: ${{ steps.lint.outputs.errors }}\n';
+            report += '- Lint Warnings: ${{ steps.lint.outputs.warnings }}\n';
+            report += lintErrors > 0 ? '⚠️ Lint errors found\n' : '✅ No lint errors\n';
+            report += '\n---\n\n';
+            report += '### 🎯 Recommended Actions\n\n';
 
----
+            if (criticalVulns > 0) report += '- 🚨 IMMEDIATE: Review critical vulnerabilities\n';
+            if (highVulns > 0) report += '- ⚠️ HIGH PRIORITY: Address high severity vulnerabilities\n';
+            if (lintErrors > 0) report += '- 🔧 Fix lint errors\n';
+            if (coverage < 80) report += '- 🧪 Increase test coverage\n';
 
-### 🏗️ Build Status
-- **Main Build:** ${{ steps.build.outputs.status }}
-- **Bundle Size:** ${{ steps.bundle.outputs.size }}
+            report += '\n---\n\n🤖 Generated by Comprehensive Health Dashboard\n';
 
----
+            const shouldCreateIssue = criticalVulns > 0 || lintErrors > 10;
 
-### 🧪 Test Coverage
-- **Coverage:** ${{ steps.coverage.outputs.percentage }}%
-${parseFloat('${{ steps.coverage.outputs.percentage }}') < 80 ? '⚠️ Coverage below 80% threshold' : '✅ Coverage meets threshold'}
-
----
-
-### 🔍 Code Quality
-- **Lint Errors:** ${{ steps.lint.outputs.errors }}
-- **Lint Warnings:** ${{ steps.lint.outputs.warnings }}
-${${{ steps.lint.outputs.errors }} > 0 ? '⚠️ Lint errors found - review needed' : '✅ No lint errors'}
-
----
-
-### 🌿 Branch Status
-${branchStatus.map(b => `- **${b.name}:** ${b.status}`).join('\n')}
-
----
-
-### 📈 Trends
-- Previous vulnerabilities: [Track in ledger]
-- Coverage trend: [Track over time]
-
----
-
-### 🎯 Recommended Actions
-
-${${{ steps.audit.outputs.critical }} > 0 ? '- 🚨 **IMMEDIATE:** Review and fix critical vulnerabilities\n' : ''}
-${${{ steps.audit.outputs.high }} > 0 ? '- ⚠️ **HIGH PRIORITY:** Address high severity vulnerabilities\n' : ''}
-${${{ steps.lint.outputs.errors }} > 0 ? '- 🔧 Fix lint errors\n' : ''}
-${parseFloat('${{ steps.coverage.outputs.percentage }}') < 80 ? '- 🧪 Increase test coverage\n' : ''}
-${branchStatus.some(b => b.status === '❌') ? '- 🔨 Fix failing branch builds\n' : ''}
-
----
-
-🤖 *Generated by Comprehensive Health Dashboard*
-`;
-
-            // Determine if we should create an issue or discussion
-            const shouldCreateIssue = 
-              ${{ steps.audit.outputs.critical }} > 0 ||
-              ${{ steps.lint.outputs.errors }} > 10;
-            
             if (shouldCreateIssue) {
-              // Create issue for critical items
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                title: `📊 Daily Health Report - ${alertLevel}`,
+                title: '📊 Daily Health Report - ' + alertLevel,
                 body: report,
                 labels: ['health-report', 'automated']
               });
             } else {
-              // Just log for info
               console.log(report);
             }
-      
+
       # Record to ledger
       - name: Record health report to ledger
         run: |
@@ -303,7 +279,7 @@ ${branchStatus.some(b => b.status === '❌') ? '- 🔨 Fix failing branch builds
             "parentId": null
           }
           EOF
-          
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .bick/ledger/
