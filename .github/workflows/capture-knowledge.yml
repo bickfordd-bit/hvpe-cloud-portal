@@ -1,0 +1,223 @@
+name: Capture Knowledge
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  capture-knowledge:
+    # Only run if PR was merged (not just closed)
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Extract PR metadata
+        id: pr_meta
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_BODY="${{ github.event.pull_request.body }}"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_MERGED_AT="${{ github.event.pull_request.merged_at }}"
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          
+          # Extract action ID from PR title or generate from number
+          ACTION_ID=$(echo "$PR_TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//')
+          ACTION_ID="${ACTION_ID}-pr-${PR_NUMBER}"
+          
+          # Determine action type from labels or title
+          ACTION_TYPE="feature"
+          if echo "$PR_TITLE" | grep -qi "fix\|bug"; then
+            ACTION_TYPE="bug_fix"
+          elif echo "$PR_TITLE" | grep -qi "refactor"; then
+            ACTION_TYPE="refactor"
+          elif echo "$PR_TITLE" | grep -qi "test"; then
+            ACTION_TYPE="test"
+          elif echo "$PR_TITLE" | grep -qi "doc"; then
+            ACTION_TYPE="documentation"
+          elif echo "$PR_TITLE" | grep -qi "deploy"; then
+            ACTION_TYPE="deployment"
+          elif echo "$PR_TITLE" | grep -qi "config"; then
+            ACTION_TYPE="configuration"
+          elif echo "$PR_TITLE" | grep -qi "security"; then
+            ACTION_TYPE="security"
+          elif echo "$PR_TITLE" | grep -qi "perf"; then
+            ACTION_TYPE="performance"
+          fi
+          
+          echo "action_id=$ACTION_ID" >> $GITHUB_OUTPUT
+          echo "action_type=$ACTION_TYPE" >> $GITHUB_OUTPUT
+          echo "timestamp=$PR_MERGED_AT" >> $GITHUB_OUTPUT
+      
+      - name: Generate knowledge entry template
+        id: generate
+        run: |
+          ACTION_ID="${{ steps.pr_meta.outputs.action_id }}"
+          ACTION_TYPE="${{ steps.pr_meta.outputs.action_type }}"
+          TIMESTAMP="${{ steps.pr_meta.outputs.timestamp }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_BODY="${{ github.event.pull_request.body }}"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          
+          DATE=$(echo "$TIMESTAMP" | cut -d'T' -f1)
+          FILENAME="${ACTION_ID}.yml"
+          FILEPATH=".github/knowledge/entries/${FILENAME}"
+          
+          # Create knowledge entry template
+          cat > "$FILEPATH" << 'EOF'
+          action:
+            id: "$ACTION_ID"
+            timestamp: "$TIMESTAMP"
+            type: "$ACTION_TYPE"
+            
+          intent:
+            description: "$PR_TITLE"
+            context: "TODO: Add context - why was this needed?"
+            
+          enables:
+            - "TODO: What capabilities does this unlock?"
+            
+          depends_on:
+            # TODO: Add dependencies if any
+            # - action: "previous-action-id"
+            #   why: "Reason for dependency"
+            
+          unlocks:
+            # TODO: Add future actions this enables
+            # - action: "future-action-id"
+            #   why: "Why this is now possible"
+            
+          implementation:
+            approach: "TODO: High-level implementation strategy"
+            why_this_sequence:
+              - "TODO: Step 1 reasoning"
+              - "TODO: Step 2 reasoning"
+              
+          proof:
+            - "PR #$PR_NUMBER merged"
+            - "TODO: Add build logs, test results, or other proof"
+            
+          lessons:
+            - "TODO: What did we learn?"
+            
+          coaching_notes: |
+            TODO: Add coaching guidance for similar situations.
+            Write as if explaining to someone encountering this for the first time.
+            
+          related_ledger_entries:
+            - "TODO: Link to .bick/ledger entries if they exist"
+          EOF
+          
+          # Replace variables in template
+          sed -i "s/\$ACTION_ID/${ACTION_ID}/g" "$FILEPATH"
+          sed -i "s/\$TIMESTAMP/${TIMESTAMP}/g" "$FILEPATH"
+          sed -i "s/\$ACTION_TYPE/${ACTION_TYPE}/g" "$FILEPATH"
+          sed -i "s/\$PR_TITLE/${PR_TITLE}/g" "$FILEPATH"
+          sed -i "s/\$PR_NUMBER/${PR_NUMBER}/g" "$FILEPATH"
+          
+          echo "filepath=$FILEPATH" >> $GITHUB_OUTPUT
+          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+      
+      - name: Update index
+        run: |
+          # Run update script (create if needed)
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const yaml = require('yaml');
+          
+          const INDEX_FILE = '.github/knowledge/index.yml';
+          const ENTRIES_DIR = '.github/knowledge/entries';
+          
+          // Load current index
+          let index = yaml.parse(fs.readFileSync(INDEX_FILE, 'utf8'));
+          
+          // Count entries by type
+          const files = fs.readdirSync(ENTRIES_DIR);
+          const entries = [];
+          const categoryCounts = {};
+          
+          for (const file of files) {
+            if (file.endsWith('.yml') || file.endsWith('.yaml')) {
+              try {
+                const content = fs.readFileSync(path.join(ENTRIES_DIR, file), 'utf8');
+                const entry = yaml.parse(content);
+                
+                if (entry.action) {
+                  entries.push({
+                    id: entry.action.id,
+                    type: entry.action.type,
+                    timestamp: entry.action.timestamp,
+                    file: 'entries/' + file,
+                    description: entry.intent.description
+                  });
+                  
+                  categoryCounts[entry.action.type] = (categoryCounts[entry.action.type] || 0) + 1;
+                }
+              } catch (err) {
+                console.error('Failed to parse', file, err.message);
+              }
+            }
+          }
+          
+          // Sort entries by timestamp (newest first)
+          entries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+          
+          // Update index
+          index.total_entries = entries.length;
+          index.entries = entries;
+          
+          // Update category counts
+          for (const cat in index.categories) {
+            index.categories[cat] = categoryCounts[cat] || 0;
+          }
+          
+          // Update timestamp
+          const lines = fs.readFileSync(INDEX_FILE, 'utf8').split('\n');
+          lines[2] = '# Last updated: ' + new Date().toISOString();
+          
+          fs.writeFileSync(INDEX_FILE, lines.join('\n').split('version:')[0] + yaml.stringify(index), 'utf8');
+          
+          console.log('Index updated:', entries.length, 'entries');
+          "
+      
+      - name: Commit knowledge entry
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/knowledge/
+          git commit -m "docs: capture knowledge for PR #${{ github.event.pull_request.number }}" || echo "No changes to commit"
+          git push || echo "No changes to push"
+      
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const filename = '${{ steps.generate.outputs.filename }}';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🧠 **Knowledge Entry Created**\n\nA knowledge entry template has been created at \`.github/knowledge/entries/${filename}\`\n\n**TODO**: Please update the TODOs in the entry with:\n- Context and reasoning\n- Dependencies and what this unlocks\n- Lessons learned\n- Coaching notes\n\nThis helps build our institutional knowledge for future reference.`
+            });
