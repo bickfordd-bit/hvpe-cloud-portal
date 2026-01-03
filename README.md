@@ -58,6 +58,38 @@ Set these in `.env.local` (and in Vercel Project Settings → Environment Variab
 - `OPENAI_API_KEY` (for the in-portal HVPE chat dock)
 - `HVPE_OPENAI_API_KEY` (preferred alias for AI Core; falls back to `OPENAI_API_KEY`)
 
+## Unified Chat Agent Feature 💬
+
+The HVPE Cloud Portal includes a unified chat agent that provides an intelligent assistant experience with automatic daily archiving.
+
+### Key Features
+- **Unified Agent Experience**: Single AI agent (no persona selection) for streamlined interaction
+- **Daily Archiving**: Conversations automatically archive at the start of each new day
+- **Persistent State**: Messages persist across page refreshes within the same day
+- **Cross-screen Availability**: Chat dock appears on all screens throughout the portal
+- **Archive Status Display**: UI shows current date and automatic archiving status
+
+### How It Works
+1. **Persistence**: All conversations are stored in browser localStorage with date-based keys
+2. **Auto-archiving**: When the date changes (detected every 60 seconds), previous day's messages are automatically archived
+3. **Fresh Context**: Each new day starts with a clean slate while preserving history in archives
+4. **API Integration**: Uses `/api/hvpe-chat` endpoint with `mode: "general"` for unified agent responses
+
+### Storage Keys
+- Active conversation: `hvpe-chat-history-YYYY-MM-DD`
+- Archived conversations: `hvpe-chat-archive-YYYY-MM-DD`
+- Last seen date tracker: `hvpe-chat-last-date`
+
+### Testing
+Comprehensive test coverage for:
+- Date key generation and storage key formatting
+- Message persistence across sessions
+- Daily archiving trigger logic
+- Archive rotation when date changes
+- Corrupted data handling
+
+Run tests: `npm test -- src/components/chat/__tests__/HvpeChatDock.test.tsx`
+
 ## Prisma setup (Postgres)
 1) Generate client (requires `DATABASE_URL` set):
 ```bash
