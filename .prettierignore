@@ -43,11 +43,6 @@ next-env.d.ts
 .expo
 .expo-shared
 
-# lock files
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-
 # prisma
 prisma/migrations
 
@@ -59,8 +54,7 @@ prisma/migrations
 .git
 .github
 
-# docs and config files that should not be formatted
-*.md
-*.json
-*.yaml
-*.yml
+# lock files should not be formatted
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

@@ -26,13 +26,8 @@ const eslintConfig = defineConfig([
   ]),
   {
     rules: {
-      // Allow any type in catch clauses - TypeScript doesn't provide good error types
-      '@typescript-eslint/no-explicit-any': [
-        'error',
-        {
-          ignoreRestArgs: false,
-        },
-      ],
+      // Enforce type safety - avoid 'any' types
+      '@typescript-eslint/no-explicit-any': 'error',
       // Allow unused vars that start with underscore
       '@typescript-eslint/no-unused-vars': [
         'warn',
