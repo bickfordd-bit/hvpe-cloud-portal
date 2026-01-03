@@ -67,6 +67,63 @@ curl -X POST https://your-domain/api/license/approve \
 - Lint: `npm run lint`
 - Test: `npm test`
 
+## Automated Deployment (CI/CD) 🚀
+
+The project uses a **unified deployment pipeline** that automatically deploys on every push:
+
+### How It Works
+
+1. **Push your code** to any branch
+2. **GitHub Actions** automatically runs the deployment workflow
+3. **Get notified** when deployment completes with a live URL
+
+### Deployment Types
+
+- **Production:** Pushes to `main` or `mobile` → deployed to production
+- **Preview:** Pushes to any other branch → deployed to preview URL
+- **Pull Requests:** Automatic preview deployments with PR comments
+
+### Features
+
+✅ Automatic retries for transient failures  
+✅ Pre-deployment validation (catches issues early)  
+✅ Post-deployment smoke tests  
+✅ Real-time status updates via GitHub UI  
+✅ Zero manual intervention required  
+
+### Configuration
+
+Deployment is configured via GitHub Secrets:
+- `VERCEL_TOKEN` - Vercel authentication
+- `VERCEL_ORG_ID` - Organization ID
+- `VERCEL_PROJECT_ID` - Project ID
+
+Optional secrets (auto-detected):
+- `DATABASE_URL` - Database connection
+- `OPENAI_API_KEY` - AI features
+- `LICENSE_SESSION_SECRET` - License validation
+
+### Manual Deployment
+
+You can also deploy manually using helper scripts:
+
+```bash
+# Validate environment
+./scripts/preflight-check.sh
+
+# Deploy with automatic retries
+./scripts/deploy-with-retry.sh production
+
+# Verify deployment health
+./scripts/verify-deployment.sh https://your-url.vercel.app
+```
+
+### Documentation
+
+- **Quick Start:** See [Deployment Guide](./DEPLOYMENT.md)
+- **Comprehensive Reference:** See [CI/CD Guide](./docs/CI_CD_GUIDE.md)
+- **Workflow Details:** See `.github/workflows/master-deploy.yml`
+
 ## Docker Deployment 🐳
 
 ### Quick Start with Docker Compose
@@ -141,7 +198,33 @@ If you want, I can scaffold a simple CLA acceptance flow (web form + signed reco
 
 Security note: The `/api/ai/code` endpoint runs `git` commands on the host. Do not expose it publicly without authentication and approval gates. Prefer setting `AI_WEBHOOK_SECRET` and adding user authentication in front of it.
 
-CI: A GitHub Actions workflow is provided at `.github/workflows/ci-deploy.yml`. It builds the app on push/PR to `ui-redesign-v1` and attempts to deploy to Vercel when Vercel secrets are configured.
+## CI/CD: Unified Deployment Pipeline
+
+The project uses a **bulletproof unified deployment workflow** at `.github/workflows/master-deploy.yml`.
+
+### Key Features:
+- ✅ Single workflow handles all deployments (production + preview)
+- ✅ Automatic retry logic for transient failures (3 retries with exponential backoff)
+- ✅ Preflight validation catches issues before deployment starts
+- ✅ Post-deployment smoke tests verify deployment health
+- ✅ Real-time status updates via GitHub commit status API
+- ✅ Concurrency protection (queues instead of canceling deployments)
+- ✅ Auto-fixes common issues (stale dependencies, cache)
+
+### How to Use:
+**Just push your code!** The workflow automatically:
+1. Validates environment and dependencies
+2. Builds and tests the application
+3. Deploys to Vercel (production or preview based on branch)
+4. Verifies deployment health
+5. Comments on PR/commit with deployment URL
+
+### Documentation:
+- **Comprehensive Guide:** [docs/CI_CD_GUIDE.md](./docs/CI_CD_GUIDE.md)
+- **Deployment Platforms:** [DEPLOYMENT.md](./DEPLOYMENT.md)
+- **Workflow Source:** [.github/workflows/master-deploy.yml](./.github/workflows/master-deploy.yml)
+
+Legacy workflows (`ci-cd.yml`, `deploy-vercel.yml`, `ci-deploy.yml`) are deprecated and will be archived after a monitoring period. See `.github/workflows/archive/README.md` for details.
 
 ## HVPE chat dock
 - API: `POST /api/hvpe-chat` (requires `OPENAI_API_KEY`)

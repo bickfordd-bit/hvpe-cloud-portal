@@ -1,0 +1,170 @@
+# HVPE Cloud Portal - Unified Deployment Configuration
+# This is the single source of truth for deployment settings
+
+deployment:
+  # Branches that trigger production deployments
+  production_branches:
+    - main
+    - mobile
+  
+  # Branches that get preview deployments
+  preview_branches:
+    - ui-redesign-v1
+    - develop
+    - feature/*
+    - fix/*
+    - "*"  # All other branches get previews by default
+  
+  # Required secrets for deployment to succeed
+  required_secrets:
+    - VERCEL_TOKEN
+    - VERCEL_ORG_ID
+    - VERCEL_PROJECT_ID
+  
+  # Optional secrets (deployment continues without these, but features may be disabled)
+  optional_secrets:
+    - DATABASE_URL
+    - LICENSE_SESSION_SECRET
+    - OPENAI_API_KEY
+    - HVPE_OPENAI_API_KEY
+    - STRIPE_SECRET_KEY
+    - TWILIO_ACCOUNT_SID
+    - TWILIO_AUTH_TOKEN
+    - TWILIO_PHONE_NUMBER
+    - AI_WEBHOOK_SECRET
+    - ADMIN_DASH_TOKEN
+    - CODEX_WEBHOOK_SECRET
+  
+  # Deployment strategy settings
+  strategy:
+    # Number of automatic retries for transient failures
+    max_retries: 3
+    
+    # Initial backoff in seconds (exponential: 5s, 15s, 30s)
+    initial_backoff: 5
+    
+    # Maximum deployment timeout in seconds
+    timeout: 600  # 10 minutes
+    
+    # Enable concurrency protection (queue vs cancel)
+    concurrency_queue: true
+  
+  # Health check configuration
+  health_checks:
+    # Wait time before starting health checks
+    initial_delay: 10
+    
+    # Maximum wait time for deployment to be ready
+    max_wait: 60
+    
+    # Interval between health check attempts
+    check_interval: 5
+  
+  # Smoke tests to run after deployment
+  smoke_tests:
+    - path: "/"
+      expected_status: 200
+      description: "Homepage loads"
+      critical: true
+    
+    - path: "/api/health"
+      expected_status: 200
+      description: "Health endpoint responds"
+      critical: true
+    
+    - path: "/api/lock/status"
+      expected_status: 200
+      description: "Lock API is accessible"
+      critical: false
+    
+    - path: "/api/bickford"
+      expected_status: 200
+      description: "Bickford API is accessible"
+      critical: false
+  
+  # Notification settings
+  notifications:
+    # Create commit status updates
+    commit_status: true
+    
+    # Comment on PRs with deployment info
+    pr_comments: true
+    
+    # Notify on deployment failures
+    notify_on_failure: true
+    
+    # Notify on deployment success (production only)
+    notify_on_success: true
+  
+  # Database migration settings
+  migrations:
+    # Run migrations automatically on production deployments
+    auto_migrate_production: false  # Set to true when ready
+    
+    # Run migrations on preview deployments
+    auto_migrate_preview: false
+    
+    # Skip migrations if DATABASE_URL is not set
+    skip_if_no_database: true
+  
+  # Build configuration
+  build:
+    # Node.js version to use
+    node_version: "20"
+    
+    # npm install flags
+    npm_install_flags: "--legacy-peer-deps"
+    
+    # Enable build cache
+    use_cache: true
+    
+    # Cache directories
+    cache_paths:
+      - "node_modules"
+      - ".next/cache"
+      - "~/.npm"
+  
+  # Security settings
+  security:
+    # Fail deployment if security audit finds high/critical issues
+    fail_on_security_issues: false  # Warning only for now
+    
+    # Run npm audit
+    npm_audit: true
+    
+    # Audit level (low, moderate, high, critical)
+    audit_level: "high"
+  
+  # Cleanup settings
+  cleanup:
+    # Delete old preview deployments after N days
+    delete_previews_after_days: 30
+    
+    # Maximum number of preview deployments to keep
+    max_preview_deployments: 10
+
+# Rollout plan settings
+rollout:
+  # Current phase (1-4)
+  current_phase: 1
+  
+  phases:
+    1:
+      description: "Create new workflow alongside existing ones"
+      enabled: true
+      monitor_duration_days: 7
+    
+    2:
+      description: "Monitor for issues, fix any problems"
+      enabled: false
+      deprecate_old_workflows: false
+    
+    3:
+      description: "Add deprecation notices to old workflows"
+      enabled: false
+      deprecate_old_workflows: true
+    
+    4:
+      description: "Archive old workflows after 2 weeks of successful runs"
+      enabled: false
+      archive_old_workflows: true

@@ -1,10 +1,4 @@
-name: CI Build and Deploy (DEPRECATED - Use master-deploy.yml)
-
-# ⚠️  DEPRECATION NOTICE
-# This workflow is being replaced by the unified master-deploy.yml
-# Currently running in parallel for monitoring (Phase 1)
-# Will be archived after 2 weeks of successful master-deploy runs
-# See .github/workflows/archive/README.md for details
+name: CI Build and Deploy
 
 on:
   push:

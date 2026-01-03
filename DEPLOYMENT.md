@@ -2,13 +2,87 @@
 
 Complete guide for deploying HVPE Cloud Portal to various platforms.
 
-## Quick Deploy
+## Automated CI/CD Deployment (Recommended) 🚀
+
+The easiest way to deploy is through our **unified GitHub Actions workflow**.
+
+### How It Works
+
+**Just push your code** - deployment is fully automated:
+
+```bash
+git push origin your-branch
+```
+
+The workflow automatically:
+1. ✅ Validates environment and dependencies
+2. 🔨 Builds and tests your application
+3. 🚀 Deploys to Vercel (production or preview)
+4. ✅ Verifies deployment health
+5. 💬 Comments with deployment URL
+
+### Branch-Based Deployment
+
+- **Production:** `main`, `mobile` → https://hvpe-cloud-portal.vercel.app
+- **Preview:** All other branches → https://your-branch-name.vercel.app
+
+### Features
+
+✅ **Automatic Retries** - 3 retries with exponential backoff  
+✅ **Preflight Checks** - Catches issues before deployment  
+✅ **Smoke Tests** - Verifies deployment health  
+✅ **Real-time Status** - GitHub commit status updates  
+✅ **Zero Touch** - No manual intervention needed  
+
+### Setup (One-time)
+
+Configure GitHub Secrets in **Settings → Secrets and variables → Actions**:
+
+```
+VERCEL_TOKEN           # Get from vercel.com/account/tokens
+VERCEL_ORG_ID          # From .vercel/project.json
+VERCEL_PROJECT_ID      # From .vercel/project.json
+```
+
+Optional secrets (auto-detected):
+```
+DATABASE_URL           # PostgreSQL connection
+OPENAI_API_KEY         # AI features
+LICENSE_SESSION_SECRET # License validation
+```
+
+### Documentation
+
+- **Quick Reference:** See below for platform-specific deployment
+- **Comprehensive Guide:** [docs/CI_CD_GUIDE.md](./docs/CI_CD_GUIDE.md)
+- **Workflow Source:** [.github/workflows/master-deploy.yml](./.github/workflows/master-deploy.yml)
+
+---
+
+## Manual Deployment Options
+
+### Quick Deploy (All Platforms)
 
 ```bash
 # Deploy everywhere with one command
 chmod +x scripts/deploy.sh
 ./scripts/deploy.sh
 ```
+
+Or use our deployment scripts:
+
+```bash
+# Validate environment
+./scripts/preflight-check.sh
+
+# Deploy with automatic retries
+./scripts/deploy-with-retry.sh production
+
+# Verify deployment
+./scripts/verify-deployment.sh https://your-url.vercel.app
+```
+
+---
 
 ## Deployment Platforms
 
@@ -17,7 +91,11 @@ chmod +x scripts/deploy.sh
 **Pros**: Zero config, automatic HTTPS, global CDN, serverless functions  
 **Best for**: Production web hosting
 
-#### Setup
+#### Automated Deployment (Recommended)
+
+See [Automated CI/CD Deployment](#automated-cicd-deployment-recommended) above.
+
+#### Manual Deployment
 
 1. **Install Vercel CLI**:
 ```bash
@@ -32,10 +110,10 @@ vercel login
 3. **Deploy**:
 ```bash
 # Preview deployment
-./scripts/deploy-vercel.sh
+./scripts/deploy-with-retry.sh
 
 # Production deployment
-./scripts/deploy-vercel.sh production
+./scripts/deploy-with-retry.sh production
 ```
 
 #### Environment Variables
@@ -255,7 +333,55 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/cont
 
 ## CI/CD Automation
 
-### GitHub Actions Workflows
+### Unified GitHub Actions Workflow
+
+The repository includes a **bulletproof unified deployment workflow** that replaces all previous deployment workflows.
+
+**Workflow:** `.github/workflows/master-deploy.yml`
+
+#### Features
+
+✅ Single workflow handles all deployments  
+✅ Branch-aware (production vs preview)  
+✅ Concurrency protection (queues deployments)  
+✅ Automatic retries (3x with exponential backoff)  
+✅ Preflight validation (catches issues early)  
+✅ Post-deployment verification (smoke tests)  
+✅ Real-time status updates (GitHub commit API)  
+✅ Auto-fixes (cache, dependencies)  
+
+#### How It Works
+
+1. **Push code** to any branch
+2. **Preflight** validates environment
+3. **Build** compiles and tests application
+4. **Deploy** to Vercel with retries
+5. **Verify** runs smoke tests
+6. **Notify** updates PR/commit with URL
+
+#### Configuration
+
+Configured via:
+- **GitHub Secrets:** Repository secrets
+- **Config File:** `.github/deployment-config.yml`
+- **Scripts:** `scripts/preflight-check.sh`, `scripts/deploy-with-retry.sh`, `scripts/verify-deployment.sh`
+
+#### Documentation
+
+Complete reference: **[docs/CI_CD_GUIDE.md](./docs/CI_CD_GUIDE.md)**
+
+#### Legacy Workflows (Deprecated)
+
+Old workflows are archived but still active during monitoring period:
+- `ci-cd.yml` - Original CI/CD pipeline
+- `deploy-vercel.yml` - Vercel deployment
+- `ci-deploy.yml` - UI redesign branch
+
+See `.github/workflows/archive/README.md` for migration details.
+
+---
+
+### GitHub Actions Workflows (Legacy)
 
 Automatically deploy on push:
 
