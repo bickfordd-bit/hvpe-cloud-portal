@@ -44,11 +44,12 @@ export async function writeLedgerEntry(decision: BickfordDecision): Promise<stri
 
     return entry.id;
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error('Failed to write ledger entry', {
-      error: error.message,
+      error: errorMessage,
       decision,
     });
-    throw new Error(`Ledger write failed: ${error.message}`);
+    throw new Error(`Ledger write failed: ${errorMessage}`);
   }
 }
 
@@ -62,7 +63,14 @@ export async function queryLedger(opts: {
   before?: string;
   limit?: number;
 }) {
-  const where: unknown = {};
+  const where: {
+    kind?: string;
+    subject?: { contains: string };
+    ts?: {
+      gte?: string;
+      lte?: string;
+    };
+  } = {};
 
   if (opts.kind) where.kind = opts.kind;
   if (opts.subject) where.subject = { contains: opts.subject };

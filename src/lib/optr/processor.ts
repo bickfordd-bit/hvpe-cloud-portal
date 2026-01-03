@@ -117,18 +117,23 @@ export async function processOpportunity(
 async function fetchOpportunity(opportunityId: string) {
   const opportunity = await prisma.opportunity.findUnique({
     where: { id: opportunityId },
-    include: { requirements: true },
   });
 
   if (!opportunity) {
     throw new Error(`Opportunity ${opportunityId} not found`);
   }
 
+  // Extract requirements from metadata if present
+  const metadata = opportunity.metadata as {
+    requirements?: Array<{ id: string; text: string; priority: string }>;
+  } | null;
+  const requirements = metadata?.requirements || [];
+
   return {
     id: opportunity.id,
     title: opportunity.title,
-    description: opportunity.description || '',
-    requirements: opportunity.requirements.map((r) => ({
+    description: '', // No description field in schema
+    requirements: requirements.map((r) => ({
       id: r.id,
       text: r.text,
       priority: r.priority as 'high' | 'medium' | 'low',

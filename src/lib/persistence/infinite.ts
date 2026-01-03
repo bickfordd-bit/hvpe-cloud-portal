@@ -62,13 +62,14 @@ export async function persistForever(entry: PersistenceEntry): Promise<Persisten
   const results = await Promise.allSettled([
     // Layer 1: Bickford Ledger (immutable, file-based, SHA256 hashed)
     writeLedgerEntry({
-      id,
-      kind: entry.kind,
+      ts: timestamp,
+      kind: entry.kind as 'intent' | 'plan' | 'action' | 'observe' | 'persist' | 'guardrail',
       subject: entry.subject,
       payload: {
-        ...entry.payload,
+        ...(entry.payload as object),
         metadata: entry.metadata,
       },
+      parentId: id,
     }).then((ledgerId) => {
       proof.ledgerId = ledgerId;
       proof.redundancy.ledger = true;
@@ -136,26 +137,24 @@ async function persistToDatabase(id: string, entry: PersistenceEntry): Promise<s
     // Use BickfordLedger table as universal storage
     const record = await prisma.bickfordLedger.create({
       data: {
+        ts: new Date().toISOString(),
         kind: entry.kind,
         subject: entry.subject,
-        payload: entry.payload,
+        payloadJson: JSON.stringify(entry.payload),
         hash: `db-${id}`,
-        parentId: entry.metadata?.parentId || null,
+        parentId: (entry.metadata?.parentId as string | undefined) || null,
       },
     });
     return record.id;
   } catch (error: unknown) {
+    const err = error as { code?: string; message?: string };
     // Fallback to AiUsageLog if BickfordLedger fails
-    if (error.code === 'P2002' || error.message?.includes('BickfordLedger')) {
+    if (err.code === 'P2002' || err.message?.includes('BickfordLedger')) {
       const fallback = await prisma.aiUsageLog.create({
         data: {
-          userId: entry.metadata?.userId || 'system',
-          action: entry.kind,
-          metadata: {
-            subject: entry.subject,
-            payload: entry.payload,
-            originalId: id,
-          },
+          userId: (entry.metadata?.userId as string | undefined) || 'system',
+          mode: entry.kind,
+          taskType: entry.subject,
         },
       });
       return fallback.id;
@@ -195,14 +194,15 @@ async function persistToGit(id: string, entry: PersistenceEntry): Promise<string
     const commitSha = stdout.match(/\[mobile ([a-f0-9]+)\]/)?.[1];
 
     // Push async (don't wait)
-    execAsync('git push origin mobile').catch((err) =>
+    execAsync('git push origin mobile').catch((err: Error) =>
       logger.warn('Git push failed (non-fatal)', { error: err.message })
     );
 
     return commitSha || 'committed';
   } catch (error: unknown) {
+    const err = error as { message?: string };
     // If git fails, at least we have the file
-    if (error.message?.includes('nothing to commit')) {
+    if (err.message?.includes('nothing to commit')) {
       return 'no-changes';
     }
     throw error;
@@ -245,7 +245,7 @@ export async function retrieve(id: string): Promise<PersistenceEntry | null> {
       return {
         kind: record.kind,
         subject: record.subject,
-        payload: record.payload,
+        payload: JSON.parse(record.payloadJson),
       };
     }
   } catch (error: unknown) {
@@ -255,14 +255,15 @@ export async function retrieve(id: string): Promise<PersistenceEntry | null> {
   // Fallback to file system (ledger or backup)
   try {
     const { readFile } = await import('fs/promises');
-    const { glob } = await import('glob');
+    const globModule = await import('glob');
 
     // Search in .bick/ledger and .persistence
     const patterns = [`.bick/ledger/**/${id}.json`, `.persistence/**/${id}.json`];
 
     for (const pattern of patterns) {
-      const files = await glob(pattern, { cwd: process.cwd() });
-      if (files.length > 0) {
+      // Use sync version for simplicity with types
+      const files = globModule.glob.sync(pattern, { cwd: process.cwd() });
+      if (files && files.length > 0) {
         const content = await readFile(join(process.cwd(), files[0]), 'utf-8');
         return JSON.parse(content);
       }
@@ -302,10 +303,10 @@ export async function query(opts: {
     });
 
     results.push(
-      ...records.map((r) => ({
+      ...records.map((r: { kind: string; subject: string; payloadJson: string }) => ({
         kind: r.kind,
         subject: r.subject,
-        payload: r.payload,
+        payload: JSON.parse(r.payloadJson),
       }))
     );
   } catch (error: unknown) {

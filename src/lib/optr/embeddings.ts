@@ -56,7 +56,7 @@ export async function generateEmbeddingsBatch(
         input: batch,
       });
 
-      allEmbeddings.push(...response.data.map((d) => d.embedding));
+      allEmbeddings.push(...response.data.map((d: { embedding: number[] }) => d.embedding));
     }
 
     logger.info('Batch embeddings generated', {

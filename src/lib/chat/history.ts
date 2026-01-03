@@ -48,8 +48,9 @@ export async function recordChatHistory(entry: ChatHistoryEntry): Promise<void> 
     logger.debug('Chat history persisted to database', { source: entry.source });
   } catch (error: unknown) {
     // Don't fail the request if history recording fails
+    const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error('Failed to record chat history', {
-      error: error.message,
+      error: errorMessage,
       source: entry.source,
     });
   }
@@ -79,8 +80,9 @@ export async function getChatHistory(sessionId: string, limit: number = 50): Pro
       mode: entry.mode,
     }));
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error('Failed to query chat history', {
-      error: error.message,
+      error: errorMessage,
       sessionId,
     });
     return [];
@@ -111,8 +113,9 @@ export async function archiveChatHistory(beforeDate: Date): Promise<number> {
 
     return result.count;
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error('Failed to archive chat history', {
-      error: error.message,
+      error: errorMessage,
       beforeDate: beforeDate.toISOString(),
     });
     return 0;
