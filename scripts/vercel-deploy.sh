@@ -3,9 +3,9 @@ set -e
 
 echo "🚀 Starting Vercel deployment preparation..."
 
-# Generate Prisma client (skip telemetry)
+# Generate Prisma client (disable telemetry via env var)
 export CHECKPOINT_DISABLE=1
-npx prisma generate --skip-telemetry || echo "⚠️  Prisma generation skipped (firewall block)"
+npx prisma generate || echo "⚠️  Prisma generation skipped (firewall block)"
 
 # Build the application
 echo "📦 Building Next.js application..."
