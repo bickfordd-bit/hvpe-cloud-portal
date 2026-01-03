@@ -24,6 +24,29 @@ export function OptrVoiceAssistant({ opportunityId, onResult }: OptrVoiceAssista
   const recognitionRef = useRef<unknown>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
 
+  // Define speak function first so it can be used in handleVoiceCommand
+  const speak = useCallback(
+    (text: string) => {
+      if (!audioEnabled || !synthRef.current) return;
+
+      // Cancel any ongoing speech
+      synthRef.current.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+      utterance.lang = 'en-US';
+
+      utterance.onstart = () => setSpeaking(true);
+      utterance.onend = () => setSpeaking(false);
+      utterance.onerror = () => setSpeaking(false);
+
+      synthRef.current.speak(utterance);
+    },
+    [audioEnabled]
+  );
+
   // Define handleVoiceCommand with useCallback to avoid recreation
   const handleVoiceCommand = useCallback(
     async (text: string) => {
@@ -86,14 +109,8 @@ export function OptrVoiceAssistant({ opportunityId, onResult }: OptrVoiceAssista
         console.error('Voice command error:', error);
       }
     },
-    [opportunityId, onResult]
+    [opportunityId, onResult, speak]
   );
-
-  function speak(text: string) {
-    if (!audioEnabled || !synthRef.current) return;
-    const utterance = new SpeechSynthesisUtterance(text);
-    synthRef.current.speak(utterance);
-  }
 
   useEffect(() => {
     // Initialize Speech Recognition
@@ -142,86 +159,6 @@ export function OptrVoiceAssistant({ opportunityId, onResult }: OptrVoiceAssista
       }
     };
   }, [handleVoiceCommand]);
-
-  async function handleVoiceCommand(text: string) {
-    try {
-      const lowerText = text.toLowerCase();
-
-      // Parse common OPTR commands
-      if (
-        lowerText.includes('run') ||
-        lowerText.includes('start') ||
-        lowerText.includes('analyze')
-      ) {
-        const res = await fetch(`/api/optr/opportunities/${opportunityId}/run`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        const data = await res.json();
-
-        const responseText = `OPTR analysis started. Coverage is ${data.state.coverage}% with ${data.state.blockers} blockers.`;
-        setResponse(responseText);
-        speak(responseText);
-
-        if (onResult) {
-          onResult(data);
-        }
-      } else if (lowerText.includes('status')) {
-        const res = await fetch(`/api/optr/opportunities/${opportunityId}/status`);
-        const data = await res.json();
-
-        const responseText = `Current status: ${data.coverage}% coverage, ${data.blockers} blockers, ${data.traces} traces.`;
-        setResponse(responseText);
-        speak(responseText);
-
-        if (onResult) {
-          onResult(data);
-        }
-      } else if (lowerText.includes('blockers') || lowerText.includes('issues')) {
-        const res = await fetch(`/api/optr/opportunities/${opportunityId}/status`);
-        const data = await res.json();
-
-        const responseText =
-          data.blockers > 0
-            ? `Found ${data.blockers} blockers. Check the dashboard for details.`
-            : "No blockers found. You're good to go!";
-        setResponse(responseText);
-        speak(responseText);
-
-        if (onResult) {
-          onResult(data);
-        }
-      } else {
-        const responseText = 'Available commands: run analysis, check status, show blockers.';
-        setResponse(responseText);
-        speak(responseText);
-      }
-    } catch (error: unknown) {
-      const errorText = "Sorry, I couldn't process that command. Please try again.";
-      setResponse(errorText);
-      speak(errorText);
-      console.error('Voice command error:', error);
-    }
-  }
-
-  function speak(text: string) {
-    if (!audioEnabled || !synthRef.current) return;
-
-    // Cancel any ongoing speech
-    synthRef.current.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-    utterance.lang = 'en-US';
-
-    utterance.onstart = () => setSpeaking(true);
-    utterance.onend = () => setSpeaking(false);
-    utterance.onerror = () => setSpeaking(false);
-
-    synthRef.current.speak(utterance);
-  }
 
   function startListening() {
     if (!recognitionRef.current) {

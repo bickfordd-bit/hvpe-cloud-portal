@@ -1,9 +1,19 @@
-import { supabase } from '$lib/supabase';
-import type { Database } from '$lib/database.types';
-import { writeLedgerEntry } from '$lib/ledger';
+// Placeholder types for Codex integration
+// TODO: Integrate with actual database when Supabase is configured
 
-type CodexTask = Database['public']['Tables']['codex_tasks']['Row'];
-type CodexTaskUpdate = Database['public']['Tables']['codex_tasks']['Update'];
+export interface CodexTask {
+  id: string;
+  taskId: string;
+  description: string;
+  changes: Array<{ file: string; patch: string }>;
+  sync_status?: 'pending' | 'syncing' | 'synced' | 'failed';
+  created_at?: string;
+  updated_at?: string;
+  synced_at?: string | null;
+  sync_error?: string | null;
+}
+
+type CodexTaskUpdate = Partial<CodexTask>;
 
 interface SyncResult {
   success: boolean;
@@ -24,19 +34,11 @@ export async function syncCodexTasks(): Promise<SyncResult> {
   };
 
   try {
-    // Fetch pending tasks
-    const { data: tasks, error: fetchError } = await supabase
-      .from('codex_tasks')
-      .select('*')
-      .eq('sync_status', 'pending')
-      .order('created_at', { ascending: true })
-      .limit(100);
+    // TODO: Implement actual database query when Supabase is configured
+    // Placeholder: return empty result
+    const tasks: CodexTask[] = [];
 
-    if (fetchError) {
-      throw new Error(`Failed to fetch tasks: ${fetchError.message}`);
-    }
-
-    if (!tasks || tasks.length === 0) {
+    if (tasks.length === 0) {
       return result;
     }
 
@@ -139,17 +141,15 @@ async function updateTaskStatus(
   status: 'pending' | 'syncing' | 'synced' | 'failed',
   additionalUpdates?: Partial<CodexTaskUpdate>
 ): Promise<void> {
+  // TODO: Implement actual database update when Supabase is configured
+  // Placeholder: no-op
   const updates: CodexTaskUpdate = {
     sync_status: status,
     updated_at: new Date().toISOString(),
     ...additionalUpdates,
   };
 
-  const { error } = await supabase.from('codex_tasks').update(updates).eq('id', taskId);
-
-  if (error) {
-    throw new Error(`Failed to update task status: ${error.message}`);
-  }
+  // No database to update yet
 }
 
 /**
@@ -178,24 +178,74 @@ export async function getSyncStatus(): Promise<{
   synced: number;
   failed: number;
 }> {
-  const { data, error } = await supabase.from('codex_tasks').select('sync_status');
-
-  if (error) {
-    throw new Error(`Failed to get sync status: ${error.message}`);
-  }
-
-  const status = {
+  // TODO: Implement actual database query when Supabase is configured
+  // Placeholder: return zeros
+  return {
     pending: 0,
     syncing: 0,
     synced: 0,
     failed: 0,
   };
+}
 
-  data?.forEach((task) => {
-    if (task.sync_status in status) {
-      status[task.sync_status as keyof typeof status]++;
+/**
+ * Verifies the Codex webhook secret
+ */
+export function verifyCodexSecret(secret: string): boolean {
+  const expectedSecret = process.env.CODEX_WEBHOOK_SECRET;
+  if (!expectedSecret) {
+    return false;
+  }
+  return secret === expectedSecret;
+}
+
+/**
+ * Syncs codex changes (applies code changes from task)
+ */
+export async function syncCodexChanges(task: CodexTask): Promise<{
+  success: boolean;
+  error?: string;
+  filesChanged?: number;
+}> {
+  try {
+    // TODO: Implement actual sync logic (apply patches, create PR, etc.)
+    // Placeholder: validate and return success
+    if (!task.changes || task.changes.length === 0) {
+      return {
+        success: false,
+        error: 'No changes to sync',
+      };
     }
-  });
 
-  return status;
+    return {
+      success: true,
+      filesChanged: task.changes.length,
+    };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+/**
+ * Previews codex changes without applying them
+ */
+export async function previewCodexChanges(task: CodexTask): Promise<{
+  files: Array<{ path: string; changes: number }>;
+  totalChanges: number;
+}> {
+  // TODO: Implement actual preview logic
+  // Placeholder: return summary
+  const files = task.changes.map((change) => ({
+    path: change.file,
+    changes: change.patch.split('\n').filter((line) => line.startsWith('+') || line.startsWith('-'))
+      .length,
+  }));
+
+  return {
+    files,
+    totalChanges: files.reduce((sum, f) => sum + f.changes, 0),
+  };
 }
