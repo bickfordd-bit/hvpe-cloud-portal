@@ -10,7 +10,9 @@ import {
 
 /**
  * POST /api/codex/sync
- * Receives task completion from Codex and automatically applies changes
+ * 
+ * Webhook endpoint for Codex task synchronization
+ * Accepts tasks from Codex and applies changes to the system
  */
 export async function POST(req: NextRequest) {
   try {
@@ -88,7 +90,7 @@ export async function POST(req: NextRequest) {
 
 /**
  * GET /api/codex/sync
- * Health check and status
+ * Status endpoint - returns configuration and availability info
  */
 export async function GET() {
   const isConfigured = !!process.env.CODEX_WEBHOOK_SECRET;
@@ -98,7 +100,6 @@ export async function GET() {
       status: "online",
       configured: isConfigured,
       endpoint: "/api/codex/sync",
-      methods: ["GET", "POST"],
       authentication: "x-codex-secret header required",
       usage: {
         sync: "POST with CodexTask body",
