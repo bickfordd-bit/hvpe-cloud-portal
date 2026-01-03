@@ -9,9 +9,9 @@ export async function GET() {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     checks: {
-      api: { status: "ok" },
-      database: { status: "unknown" },
-      openai: { status: "unknown" }
+      api: { status: "ok" as string, message: undefined as string | undefined },
+      database: { status: "unknown" as string, message: undefined as string | undefined },
+      openai: { status: "unknown" as string, message: undefined as string | undefined }
     },
     version: process.env.npm_package_version || "1.0.0",
     environment: process.env.NODE_ENV || "development"
@@ -20,7 +20,7 @@ export async function GET() {
   // Check database connection
   try {
     await prisma.$queryRaw`SELECT 1`;
-    health.checks.database = { status: "ok" };
+    health.checks.database = { status: "ok", message: undefined };
   } catch (error) {
     health.checks.database = { 
       status: "degraded",
@@ -30,7 +30,7 @@ export async function GET() {
 
   // Check OpenAI API key configuration
   if (process.env.OPENAI_API_KEY || process.env.HVPE_OPENAI_API_KEY) {
-    health.checks.openai = { status: "configured" };
+    health.checks.openai = { status: "configured", message: undefined };
   } else {
     health.checks.openai = { 
       status: "missing",

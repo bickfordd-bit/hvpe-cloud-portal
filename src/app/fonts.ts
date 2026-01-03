@@ -1,10 +1,8 @@
-import { Caveat } from 'next/font/google';
-
-// Use Google's Caveat font as Bickford signature style
+// Fallback to system fonts during build if Google Fonts unavailable
 // TODO: Replace with custom Bickford font files when available
-export const bickfordFont = Caveat({
-  weight: ['400', '700'],
-  subsets: ['latin'],
+export const bickfordFont = {
   variable: '--font-bickford',
-  display: 'swap',
-});
+  style: {
+    fontFamily: 'system-ui, -apple-system, sans-serif'
+  }
+};

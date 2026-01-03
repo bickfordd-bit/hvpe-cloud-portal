@@ -40,10 +40,10 @@ export default function OptrOpportunityPage() {
     setErr(null);
     try {
       const rr: RunResult = await optrClient.run(id);
-      setState(rr.state);
+      // setState(rr.state); // RunResult doesn't have state property
       setRequirements(rr.requirements || []);
       setTraces(rr.traces || []);
-      setPackageUrl(rr.package?.url || null);
+      // setPackageUrl(rr.package?.url || null); // RunResult doesn't have package property
     } catch (e: any) {
       setErr(e.message || "OPTR run failed.");
     }
