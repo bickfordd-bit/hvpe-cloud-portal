@@ -1,0 +1,12 @@
+{
+  "ignore": [
+    "src/app/**/page.tsx",
+    "src/app/**/layout.tsx",
+    "src/app/api/**/route.ts",
+    "src/app/api/**/route.native.ts",
+    "middleware.ts",
+    "next.config.ts",
+    "jest.config.ts",
+    "tailwind.config.js"
+  ]
+}

@@ -1,0 +1,17 @@
+# Framework-required exports (Next.js App Router)
+# Page components - Next.js requires default exports
+src/app/**/page.tsx
+# API routes - Next.js requires named HTTP method exports
+src/app/api/**/route.ts
+src/app/api/**/route.native.ts
+# Layouts - Next.js requires default and metadata exports
+src/app/layout.tsx
+src/app/**/layout.tsx
+# Middleware - Next.js requires middleware and config exports
+middleware.ts
+# Config files - Framework requirements
+next.config.ts
+jest.config.ts
+tailwind.config.js
+# Component libraries - May be used dynamically or in future
+src/components/**/*.tsx
