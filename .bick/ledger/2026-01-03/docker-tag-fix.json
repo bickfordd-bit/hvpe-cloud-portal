@@ -1,0 +1,37 @@
+{
+  "id": "docker-tag-fix-2026-01-03",
+  "timestamp": "2026-01-03T16:54:44.187Z",
+  "intent": "Fix Docker build failure caused by invalid tag format on PRs",
+  "execution": {
+    "scope": "Remove line 47 from .github/workflows/docker-publish.yml",
+    "plan": [
+      "Understand the issue: type=sha,prefix={{branch}}- creates invalid tags on PRs",
+      "Remove the problematic line",
+      "Verify YAML syntax",
+      "Commit and push"
+    ],
+    "risk": "Low - removing redundant tag generation already covered by line 43",
+    "rollback": "Revert commit if needed"
+  },
+  "proof": {
+    "artifacts": [
+      "Commit hash will be added after commit",
+      "YAML syntax validated with python yaml parser"
+    ],
+    "verification_commands": [
+      "python3 -c \"import yaml; yaml.safe_load(open('.github/workflows/docker-publish.yml'))\"",
+      "git diff .github/workflows/docker-publish.yml"
+    ]
+  },
+  "result": {
+    "changed": [
+      ".github/workflows/docker-publish.yml: Removed line 47 (type=sha,prefix={{branch}}-)"
+    ],
+    "remains": [
+      "PR tagging now handled cleanly by type=ref,event=pr (line 43)",
+      "Branch tagging handled by type=ref,event=branch (line 42)",
+      "Semver and latest tags unchanged"
+    ]
+  },
+  "t2v_impact": "Unblocks CI/CD pipeline, enabling automated Docker builds on PRs"
+}

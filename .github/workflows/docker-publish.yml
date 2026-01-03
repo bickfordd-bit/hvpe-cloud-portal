@@ -2,10 +2,10 @@ name: Docker Build & Publish
 
 on:
   push:
-    branches: [ main, ui-redesign-v1 ]
+    branches: [ main, mobile ]
     tags: [ 'v*.*.*' ]
   pull_request:
-    branches: [ main, ui-redesign-v1 ]
+    branches: [ main, mobile ]
 
 env:
   REGISTRY: ghcr.io
@@ -44,7 +44,6 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image

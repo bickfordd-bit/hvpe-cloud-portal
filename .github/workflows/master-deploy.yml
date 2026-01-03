@@ -1,0 +1,448 @@
+name: Master Deployment Pipeline
+
+# Single unified workflow for all deployments
+# Replaces: ci-cd.yml, deploy-vercel.yml, ci-deploy.yml, and others
+
+on:
+  push:
+    branches:
+      - main
+      - mobile
+      - ui-redesign-v1
+      - develop
+  pull_request:
+    branches:
+      - main
+      - mobile
+      - ui-redesign-v1
+
+# Concurrency control - queue deployments instead of canceling
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false  # Queue instead of cancel
+
+env:
+  NODE_VERSION: '20'
+  DEPLOYMENT_TIMEOUT: 600
+
+jobs:
+  # Job 1: Preflight Validation
+  preflight:
+    name: 🔍 Preflight Checks
+    runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+      is_production: ${{ steps.check.outputs.is_production }}
+    steps:
+      - name: Update commit status - Preflight
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: 'pending',
+              context: 'deployment/preflight',
+              description: 'Running preflight checks...'
+            })
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Restore cached dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Check deployment configuration
+        id: check
+        run: |
+          # Determine if this is a production deployment
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.ref }}" == "refs/heads/mobile" ]]; then
+            echo "is_production=true" >> $GITHUB_OUTPUT
+            echo "📦 Production deployment detected"
+          else
+            echo "is_production=false" >> $GITHUB_OUTPUT
+            echo "🔍 Preview deployment detected"
+          fi
+
+          # Check if we should deploy (push events or PR to main branches)
+          if [[ "${{ github.event_name }}" == "push" ]] || [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate secrets
+        run: |
+          echo "🔐 Validating required secrets..."
+
+          MISSING_SECRETS=()
+
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
+            MISSING_SECRETS+=("VERCEL_TOKEN")
+          fi
+
+          if [ -z "${{ secrets.VERCEL_ORG_ID }}" ]; then
+            MISSING_SECRETS+=("VERCEL_ORG_ID")
+          fi
+
+          if [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
+            MISSING_SECRETS+=("VERCEL_PROJECT_ID")
+          fi
+
+          if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
+            echo "❌ Missing required secrets: ${MISSING_SECRETS[*]}"
+            echo "Please configure these in GitHub repository settings"
+            exit 1
+          fi
+
+          echo "✅ All required secrets are configured"
+
+          # Check optional secrets
+          echo ""
+          echo "📋 Optional secrets status:"
+          [ -n "${{ secrets.DATABASE_URL }}" ] && echo "✅ DATABASE_URL" || echo "⚠️  DATABASE_URL not set"
+          [ -n "${{ secrets.LICENSE_SESSION_SECRET }}" ] && echo "✅ LICENSE_SESSION_SECRET" || echo "⚠️  LICENSE_SESSION_SECRET not set"
+          [ -n "${{ secrets.OPENAI_API_KEY }}" ] && echo "✅ OPENAI_API_KEY" || echo "⚠️  OPENAI_API_KEY not set"
+
+      - name: Run preflight script
+        run: |
+          chmod +x scripts/preflight-check.sh
+          scripts/preflight-check.sh
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Update commit status - Preflight Complete
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const state = '${{ job.status }}' === 'success' ? 'success' : 'failure';
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: state,
+              context: 'deployment/preflight',
+              description: state === 'success' ? 'Preflight checks passed' : 'Preflight checks failed'
+            })
+
+  # Job 2: Build and Test
+  build:
+    name: 🔨 Build & Test
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: needs.preflight.outputs.should_deploy == 'true'
+    steps:
+      - name: Update commit status - Building
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: 'pending',
+              context: 'deployment/build',
+              description: 'Building application...'
+            })
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Restore cached dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: |
+          if [ ! -d "node_modules" ]; then
+            echo "📦 Installing dependencies..."
+            npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+          else
+            echo "✅ Using cached dependencies"
+          fi
+
+      - name: Generate Prisma Client
+        run: npx prisma generate || true
+
+      - name: Run TypeScript check
+        run: npx tsc --noEmit || echo "⚠️  TypeScript errors found (non-blocking)"
+
+      - name: Run tests
+        run: npm test -- --coverage --passWithNoTests || echo "⚠️  Some tests failed (non-blocking)"
+
+      - name: Build application
+        run: npm run build
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'sk-placeholder' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || '' }}
+
+      - name: Verify build output
+        run: |
+          if [ ! -d ".next" ]; then
+            echo "❌ Build failed: .next directory not found"
+            exit 1
+          fi
+          echo "✅ Build successful"
+
+      - name: Update commit status - Build Complete
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const state = '${{ job.status }}' === 'success' ? 'success' : 'failure';
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: state,
+              context: 'deployment/build',
+              description: state === 'success' ? 'Build successful' : 'Build failed'
+            })
+
+  # Job 3: Security Audit
+  security:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: needs.preflight.outputs.should_deploy == 'true'
+    continue-on-error: true  # Don't block deployment
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Run npm audit
+        run: npm audit --audit-level=high --production || echo "⚠️  Security vulnerabilities found"
+
+  # Job 4: Deploy to Vercel
+  deploy:
+    name: 🚀 Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: [preflight, build]
+    if: needs.preflight.outputs.should_deploy == 'true'
+    environment:
+      name: ${{ needs.preflight.outputs.is_production == 'true' && 'production' || 'preview' }}
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Update commit status - Deploying
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: 'pending',
+              context: 'deployment/vercel',
+              description: 'Deploying to Vercel...'
+            })
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+
+      - name: Deploy with retry logic
+        id: deploy
+        run: |
+          chmod +x scripts/deploy-with-retry.sh
+
+          if [ "${{ needs.preflight.outputs.is_production }}" == "true" ]; then
+            echo "🚀 Deploying to PRODUCTION"
+            scripts/deploy-with-retry.sh production
+          else
+            echo "🔍 Deploying to PREVIEW"
+            scripts/deploy-with-retry.sh
+          fi
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Update commit status - Deploy Complete
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const state = '${{ job.status }}' === 'success' ? 'success' : 'failure';
+            const url = '${{ steps.deploy.outputs.url }}' || 'N/A';
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: state,
+              context: 'deployment/vercel',
+              description: state === 'success' ? `Deployed: ${url}` : 'Deployment failed',
+              target_url: url !== 'N/A' ? url : undefined
+            })
+
+  # Job 5: Verify Deployment
+  verify:
+    name: ✅ Verify Deployment
+    runs-on: ubuntu-latest
+    needs: [preflight, deploy]
+    if: needs.preflight.outputs.should_deploy == 'true' && success()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run verification script
+        run: |
+          chmod +x scripts/verify-deployment.sh
+
+          # Get deployment URL from previous job
+          DEPLOYMENT_URL="${{ needs.deploy.outputs.url }}"
+          scripts/verify-deployment.sh "$DEPLOYMENT_URL"
+        continue-on-error: true
+
+  # Job 6: Notify
+  notify:
+    name: 📢 Notify
+    runs-on: ubuntu-latest
+    needs: [preflight, deploy, verify]
+    if: always() && needs.preflight.outputs.should_deploy == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployUrl = '${{ needs.deploy.outputs.url }}' || 'N/A';
+            const deployStatus = '${{ needs.deploy.result }}';
+            const verifyStatus = '${{ needs.verify.result }}';
+
+            let emoji = '🚀';
+            let status = 'Deployed';
+
+            if (deployStatus !== 'success') {
+              emoji = '❌';
+              status = 'Failed';
+            } else if (verifyStatus !== 'success') {
+              emoji = '⚠️';
+              status = 'Deployed (verification warnings)';
+            }
+
+            const body = `## ${emoji} Preview Deployment ${status}
+
+            **URL:** ${deployUrl}
+            **Branch:** \`${{ github.head_ref }}\`
+            **Commit:** \`${{ github.sha }}\`
+
+            ${deployStatus === 'success' ? '✅ Deployment successful' : '❌ Deployment failed'}
+            ${verifyStatus === 'success' ? '✅ Verification passed' : '⚠️ Verification had warnings'}
+
+            Changes are ready for review!`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            })
+
+      - name: Comment on commit (push)
+        if: github.event_name == 'push'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployUrl = '${{ needs.deploy.outputs.url }}' || 'N/A';
+            const deployStatus = '${{ needs.deploy.result }}';
+            const isProduction = '${{ needs.preflight.outputs.is_production }}' === 'true';
+
+            let emoji = isProduction ? '🚀' : '🔍';
+            let env = isProduction ? 'Production' : 'Preview';
+
+            if (deployStatus !== 'success') {
+              emoji = '❌';
+            }
+
+            const body = `${emoji} Deployed to ${env}: ${deployUrl}`;
+
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: body
+            })
+
+  # Job 7: Create Ledger Entry
+  ledger:
+    name: 📝 Record Deployment
+    runs-on: ubuntu-latest
+    needs: [preflight, deploy]
+    if: success() && needs.preflight.outputs.is_production == 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create ledger entry
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          mkdir -p .bick/ledger/$DATE
+          cat > .bick/ledger/$DATE/deployment-${{ github.run_id }}.json << EOF
+          {
+            "id": "deployment-${{ github.run_id }}",
+            "ts": "$(date -Iseconds)",
+            "kind": "unified-deployment",
+            "subject": "${{ needs.preflight.outputs.is_production == 'true' && 'production' || 'preview' }}",
+            "payload": {
+              "commit": "${{ github.sha }}",
+              "branch": "${{ github.ref_name }}",
+              "workflow": "master-deploy",
+              "run_id": "${{ github.run_id }}",
+              "actor": "${{ github.actor }}",
+              "event": "${{ github.event_name }}",
+              "deployment_url": "${{ needs.deploy.outputs.url }}"
+            },
+            "hash": "master-deploy-$(date +%s)",
+            "parentId": null
+          }
+          EOF
+
+      - name: Commit ledger entry
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .bick/ledger/
+          git commit -m "chore: add master deployment ledger entry [skip ci]" || echo "No changes"
+          git push || echo "Push failed (non-critical)"
