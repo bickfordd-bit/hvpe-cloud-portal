@@ -44,11 +44,12 @@ export async function writeLedgerEntry(decision: BickfordDecision): Promise<stri
 
     return entry.id;
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error('Failed to write ledger entry', {
-      error: error.message,
+      error: errorMessage,
       decision,
     });
-    throw new Error(`Ledger write failed: ${error.message}`);
+    throw new Error(`Ledger write failed: ${errorMessage}`);
   }
 }
 

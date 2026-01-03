@@ -1,4 +1,4 @@
-import { loadLockSpec } from "@/lib/lock/spec";
+import { loadLockSpec } from '@/lib/lock/spec';
 
 export type T2VInput = {
   V: number; // value_committed_usd
@@ -28,19 +28,22 @@ export function t2vDollar(input: T2VInput): T2VResult {
   const { spec } = loadLockSpec();
 
   // Hard bind: formula identity check (fail closed if drifted)
-  const expectedFormula = "T2V$ = (V / T0) * ΔT + Ch * H + R";
-  if (spec.optr_t2v?.formula !== expectedFormula) {
-    throw new Error(`LOCK violation: OPTR/T2V formula drift. Expected "${expectedFormula}", got "${spec.optr_t2v?.formula}"`);
+  const expectedFormula = 'T2V$ = (V / T0) * ΔT + Ch * H + R';
+  const specFormula = (spec.optr_t2v as { formula?: string } | undefined)?.formula;
+  if (specFormula !== expectedFormula) {
+    throw new Error(
+      `LOCK violation: OPTR/T2V formula drift. Expected "${expectedFormula}", got "${specFormula}"`
+    );
   }
 
   const { V, T0, deltaT, Ch, H, R } = input;
 
   // Input validation
   if (![V, T0, deltaT, Ch, H, R].every((n) => Number.isFinite(n) && n >= 0)) {
-    throw new Error("Invalid T2V input: all values must be finite and non-negative");
+    throw new Error('Invalid T2V input: all values must be finite and non-negative');
   }
   if (T0 <= 0) {
-    throw new Error("T0 (planned_time_to_value) must be > 0");
+    throw new Error('T0 (planned_time_to_value) must be > 0');
   }
 
   // Compute components

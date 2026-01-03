@@ -62,11 +62,12 @@ export async function persistForever(entry: PersistenceEntry): Promise<Persisten
   const results = await Promise.allSettled([
     // Layer 1: Bickford Ledger (immutable, file-based, SHA256 hashed)
     writeLedgerEntry({
+      ts: timestamp,
       id,
-      kind: entry.kind,
+      kind: entry.kind as 'intent' | 'plan' | 'action' | 'observe' | 'persist' | 'guardrail',
       subject: entry.subject,
       payload: {
-        ...entry.payload,
+        ...(entry.payload as object),
         metadata: entry.metadata,
       },
     }).then((ledgerId) => {
@@ -145,11 +146,12 @@ async function persistToDatabase(id: string, entry: PersistenceEntry): Promise<s
     });
     return record.id;
   } catch (error: unknown) {
+    const err = error as { code?: string; message?: string };
     // Fallback to AiUsageLog if BickfordLedger fails
-    if (error.code === 'P2002' || error.message?.includes('BickfordLedger')) {
+    if (err.code === 'P2002' || err.message?.includes('BickfordLedger')) {
       const fallback = await prisma.aiUsageLog.create({
         data: {
-          userId: entry.metadata?.userId || 'system',
+          userId: (entry.metadata?.userId as string | undefined) || 'system',
           action: entry.kind,
           metadata: {
             subject: entry.subject,
@@ -195,14 +197,15 @@ async function persistToGit(id: string, entry: PersistenceEntry): Promise<string
     const commitSha = stdout.match(/\[mobile ([a-f0-9]+)\]/)?.[1];
 
     // Push async (don't wait)
-    execAsync('git push origin mobile').catch((err) =>
+    execAsync('git push origin mobile').catch((err: Error) =>
       logger.warn('Git push failed (non-fatal)', { error: err.message })
     );
 
     return commitSha || 'committed';
   } catch (error: unknown) {
+    const err = error as { message?: string };
     // If git fails, at least we have the file
-    if (error.message?.includes('nothing to commit')) {
+    if (err.message?.includes('nothing to commit')) {
       return 'no-changes';
     }
     throw error;
@@ -302,7 +305,7 @@ export async function query(opts: {
     });
 
     results.push(
-      ...records.map((r) => ({
+      ...records.map((r: { kind: string; subject: string; payload: unknown }) => ({
         kind: r.kind,
         subject: r.subject,
         payload: r.payload,

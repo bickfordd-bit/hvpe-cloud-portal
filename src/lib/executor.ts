@@ -333,7 +333,8 @@ export async function executePolicy(binding: PolicyBinding): Promise<ExecutionRe
     return result;
   } catch (error: unknown) {
     // Execution failure
-    logger.error('Execution failed', { error: error.message });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error('Execution failed', { error: errorMessage });
 
     const result: ExecutionResult = {
       success: false,
@@ -347,9 +348,9 @@ export async function executePolicy(binding: PolicyBinding): Promise<ExecutionRe
         binding.policy.id,
         loadCanon().meta.sha256,
         'FAIL',
-        `Execution failed: ${error.message}`
+        `Execution failed: ${errorMessage}`
       ),
-      error: error.message,
+      error: errorMessage,
       timestamp: new Date().toISOString(),
       durationMs: Date.now() - startTime,
     };

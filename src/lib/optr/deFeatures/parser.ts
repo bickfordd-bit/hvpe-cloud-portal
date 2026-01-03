@@ -233,7 +233,7 @@ export class DEFeaturesParser {
             sheet: mappedName,
             row: r,
             col: c,
-            value: row[c],
+            value: row[c] as string | number | null,
           });
         }
       }

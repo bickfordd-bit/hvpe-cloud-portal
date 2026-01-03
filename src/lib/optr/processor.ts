@@ -128,11 +128,13 @@ async function fetchOpportunity(opportunityId: string) {
     id: opportunity.id,
     title: opportunity.title,
     description: opportunity.description || '',
-    requirements: opportunity.requirements.map((r) => ({
-      id: r.id,
-      text: r.text,
-      priority: r.priority as 'high' | 'medium' | 'low',
-    })),
+    requirements: opportunity.requirements.map(
+      (r: { id: string; text: string; priority: string }) => ({
+        id: r.id,
+        text: r.text,
+        priority: r.priority as 'high' | 'medium' | 'low',
+      })
+    ),
   };
 }
 

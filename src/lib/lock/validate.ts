@@ -23,7 +23,11 @@ export function validateLockSpec(spec: LockSpec): void {
 
   // Trading guardrail must exist
   req(
-    spec.trading_controls?.billy?.live_guardrail?.require_env_flag === 'ALLOW_BILLY_LIVE_TRADING',
+    (
+      spec.trading_controls as
+        | { billy?: { live_guardrail?: { require_env_flag?: string } } }
+        | undefined
+    )?.billy?.live_guardrail?.require_env_flag === 'ALLOW_BILLY_LIVE_TRADING',
     'billy live_guardrail require_env_flag must be ALLOW_BILLY_LIVE_TRADING'
   );
 }

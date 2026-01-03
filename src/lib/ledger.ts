@@ -39,7 +39,7 @@ function getLastEntry(): LedgerEntry | null {
     // Get all date directories, sorted descending
     const dateDirs = fs
       .readdirSync(LEDGER_DIR)
-      .filter((name) => /^\d{4}-\d{2}-\d{2}$/.test(name))
+      .filter((name: string) => /^\d{4}-\d{2}-\d{2}$/.test(name))
       .sort()
       .reverse();
 
@@ -52,7 +52,7 @@ function getLastEntry(): LedgerEntry | null {
       const dirPath = path.join(LEDGER_DIR, dateDir);
       const files = fs
         .readdirSync(dirPath)
-        .filter((name) => name.endsWith('.json'))
+        .filter((name: string) => name.endsWith('.json'))
         .sort()
         .reverse();
 
@@ -65,7 +65,9 @@ function getLastEntry(): LedgerEntry | null {
 
     return null;
   } catch (error: unknown) {
-    logger.error('Failed to get last ledger entry', { error: error.message });
+    logger.error('Failed to get last ledger entry', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -182,11 +184,12 @@ export function appendLedger(
       path: filepath,
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error('Failed to write ledger entry', {
-      error: error.message,
+      error: errorMessage,
       path: filepath,
     });
-    throw new Error(`Failed to write ledger entry: ${error.message}`);
+    throw new Error(`Failed to write ledger entry: ${errorMessage}`);
   }
 
   return entry;
@@ -212,12 +215,12 @@ export function queryLedger(options: {
     // Get all date directories
     const dateDirs = fs
       .readdirSync(LEDGER_DIR)
-      .filter((name) => /^\d{4}-\d{2}-\d{2}$/.test(name))
+      .filter((name: string) => /^\d{4}-\d{2}-\d{2}$/.test(name))
       .sort()
       .reverse(); // Most recent first
 
     // Apply date filters
-    const filteredDirs = dateDirs.filter((dateDir) => {
+    const filteredDirs = dateDirs.filter((dateDir: string) => {
       if (options.startDate && dateDir < options.startDate) return false;
       if (options.endDate && dateDir > options.endDate) return false;
       return true;
@@ -228,7 +231,7 @@ export function queryLedger(options: {
       const dirPath = path.join(LEDGER_DIR, dateDir);
       const files = fs
         .readdirSync(dirPath)
-        .filter((name) => name.endsWith('.json'))
+        .filter((name: string) => name.endsWith('.json'))
         .sort()
         .reverse();
 
@@ -256,7 +259,9 @@ export function queryLedger(options: {
 
     return entries;
   } catch (error: unknown) {
-    logger.error('Failed to query ledger', { error: error.message });
+    logger.error('Failed to query ledger', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return entries;
   }
 }
@@ -316,7 +321,9 @@ export function verifyLedgerIntegrity(): {
 
     return { valid: true, totalEntries: entries.length };
   } catch (error: unknown) {
-    logger.error('Failed to verify ledger integrity', { error: error.message });
+    logger.error('Failed to verify ledger integrity', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return { valid: false, totalEntries: 0 };
   }
 }

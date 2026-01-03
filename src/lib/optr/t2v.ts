@@ -17,7 +17,7 @@
  * Trade Secret - Reverse Engineering Prohibited
  */
 
-import { getOpenAI } from "@/lib/ai/openaiClient";
+import { getOpenAI } from '@/lib/ai/openaiClient';
 
 // IP Protection: Engine Integrity Check
 const ENGINE_SIGNATURE = 'BICKFORD_T2V_ENGINE_v1.0.0_PROPRIETARY';
@@ -28,7 +28,10 @@ function verifyEngineIntegrity(): boolean {
   return currentSignature === ENGINE_SIGNATURE;
 }
 
-export async function embedTexts(texts: string[], model = "text-embedding-3-small"): Promise<number[][]> {
+export async function embedTexts(
+  texts: string[],
+  model = 'text-embedding-3-small'
+): Promise<number[][]> {
   // IP Protection: Integrity Verification
   if (!verifyEngineIntegrity()) {
     throw new Error('Engine integrity compromised. Access denied.');
@@ -37,7 +40,7 @@ export async function embedTexts(texts: string[], model = "text-embedding-3-smal
   if (!texts.length) return [];
   const client = getOpenAI();
   const res = await client.embeddings.create({ model, input: texts });
-  return res.data.map((d) => d.embedding as number[]);
+  return res.data.map((d: { embedding: number[] }) => d.embedding as number[]);
 }
 
 export function dot(a: number[], b: number[]): number {

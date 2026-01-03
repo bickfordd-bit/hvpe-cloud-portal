@@ -6,7 +6,7 @@ import type {
 } from './types';
 import { DEFeaturesParser } from './parser';
 import { logger } from '@/lib/logger';
-import { generateEmbeddings } from '@/lib/optr/embeddings';
+import { generateEmbeddings, generateEmbeddingsBatch } from '@/lib/optr/embeddings';
 import { keyManager } from '@/lib/ai/keyManager';
 
 /**
@@ -56,7 +56,7 @@ export class DEFeaturesMatcher {
     }
 
     // Generate embeddings in batch
-    const embeddings = await generateEmbeddings(textsToEmbed, apiKey);
+    const embeddings: number[][] = await generateEmbeddingsBatch(textsToEmbed, apiKey);
 
     // Track usage
     const tokensUsed = textsToEmbed.reduce((sum, text) => sum + Math.ceil(text.length / 4), 0);
@@ -92,7 +92,7 @@ export class DEFeaturesMatcher {
     }
 
     // Generate embeddings for requirements
-    const reqEmbeddings = await generateEmbeddings(requirements, apiKey);
+    const reqEmbeddings: number[][] = await generateEmbeddingsBatch(requirements, apiKey);
 
     // Track usage
     const tokensUsed = requirements.reduce((sum, req) => sum + Math.ceil(req.length / 4), 0);
@@ -184,7 +184,7 @@ export class DEFeaturesMatcher {
       choiceText: c.choiceText,
       contractLanguage: DEFeaturesParser.getContractLanguage(
         this.workbook,
-        featureId as unknown,
+        featureId as FeatureId,
         c.choiceIndex
       ),
       score: c.score,
@@ -196,10 +196,9 @@ export class DEFeaturesMatcher {
    */
   async analyzeOpportunity(
     opportunityId: string,
-    requirements: string[],
-    apiKey: string
+    requirements: string[]
   ): Promise<DEFeatureAnalysisResult> {
-    const matchedFeatures = await this.matchRequirements(requirements, apiKey, 10);
+    const matchedFeatures = await this.matchRequirements(requirements, 10);
 
     // Calculate coverage score (% of requirements with good matches)
     const wellMatched = matchedFeatures.filter((m) => m.relevanceScore > 0.7).length;

@@ -36,7 +36,11 @@ export async function appendLedgerEvent(args: AppendLedgerArgs) {
   }
 
   // Validate event type
-  const validEventTypes = spec.storage_rules?.events || ['CREATE', 'AMEND', 'SUPERSEDE'];
+  const validEventTypes = (spec.storage_rules as { events?: string[] } | undefined)?.events || [
+    'CREATE',
+    'AMEND',
+    'SUPERSEDE',
+  ];
   if (!validEventTypes.includes(args.event_type)) {
     throw new Error(
       `Invalid event_type "${args.event_type}": must be one of ${validEventTypes.join(', ')}`
@@ -78,7 +82,10 @@ export async function getLedgerEvents(filters?: {
 }) {
   const { tenant, command, limit = 100 } = filters || {};
 
-  const where: unknown = {};
+  const where: {
+    tenant?: string;
+    command?: string;
+  } = {};
   if (tenant) where.tenant = tenant;
   if (command) where.command = command;
 
@@ -88,17 +95,29 @@ export async function getLedgerEvents(filters?: {
     take: limit,
   });
 
-  return entries.map((e) => ({
-    id: e.id,
-    tenant: e.tenant,
-    command: e.command,
-    event_type: e.eventType,
-    hash: e.hash,
-    prev_hash: e.prevHash,
-    payload: JSON.parse(e.payload),
-    locked_at: e.lockedAt,
-    created_at: e.createdAt.toISOString(),
-  }));
+  return entries.map(
+    (e: {
+      id: string;
+      tenant: string;
+      command: string;
+      eventType: string;
+      hash: string;
+      prevHash: string | null;
+      payload: string;
+      lockedAt: string | null;
+      createdAt: Date;
+    }) => ({
+      id: e.id,
+      tenant: e.tenant,
+      command: e.command,
+      event_type: e.eventType,
+      hash: e.hash,
+      prev_hash: e.prevHash,
+      payload: JSON.parse(e.payload),
+      locked_at: e.lockedAt,
+      created_at: e.createdAt.toISOString(),
+    })
+  );
 }
 
 /**
