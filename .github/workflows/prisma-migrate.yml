@@ -3,8 +3,8 @@ name: Prisma Migrate Deploy
 on:
   push:
     branches:
-      - ui-redesign-v1
       - main
+      - mobile
 
 concurrency:
   group: prisma-migrate-${{ github.ref }}
