@@ -1,0 +1,14 @@
+{
+  "id": "intent-2026-01-03T18-58-13-411Z-kx17d2",
+  "timestamp": "2026-01-03T18:58:13.411Z",
+  "tenant": "bickford",
+  "command": "EXECUTE",
+  "event_type": "INTENT",
+  "payload": {
+    "intent": "Analyze DoD compliance requirements",
+    "route": "dod-pilot",
+    "decision": "ALLOW",
+    "ttv": 0,
+    "progress": 0.01
+  }
+}

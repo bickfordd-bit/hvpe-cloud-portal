@@ -13,7 +13,7 @@ import { ChatInput } from "@/components/chat/ChatInput";
 
 export default function FilingPage() {
   const handleSubmit = async (text: string) => {
-    await fetch("/api/intent", {
+    const response = await fetch("/api/intent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -23,6 +23,25 @@ export default function FilingPage() {
         sessionId: "default",
       }),
     });
+
+    if (response.ok) {
+      const result = await response.json();
+
+      // Dispatch custom event to update UI
+      if (typeof window !== "undefined") {
+        const event = new CustomEvent("canon-event", {
+          detail: {
+            type: "intent",
+            decision: result.status,
+            route: result.route,
+            ttv: result.ttv,
+            progress: result.progress,
+            timestamp: Date.now(),
+          },
+        });
+        window.dispatchEvent(event);
+      }
+    }
   };
 
   return (

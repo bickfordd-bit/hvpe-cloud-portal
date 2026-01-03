@@ -1,0 +1,14 @@
+{
+  "id": "intent-2026-01-03T19-01-27-475Z-zn0v5n",
+  "timestamp": "2026-01-03T19:01:27.475Z",
+  "tenant": "bickford",
+  "command": "EXECUTE",
+  "event_type": "INTENT",
+  "payload": {
+    "intent": "Prepare investor pitch deck",
+    "route": "investor",
+    "decision": "ALLOW",
+    "ttv": 48516.25,
+    "progress": 0.04
+  }
+}

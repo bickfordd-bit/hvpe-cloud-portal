@@ -1,0 +1,14 @@
+{
+  "id": "intent-2026-01-03T19-00-12-857Z-rv06xc",
+  "timestamp": "2026-01-03T19:00:12.857Z",
+  "tenant": "bickford",
+  "command": "EXECUTE",
+  "event_type": "INTENT",
+  "payload": {
+    "intent": "Deploy to AWS infrastructure",
+    "route": "aws-sim",
+    "decision": "ALLOW",
+    "ttv": 59723.5,
+    "progress": 0.02
+  }
+}

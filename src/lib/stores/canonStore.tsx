@@ -12,7 +12,6 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { subscribeCanonEvents } from "@/lib/runtime/realtime";
 import type { CanonEvent } from "@/types/filing";
 
 const CanonContext = createContext<CanonEvent[]>([]);
@@ -21,10 +20,17 @@ export function CanonProvider({ children }: { children: ReactNode }) {
   const [canon, setCanon] = useState<CanonEvent[]>([]);
 
   useEffect(() => {
-    const unsubscribe = subscribeCanonEvents((event) => {
-      setCanon((c) => [...c, event]);
-    });
-    return unsubscribe;
+    // Listen for custom events dispatched from the filing page
+    const handleCanonEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<CanonEvent>;
+      setCanon((c) => [...c, customEvent.detail]);
+    };
+
+    window.addEventListener("canon-event", handleCanonEvent);
+
+    return () => {
+      window.removeEventListener("canon-event", handleCanonEvent);
+    };
   }, []);
 
   return (
