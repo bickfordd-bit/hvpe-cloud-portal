@@ -13,6 +13,9 @@ type Mode =
   | 'generic';
 
 function buildPrompt(mode: Mode, payload: unknown) {
+  // Type guard for payload as a record
+  const data = (payload && typeof payload === 'object' ? payload : {}) as Record<string, unknown>;
+
   switch (mode) {
     case 'optr-gap-analysis':
       return [
@@ -23,7 +26,7 @@ function buildPrompt(mode: Mode, payload: unknown) {
         },
         {
           role: 'user' as const,
-          content: `RFP/RFI text:\n${payload?.rfp || ''}\n\nOur draft/capabilities:\n${payload?.capabilities || ''}`,
+          content: `RFP/RFI text:\n${data.rfp || ''}\n\nOur draft/capabilities:\n${data.capabilities || ''}`,
         },
       ];
 
@@ -36,7 +39,7 @@ function buildPrompt(mode: Mode, payload: unknown) {
         },
         {
           role: 'user' as const,
-          content: `RFP section:\n${payload?.rfp || ''}\n\nOur capabilities/background:\n${payload?.capabilities || ''}\n\nRequested sections:\n${payload?.sections || ''}`,
+          content: `RFP section:\n${data.rfp || ''}\n\nOur capabilities/background:\n${data.capabilities || ''}\n\nRequested sections:\n${data.sections || ''}`,
         },
       ];
 
@@ -49,7 +52,7 @@ function buildPrompt(mode: Mode, payload: unknown) {
         },
         {
           role: 'user' as const,
-          content: `Objective:\n${payload?.objective || ''}\n\nContext:\n${payload?.context || ''}`,
+          content: `Objective:\n${data.objective || ''}\n\nContext:\n${data.context || ''}`,
         },
       ];
 
@@ -62,7 +65,7 @@ function buildPrompt(mode: Mode, payload: unknown) {
         },
         {
           role: 'user' as const,
-          content: `Topic:\n${payload?.topic || ''}\n\nKey facts:\n${payload?.facts || ''}`,
+          content: `Topic:\n${data.topic || ''}\n\nKey facts:\n${data.facts || ''}`,
         },
       ];
 
@@ -75,7 +78,7 @@ function buildPrompt(mode: Mode, payload: unknown) {
         },
         {
           role: 'user' as const,
-          content: `Context:\n${payload?.context || ''}\n\nKnown risks:\n${payload?.risks || ''}`,
+          content: `Context:\n${data.context || ''}\n\nKnown risks:\n${data.risks || ''}`,
         },
       ];
 
@@ -88,7 +91,7 @@ function buildPrompt(mode: Mode, payload: unknown) {
         },
         {
           role: 'user' as const,
-          content: `Current focus:\n${payload?.focus || ''}\nConstraints:\n${payload?.constraints || ''}`,
+          content: `Current focus:\n${data.focus || ''}\nConstraints:\n${data.constraints || ''}`,
         },
       ];
 
@@ -101,12 +104,12 @@ function buildPrompt(mode: Mode, payload: unknown) {
         },
         {
           role: 'user' as const,
-          content: `Markets:\n${payload?.markets || ''}\nPositions:\n${payload?.positions || ''}\nFocus:\n${payload?.focus || ''}`,
+          content: `Markets:\n${data.markets || ''}\nPositions:\n${data.positions || ''}\nFocus:\n${data.focus || ''}`,
         },
       ];
 
     default:
-      return payload?.messages || [];
+      return data.messages || [];
   }
 }
 

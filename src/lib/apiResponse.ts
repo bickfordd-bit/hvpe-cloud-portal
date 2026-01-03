@@ -138,10 +138,18 @@ export function apiSuccess<T>(data: T): ApiResponse<T> {
   };
 }
 
-export function apiError(error: string | Error): ApiResponse {
+export function apiError(error: unknown): ApiResponse {
+  let errorMessage: string;
+  if (error instanceof Error) {
+    errorMessage = error.message;
+  } else if (typeof error === 'string') {
+    errorMessage = error;
+  } else {
+    errorMessage = 'An unknown error occurred';
+  }
   return {
     success: false,
-    error: error instanceof Error ? error.message : error,
+    error: errorMessage,
     timestamp: new Date().toISOString(),
   };
 }
