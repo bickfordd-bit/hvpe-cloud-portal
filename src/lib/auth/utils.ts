@@ -100,7 +100,3 @@ export class RateLimiter {
     this.attempts.delete(identifier);
   }
 }
-
-// Export singleton rate limiters for different purposes
-export const loginRateLimiter = new RateLimiter(5, 15 * 60 * 1000); // 5 attempts per 15 minutes
-export const apiRateLimiter = new RateLimiter(100, 60 * 1000); // 100 requests per minute

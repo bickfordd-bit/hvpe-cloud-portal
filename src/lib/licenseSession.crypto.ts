@@ -53,19 +53,3 @@ export function verifyToken(token?: string | null): LicenseClaims | null {
     return null;
   }
 }
-
-/**
- * Server component helper: Read and verify session from cookies.
- * 
- * Usage in server components:
- *   import { getSession } from "@/lib/licenseSession.crypto";
- *   const session = await getSession();
- *   if (!session) redirect("/license");
- */
-export async function getSession(): Promise<LicenseClaims | null> {
-  // Can't use cookies() in edge runtime - only in Node.js server components
-  const { cookies } = await import("next/headers");
-  const cookieStore = await cookies();
-  const token = cookieStore.get(LICENSE_COOKIE)?.value;
-  return verifyToken(token);
-}

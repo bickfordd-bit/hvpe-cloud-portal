@@ -258,9 +258,4 @@ export function validateIntent(intent: Intent): { valid: boolean; reason?: strin
   return { valid: true };
 }
 
-/**
- * Format intent for display
- */
-export function formatIntent(intent: Intent): string {
-  return `[${intent.intentType.toUpperCase()}] ${intent.rawText} (confidence: ${(intent.confidence * 100).toFixed(0)}%)`;
-}
+

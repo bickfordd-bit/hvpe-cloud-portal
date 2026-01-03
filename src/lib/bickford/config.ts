@@ -128,66 +128,6 @@ export const DEFAULT_CONFIG: BickfordUIConfig = {
   },
 };
 
-// Enterprise Configuration Example
-export const ENTERPRISE_CONFIG: BickfordUIConfig = {
-  branding: {
-    appName: "Enterprise AI Assistant",
-    tagline: "Powered by Bickford Technology",
-    primaryColor: "#0f172a", // Enterprise dark
-    accentColor: "#3b82f6", // Enterprise blue
-  },
-
-  header: {
-    show: true,
-    title: "Your Company AI",
-    subtitle: "Intelligent Business Solutions",
-    showPoweredBy: false, // White-label
-  },
-
-  chat: {
-    placeholder: "How can I help your business today?",
-    welcomeMessage: "Welcome to your enterprise AI assistant. I can help analyze opportunities, process documents, and accelerate your business decisions.",
-    buttonText: "Send",
-    showTimestamps: true,
-    maxMessageLength: 5000,
-    enableVoice: true,
-    enableFileUpload: true,
-  },
-
-  features: {
-    enableOPTR: true,
-    enableIntentToReality: true,
-    enableIPProtection: true,
-    showMetrics: true,
-    showFormulaVersion: false,
-  },
-
-  privacy: {
-    collectAnalytics: true, // With consent
-    storeConversations: true, // Enterprise compliance
-    dataRetentionDays: 365,
-    showPrivacyNotice: true,
-    allowDataExport: true,
-    allowDataDeletion: true,
-    encryptData: true,
-  },
-
-  footer: {
-    show: true,
-    copyright: "© 2025 Your Company. Powered by Bickford Technologies.",
-    links: [
-      { text: "Privacy", url: "/privacy" },
-      { text: "Security", url: "/security" },
-      { text: "Support", url: "/support" },
-    ],
-  },
-
-  advanced: {
-    rateLimit: 1000, // Higher for enterprise
-    enableDebug: false,
-  },
-};
-
 // Configuration Management
 export class ConfigManager {
   private static config: BickfordUIConfig = DEFAULT_CONFIG;
@@ -232,28 +172,3 @@ export class ConfigManager {
     return true;
   }
 }
-
-// Privacy Compliance Helpers
-export class PrivacyManager {
-  static shouldCollectData(config: BickfordUIConfig): boolean {
-    return config.privacy.collectAnalytics && config.privacy.storeConversations;
-  }
-
-  static getRetentionPeriod(config: BickfordUIConfig): number {
-    return config.privacy.dataRetentionDays;
-  }
-
-  static canExportData(config: BickfordUIConfig): boolean {
-    return config.privacy.allowDataExport;
-  }
-
-  static canDeleteData(config: BickfordUIConfig): boolean {
-    return config.privacy.allowDataDeletion;
-  }
-
-  static shouldEncrypt(config: BickfordUIConfig): boolean {
-    return config.privacy.encryptData;
-  }
-}
-
-export default ConfigManager;

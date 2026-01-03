@@ -364,24 +364,3 @@ function generateReasoning(policy: Policy, score: OPTRScore, intent: Intent): st
   
   return parts.join(' ');
 }
-
-/**
- * Get policy by ID
- */
-export function getPolicyById(id: string): Policy | undefined {
-  return POLICY_CATALOG.find(p => p.id === id);
-}
-
-/**
- * List all available policies
- */
-export function listPolicies(): Policy[] {
-  return [...POLICY_CATALOG];
-}
-
-/**
- * Get policies for specific intent type
- */
-export function getPoliciesForIntentType(intentType: Intent['intentType']): Policy[] {
-  return POLICY_CATALOG.filter(p => p.applicableIntentTypes.includes(intentType));
-}
