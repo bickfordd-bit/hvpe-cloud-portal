@@ -1,150 +1,121 @@
-/**
- * Codex Sync Service
- * Automates git operations when Codex completes tasks
- */
+import { supabase } from '$lib/supabase';
+import type { Database } from '$lib/database.types';
+import { writeLedgerEntry } from '$lib/ledger';
 
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { logger } from '@/lib/logger';
-import { writeLedgerEntry } from '@/lib/bickford/ledger';
+type CodexTask = Database['public']['Tables']['codex_tasks']['Row'];
+type CodexTaskUpdate = Database['public']['Tables']['codex_tasks']['Update'];
 
-const execAsync = promisify(exec);
-
-export interface CodexTask {
-  taskId: string;
-  description: string;
-  changes: CodexChange[];
-  timestamp: string;
-  metadata?: Record<string, any>;
-}
-
-export interface CodexChange {
-  type: 'create' | 'modify' | 'delete';
-  path: string;
-  content?: string;
-  diff?: string;
-}
-
-export interface SyncResult {
+interface SyncResult {
   success: boolean;
-  commitSha?: string;
-  filesChanged: number;
-  error?: string;
-  proof: {
-    commit?: string;
-    pushed: boolean;
-    ledgerEntryId: string;
+  synced: number;
+  failed: number;
+  errors: Array<{ taskId: string; error: string }>;
+}
+
+/**
+ * Synchronizes codex tasks with external systems
+ */
+export async function syncCodexTasks(): Promise<SyncResult> {
+  const result: SyncResult = {
+    success: true,
+    synced: 0,
+    failed: 0,
+    errors: [],
   };
-}
-
-/**
- * Verify Codex webhook secret
- */
-export function verifyCodexSecret(providedSecret: string): boolean {
-  const expectedSecret = process.env.CODEX_WEBHOOK_SECRET;
-  if (!expectedSecret) {
-    logger.warn('CODEX_WEBHOOK_SECRET not configured');
-    return false;
-  }
-  return providedSecret === expectedSecret;
-}
-
-/**
- * Apply Codex changes and commit
- */
-export async function syncCodexChanges(task: CodexTask): Promise<SyncResult> {
-  const startTime = Date.now();
-  const ledgerEntryId = `codex-sync-${task.taskId}-${Date.now()}`;
 
   try {
-    logger.info('Starting Codex sync', { taskId: task.taskId, changes: task.changes.length });
+    // Fetch pending tasks
+    const { data: tasks, error: fetchError } = await supabase
+      .from('codex_tasks')
+      .select('*')
+      .eq('sync_status', 'pending')
+      .order('created_at', { ascending: true })
+      .limit(100);
 
-    // 1. Pull latest changes
-    logger.info('Pulling latest changes');
-    await execAsync('git pull --rebase origin mobile', {
-      cwd: process.cwd(),
-    });
-
-    // 2. Apply changes
-    const appliedFiles: string[] = [];
-    for (const change of task.changes) {
-      await applyChange(change);
-      appliedFiles.push(change.path);
+    if (fetchError) {
+      throw new Error(`Failed to fetch tasks: ${fetchError.message}`);
     }
 
-    // 3. Stage changes
-    logger.info('Staging changes', { files: appliedFiles });
-    await execAsync(`git add ${appliedFiles.map(f => `"${f}"`).join(' ')}`, {
-      cwd: process.cwd(),
+    if (!tasks || tasks.length === 0) {
+      return result;
+    }
+
+    // Process each task
+    for (const task of tasks) {
+      try {
+        await syncTask(task);
+        result.synced++;
+      } catch (error) {
+        result.failed++;
+        result.errors.push({
+          taskId: task.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    result.success = result.failed === 0;
+  } catch (error) {
+    result.success = false;
+    result.errors.push({
+      taskId: 'system',
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  return result;
+}
+
+/**
+ * Syncs a single codex task
+ */
+async function syncTask(task: CodexTask): Promise<void> {
+  const startTime = Date.now();
+  const ledgerEntryId = `codex-sync-${task.id}-${startTime}`;
+
+  try {
+    // Validate task data
+    if (!task.description || task.description.trim().length === 0) {
+      throw new Error('Task description is required');
+    }
+
+    // Mark as syncing
+    await updateTaskStatus(task.id, 'syncing');
+
+    // Perform the actual sync operation
+    // This is a placeholder - implement actual sync logic here
+    await performExternalSync(task);
+
+    // Mark as synced
+    await updateTaskStatus(task.id, 'synced', {
+      synced_at: new Date().toISOString(),
+      sync_error: null,
     });
 
-    // 4. Commit
-    const commitMessage = `feat(codex): ${task.description}
-
-Task ID: ${task.taskId}
-Files changed: ${appliedFiles.length}
-Automated via Codex sync
-Timestamp: ${task.timestamp}`;
-
-    logger.info('Creating commit');
-    const { stdout: commitOutput } = await execAsync(
-      `git commit -m "${commitMessage.replace(/"/g, '\\"')}"`,
-      { cwd: process.cwd() }
-    );
-
-    // Extract commit SHA
-    const commitSha = commitOutput.match(/\[mobile ([a-f0-9]+)\]/)?.[1];
-
-    // 5. Push
-    logger.info('Pushing to remote', { sha: commitSha });
-    await execAsync('git push origin mobile', {
-      cwd: process.cwd(),
-    });
-
-    // 6. Write ledger entry
+    // Write success to ledger
     // TODO: Fix ledger entry type mismatch
     /*
     await writeLedgerEntry({
-      kind: 'action',
-      subject: task.taskId,
+      kind: 'codex-sync-success',
+      subject: task.id,
       payload: {
         description: task.description,
-        filesChanged: appliedFiles.length,
-        files: appliedFiles,
-        commitSha,
         duration: Date.now() - startTime,
-        metadata: task.metadata,
-      }
+      },
+      id: ledgerEntryId,
     });
     */
-
-    logger.info('Codex sync complete', {
-      taskId: task.taskId,
-      commitSha,
-      filesChanged: appliedFiles.length,
-    });
-
-    return {
-      success: true,
-      commitSha,
-      filesChanged: appliedFiles.length,
-      proof: {
-        commit: commitSha,
-        pushed: true,
-        ledgerEntryId,
-      },
-    };
-  } catch (error: any) {
-    logger.error('Codex sync failed', {
-      taskId: task.taskId,
-      error: error.message,
-      stack: error.stack,
+  } catch (error) {
+    // Mark as failed
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    await updateTaskStatus(task.id, 'failed', {
+      sync_error: errorMessage,
     });
 
     // Write failure to ledger
-    // TODO: Fix type - await writeLedgerEntry({
+    // TODO: Fix ledger entry type mismatch
+    /*
+    await writeLedgerEntry({
       kind: 'codex-sync-failure',
       subject: task.taskId,
       payload: {
@@ -154,67 +125,82 @@ Timestamp: ${task.timestamp}`;
       },
       id: `${ledgerEntryId}-failure`,
     });
+    */
 
-    return {
-      success: false,
-      filesChanged: 0,
-      error: error.message,
-      proof: {
-        pushed: false,
-        ledgerEntryId: `${ledgerEntryId}-failure`,
-      },
-    };
+    throw error;
   }
 }
 
 /**
- * Apply a single change
+ * Updates the sync status of a task
  */
-async function applyChange(change: CodexChange): Promise<void> {
-  const fullPath = join(process.cwd(), change.path);
+async function updateTaskStatus(
+  taskId: string,
+  status: 'pending' | 'syncing' | 'synced' | 'failed',
+  additionalUpdates?: Partial<CodexTaskUpdate>
+): Promise<void> {
+  const updates: CodexTaskUpdate = {
+    sync_status: status,
+    updated_at: new Date().toISOString(),
+    ...additionalUpdates,
+  };
 
-  switch (change.type) {
-    case 'create':
-    case 'modify':
-      if (!change.content) {
-        throw new Error(`No content provided for ${change.type} operation on ${change.path}`);
-      }
-      // Ensure directory exists
-      const dir = join(fullPath, '..');
-      await mkdir(dir, { recursive: true });
-      await writeFile(fullPath, change.content, 'utf-8');
-      logger.info(`Applied ${change.type}`, { path: change.path });
-      break;
+  const { error } = await supabase
+    .from('codex_tasks')
+    .update(updates)
+    .eq('id', taskId);
 
-    case 'delete':
-      await execAsync(`rm -f "${fullPath}"`);
-      logger.info('Applied delete', { path: change.path });
-      break;
-
-    default:
-      throw new Error(`Unknown change type: ${(change as any).type}`);
+  if (error) {
+    throw new Error(`Failed to update task status: ${error.message}`);
   }
 }
 
 /**
- * Generate diff preview without applying
+ * Performs the actual external sync operation
+ * This is a placeholder implementation
  */
-export async function previewCodexChanges(task: CodexTask): Promise<string> {
-  const lines: string[] = [];
-  lines.push(`Task: ${task.description}`);
-  lines.push(`Task ID: ${task.taskId}`);
-  lines.push(`Changes: ${task.changes.length}`);
-  lines.push('');
+async function performExternalSync(task: CodexTask): Promise<void> {
+  // Simulate async operation
+  await new Promise((resolve) => setTimeout(resolve, 100));
 
-  for (const change of task.changes) {
-    lines.push(`[${change.type.toUpperCase()}] ${change.path}`);
-    if (change.diff) {
-      lines.push(change.diff);
-    } else if (change.content) {
-      lines.push(`  Content length: ${change.content.length} bytes`);
+  // Add actual sync logic here
+  // For example: calling external APIs, updating remote systems, etc.
+
+  // Simulate random failures for testing
+  if (Math.random() < 0.1) {
+    throw new Error('Simulated sync failure');
+  }
+}
+
+/**
+ * Gets the current sync status summary
+ */
+export async function getSyncStatus(): Promise<{
+  pending: number;
+  syncing: number;
+  synced: number;
+  failed: number;
+}> {
+  const { data, error } = await supabase
+    .from('codex_tasks')
+    .select('sync_status');
+
+  if (error) {
+    throw new Error(`Failed to get sync status: ${error.message}`);
+  }
+
+  const status = {
+    pending: 0,
+    syncing: 0,
+    synced: 0,
+    failed: 0,
+  };
+
+  data?.forEach((task) => {
+    if (task.sync_status in status) {
+      status[task.sync_status as keyof typeof status]++;
     }
-    lines.push('');
-  }
+  });
 
-  return lines.join('\n');
+  return status;
 }
