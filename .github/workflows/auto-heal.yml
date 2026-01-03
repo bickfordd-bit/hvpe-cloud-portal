@@ -134,11 +134,31 @@ jobs:
       - name: Run ts-prune
         id: prune
         run: |
-          npx ts-prune --error > dead-code-report.txt || echo "Dead code found"
+          # Run ts-prune with ignore patterns for Next.js framework files
+          # Ignore Next.js required exports: pages, layouts, API routes, middleware, config files
+          npx ts-prune --error \
+            --ignore 'src/app/.*/page\.tsx$' \
+            --ignore 'src/app/.*/layout\.tsx$' \
+            --ignore 'src/app/api/.*/route\.ts$' \
+            --ignore 'src/app/api/.*/route\.native\.ts$' \
+            --ignore 'middleware\.ts$' \
+            --ignore 'next\.config\.ts$' \
+            --ignore 'jest\.config\.ts$' \
+            > dead-code-report.txt || echo "Dead code found"
+          
+          # Filter out "used in module" entries as these are shared types
           if [ -s dead-code-report.txt ]; then
-            echo "has_dead_code=true" >> $GITHUB_OUTPUT
-            echo "Dead code detected:"
-            cat dead-code-report.txt
+            grep -v '(used in module)' dead-code-report.txt > dead-code-filtered.txt || echo "" > dead-code-filtered.txt
+            
+            if [ -s dead-code-filtered.txt ]; then
+              echo "has_dead_code=true" >> $GITHUB_OUTPUT
+              echo "Dead code detected:"
+              cat dead-code-filtered.txt
+              mv dead-code-filtered.txt dead-code-report.txt
+            else
+              echo "has_dead_code=false" >> $GITHUB_OUTPUT
+              echo "No dead code found (only shared types)"
+            fi
           else
             echo "has_dead_code=false" >> $GITHUB_OUTPUT
             echo "No dead code found"
