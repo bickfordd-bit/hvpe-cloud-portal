@@ -168,25 +168,3 @@ export function getCurrentCanonHash(): string {
   const content = loadCanonContent();
   return computeHash(content);
 }
-
-/**
- * Verify canon hash matches expected value
- */
-export function verifyCanonHash(expectedHash: string): boolean {
-  const currentHash = getCurrentCanonHash();
-  return currentHash === expectedHash;
-}
-
-/**
- * Get canon metadata only (without content)
- */
-export function getCanonMeta(): CanonMeta {
-  return loadCanonMeta();
-}
-
-/**
- * Check if canon files exist
- */
-export function canonExists(): boolean {
-  return fs.existsSync(CANON_PATH) && fs.existsSync(META_PATH);
-}

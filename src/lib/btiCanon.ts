@@ -215,6 +215,3 @@ export const BICKFORD_CANON: CanonDefinition = {
     },
   ],
 };
-
-export const getSalePhaseById = (phaseId: string): SalePhase | undefined =>
-  BICKFORD_CANON.saleArchitecture.find((phase) => phase.id === phaseId);

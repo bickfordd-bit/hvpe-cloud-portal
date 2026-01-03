@@ -231,26 +231,10 @@ export interface LedgerQueryResponse {
 // Configuration Types
 // ============================================================================
 
-export interface BickfordConfig {
-  mode: 'zero-approval' | 'review-required';
-  canonPath: string;
-  ledgerPath: string;
-  githubRepo: string;
-  githubBranch: string;
-  optrWeights: {
-    ttv: number;
-    risk: number;
-    cogLoad: number;
-    autoGain: number;
-  };
-}
+// BickfordConfig removed - unused
 
 // ============================================================================
 // Utility Types
 // ============================================================================
 
-export type Result<T, E = Error> = 
-  | { ok: true; value: T }
-  | { ok: false; error: E };
-
-export type Awaitable<T> = T | Promise<T>;
+// Result and Awaitable types removed - unused
