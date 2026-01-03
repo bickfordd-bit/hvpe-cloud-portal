@@ -1,3 +1,72 @@
+/**
+ * CODEX SYNC - TEMPORARILY DISABLED
+ * 
+ * This module needs refactoring to work with Next.js:
+ * - Replace SvelteKit imports ($lib/*) with Next.js paths (@/lib/*)
+ * - Implement missing exports: verifyCodexSecret, syncCodexChanges, previewCodexChanges
+ * - Update Supabase integration for Next.js environment
+ * 
+ * TODO: Full refactor in separate PR
+ * Related: Codex automation system for AI-driven code changes
+ * 
+ * Original imports (SvelteKit-style, not compatible with Next.js):
+ * - import { supabase } from '$lib/supabase';
+ * - import type { Database } from '$lib/database.types';
+ * - import { writeLedgerEntry } from '$lib/ledger';
+ */
+
+// Temporarily export empty functions to satisfy imports
+export function getSyncStatus() {
+  return { 
+    status: 'disabled', 
+    message: 'Codex sync temporarily disabled - refactor in progress' 
+  };
+}
+
+export function syncCodexTasks() {
+  throw new Error('Codex sync is temporarily disabled');
+}
+
+export function verifyCodexSecret(secret: string): boolean {
+  return false;
+}
+
+export async function syncCodexChanges(task: CodexTask): Promise<SyncResult> {
+  throw new Error('Codex sync is temporarily disabled');
+}
+
+export async function previewCodexChanges(task: CodexTask): Promise<any> {
+  throw new Error('Codex sync is temporarily disabled');
+}
+
+export type CodexTask = {
+  id: string;
+  taskId: string;
+  description: string;
+  changes: any[];
+  status: 'disabled';
+};
+
+export type SyncResult = {
+  success: boolean;
+  error?: string;
+};
+
+/*
+ * ORIGINAL CODE - Commented out until refactor
+ * 
+ * The code below uses SvelteKit-style imports ($lib/*) that don't work in Next.js.
+ * It also references Supabase tables (codex_tasks) that may not exist yet.
+ * 
+ * To restore this functionality:
+ * 1. Replace $lib/* imports with @/lib/* paths
+ * 2. Set up Supabase client for Next.js environment
+ * 3. Create or migrate codex_tasks table schema
+ * 4. Implement verifyCodexSecret, syncCodexChanges, previewCodexChanges
+ * 5. Test with actual Codex webhook integration
+ * 
+ * Original implementation below:
+
 import { supabase } from '$lib/supabase';
 import type { Database } from '$lib/database.types';
 import { writeLedgerEntry } from '$lib/ledger';
@@ -12,9 +81,6 @@ interface SyncResult {
   errors: Array<{ taskId: string; error: string }>;
 }
 
-/**
- * Synchronizes codex tasks with external systems
- */
 export async function syncCodexTasks(): Promise<SyncResult> {
   const result: SyncResult = {
     success: true,
@@ -24,7 +90,6 @@ export async function syncCodexTasks(): Promise<SyncResult> {
   };
 
   try {
-    // Fetch pending tasks
     const { data: tasks, error: fetchError } = await supabase
       .from('codex_tasks')
       .select('*')
@@ -40,7 +105,6 @@ export async function syncCodexTasks(): Promise<SyncResult> {
       return result;
     }
 
-    // Process each task
     for (const task of tasks) {
       try {
         await syncTask(task);
@@ -66,74 +130,30 @@ export async function syncCodexTasks(): Promise<SyncResult> {
   return result;
 }
 
-/**
- * Syncs a single codex task
- */
 async function syncTask(task: CodexTask): Promise<void> {
   const startTime = Date.now();
   const ledgerEntryId = `codex-sync-${task.id}-${startTime}`;
 
   try {
-    // Validate task data
     if (!task.description || task.description.trim().length === 0) {
       throw new Error('Task description is required');
     }
 
-    // Mark as syncing
     await updateTaskStatus(task.id, 'syncing');
-
-    // Perform the actual sync operation
-    // This is a placeholder - implement actual sync logic here
     await performExternalSync(task);
-
-    // Mark as synced
     await updateTaskStatus(task.id, 'synced', {
       synced_at: new Date().toISOString(),
       sync_error: null,
     });
-
-    // Write success to ledger
-    // TODO: Fix ledger entry type mismatch
-    /*
-    await writeLedgerEntry({
-      kind: 'codex-sync-success',
-      subject: task.id,
-      payload: {
-        description: task.description,
-        duration: Date.now() - startTime,
-      },
-      id: ledgerEntryId,
-    });
-    */
   } catch (error) {
-    // Mark as failed
     const errorMessage = error instanceof Error ? error.message : String(error);
     await updateTaskStatus(task.id, 'failed', {
       sync_error: errorMessage,
     });
-
-    // Write failure to ledger
-    // TODO: Fix ledger entry type mismatch
-    /*
-    await writeLedgerEntry({
-      kind: 'codex-sync-failure',
-      subject: task.taskId,
-      payload: {
-        description: task.description,
-        error: error.message,
-        duration: Date.now() - startTime,
-      },
-      id: `${ledgerEntryId}-failure`,
-    });
-    */
-
     throw error;
   }
 }
 
-/**
- * Updates the sync status of a task
- */
 async function updateTaskStatus(
   taskId: string,
   status: 'pending' | 'syncing' | 'synced' | 'failed',
@@ -155,26 +175,13 @@ async function updateTaskStatus(
   }
 }
 
-/**
- * Performs the actual external sync operation
- * This is a placeholder implementation
- */
 async function performExternalSync(task: CodexTask): Promise<void> {
-  // Simulate async operation
   await new Promise((resolve) => setTimeout(resolve, 100));
-
-  // Add actual sync logic here
-  // For example: calling external APIs, updating remote systems, etc.
-
-  // Simulate random failures for testing
   if (Math.random() < 0.1) {
     throw new Error('Simulated sync failure');
   }
 }
 
-/**
- * Gets the current sync status summary
- */
 export async function getSyncStatus(): Promise<{
   pending: number;
   syncing: number;
@@ -204,3 +211,5 @@ export async function getSyncStatus(): Promise<{
 
   return status;
 }
+
+*/
