@@ -1,0 +1,27 @@
+# ts-prune configuration
+# Ignore Next.js framework exports and legitimate library code
+
+# Next.js framework files
+-skip (middleware\.ts|next\.config\.ts|jest\.config\.ts)$
+
+# Next.js App Router pages (default exports are required)
+-skip /app/.*/page\.tsx$
+
+# Next.js API routes (GET, POST, etc. exports are required)
+-skip /app/api/.*/route(\.ts|\.native\.ts)$
+
+# Next.js layout and metadata (default exports are required)
+-skip /app/layout\.tsx$
+
+# Configuration and setup files
+-skip (\.config\.|\.setup\.)
+
+# Type definition files that export types for libraries
+-skip (types\.ts|\.d\.ts)$
+
+# Library API exports (these are intentionally public)
+-skip src/lib/.*/client\.ts$
+-skip src/lib/.*/(config|runtime|spec)\.ts$
+
+# Component libraries (React components export for reuse)
+-skip src/components/.*\.tsx$
