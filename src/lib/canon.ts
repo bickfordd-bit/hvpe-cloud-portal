@@ -85,7 +85,7 @@ function parseCanonRules(content: string) {
   }
   
   // Invariants
-  const invMatches = content.matchAll(/### Invariant \d+: (.+)\n```\n(.+?)\n```/gs);
+  const invMatches = content.matchAll(/### Invariant \d+: (.+)\n```\n([\s\S]+?)\n```/g);
   for (const match of invMatches) {
     rules.push({
       id: `invariant-${match[1].toLowerCase().replace(/\s+/g, '-')}`,
@@ -96,7 +96,7 @@ function parseCanonRules(content: string) {
   }
   
   // Promotion Gates
-  const gateMatches = content.matchAll(/### Gate \d+: (.+)\n(.+?)(?=###|\n---)/gs);
+  const gateMatches = content.matchAll(/### Gate \d+: (.+)\n([\s\S]+?)(?=###|\n---)/g);
   for (const match of gateMatches) {
     rules.push({
       id: `gate-${match[1].toLowerCase().replace(/\s+/g, '-')}`,

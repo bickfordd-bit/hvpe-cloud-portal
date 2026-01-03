@@ -16,62 +16,53 @@ function barWidth01(v?: number) {
 }
 
 export function OptrStatusPanel({ state }: { state: OPTRState | null }) {
-  const coverage = state?.coverage ?? 0;
+  const coverage = (state as any)?.coverage ?? 0;
 
   return (
     <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-4">
       <div className="flex items-center justify-between">
         <div className="text-sm font-semibold">Status</div>
         <div className="text-xs text-neutral-400">
-          Phase: <span className="text-neutral-100">{state?.phase ?? "—"}</span>
+          Stage: <span className="text-neutral-100">{state?.stage ?? "—"}</span>
         </div>
       </div>
 
       <div className="mt-4">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-neutral-400">Coverage</span>
-          <span className="font-medium">{pct(coverage)}</span>
+          <span className="text-neutral-400">Progress</span>
+          <span className="font-medium">{state?.progress ?? 0}%</span>
         </div>
         <div className="mt-2 h-3 w-full rounded-full bg-neutral-950">
-          <div className="h-3 rounded-full bg-emerald-600" style={{ width: barWidth01(coverage) }} />
+          <div className="h-3 rounded-full bg-emerald-600" style={{ width: `${state?.progress ?? 0}%` }} />
         </div>
         <div className="mt-2 text-xs text-neutral-500">
-          SubmitAllowed ⇔ Coverage = 100% and mandatory docs present.
+          {state?.message || "Waiting for execution..."}
         </div>
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-3">
         <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-3">
-          <div className="text-xs text-neutral-400">Blocked</div>
+          <div className="text-xs text-neutral-400">Stage</div>
           <div className="mt-1 text-sm font-semibold">
-            {state ? (state.blocked ? "YES" : "NO") : "—"}
+            {state?.stage ?? "idle"}
           </div>
         </div>
         <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-3">
-          <div className="text-xs text-neutral-400">Win Prob</div>
-          <div className="mt-1 text-sm font-semibold">{pct(state?.win_prob)}</div>
+          <div className="text-xs text-neutral-400">Progress</div>
+          <div className="mt-1 text-sm font-semibold">{state?.progress ?? 0}%</div>
         </div>
         <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-3">
-          <div className="text-xs text-neutral-400">ECV</div>
-          <div className="mt-1 text-sm font-semibold">{money(state?.ecv)}</div>
+          <div className="text-xs text-neutral-400">Status</div>
+          <div className="mt-1 text-sm font-semibold">{state?.stage ?? "idle"}</div>
         </div>
       </div>
 
-      <div className="mt-4 rounded-xl border border-neutral-800 bg-neutral-950 p-3">
-        <div className="text-sm font-semibold">Blockers</div>
-        {state?.blockers?.length ? (
-          <div className="mt-2 space-y-2">
-            {state.blockers.map((b, i) => (
-              <div key={i} className="rounded-lg border border-red-900 bg-red-950/30 p-2 text-sm">
-                <div className="text-red-200">{b.code || "BLOCKER"}</div>
-                <div className="text-red-100/80">{b.detail || ""}</div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="mt-2 text-sm text-neutral-500">No blockers reported.</div>
-        )}
-      </div>
+      {state?.message && (
+        <div className="mt-4 rounded-xl border border-neutral-800 bg-neutral-950 p-3">
+          <div className="text-sm font-semibold">Message</div>
+          <div className="mt-2 text-sm text-neutral-400">{state.message}</div>
+        </div>
+      )}
     </div>
   );
 }

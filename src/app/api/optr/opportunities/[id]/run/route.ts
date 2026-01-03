@@ -3,6 +3,7 @@ import { processOpportunity } from "@/lib/optr/processor";
 import { apiSuccess, apiError } from "@/lib/apiResponse";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import type { Requirement } from "@/lib/optr/types";
 
 export async function POST(req: NextRequest) {
   const id = req.nextUrl.pathname.split("/").slice(-2, -1)[0] || "";
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
     logger.info("OPTR run endpoint completed", {
       opportunityId: id,
       success: result.success,
-      duration: result.metadata?.duration,
+      duration: result.summary?.executionTimeMs,
     });
 
     return NextResponse.json(apiSuccess(result));

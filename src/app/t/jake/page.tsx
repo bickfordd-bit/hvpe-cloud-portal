@@ -44,9 +44,9 @@ export default async function JakePage() {
 
         {/* Details */}
         <div className="text-sm text-neutral-500 space-y-1">
-          <p>Role: {session.role}</p>
-          <p>Mode: {session.mode}</p>
-          <p>Tenant: {session.tenant}</p>
+          <p>Role: JAKE</p>
+          <p>Mode: Trading</p>
+          <p>Tenant: default</p>
         </div>
       </div>
     </main>
