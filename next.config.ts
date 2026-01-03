@@ -12,27 +12,25 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
 
-  // Temporarily ignore ESLint errors during build
-  // TODO: Remove this once all pre-existing lint errors are resolved
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
-  // Skip static generation for dynamic pages
-  // This prevents build failures for pages using useSearchParams without Suspense
-  experimental: {
-    missingSuspenseWithCSRBailout: false,
-  },
-
   // Optimize for Vercel
-  swcMinify: true,
   reactStrictMode: true,
 
-  // Handle Prisma in serverless environment
+  // Turbopack configuration (Next.js 16 default bundler)
+  // Empty config to silence webpack compatibility warning
+  turbopack: {},
+
+  // Handle Prisma in serverless environment (for webpack builds)
   webpack: (config, { isServer }) => {
     if (isServer) {
       // Externalize Prisma client to prevent bundling issues
-      config.externals.push("@prisma/client");
+      config.externals = config.externals || [];
+      if (Array.isArray(config.externals)) {
+        config.externals.push("@prisma/client");
+      } else {
+        // Handle other externals formats
+        const originalExternals = config.externals;
+        config.externals = ["@prisma/client", originalExternals];
+      }
     }
     return config;
   },
