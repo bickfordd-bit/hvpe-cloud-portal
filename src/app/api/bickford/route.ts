@@ -22,7 +22,9 @@ export async function GET(req: NextRequest) {
       })
     );
   } catch (error: unknown) {
-    logger.error('Bickford status check failed', { error: error.message });
+    logger.error('Bickford status check failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(apiError(error), { status: 500 });
   }
 }
@@ -58,7 +60,9 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error: unknown) {
-    logger.error('Ledger write failed', { error: error.message });
+    logger.error('Ledger write failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(apiError(error), { status: 500 });
   }
 }

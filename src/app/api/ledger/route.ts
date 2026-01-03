@@ -41,10 +41,12 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error: unknown) {
-    logger.error('Ledger query failed', { error: error.message });
+    logger.error('Ledger query failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       {
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
@@ -64,10 +66,12 @@ export async function POST(req: NextRequest) {
       const stats = getLedgerStats();
       return NextResponse.json(stats);
     } catch (error: unknown) {
-      logger.error('Ledger stats failed', { error: error.message });
+      logger.error('Ledger stats failed', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return NextResponse.json(
         {
-          error: error.message,
+          error: error instanceof Error ? error.message : String(error),
         },
         { status: 500 }
       );
@@ -79,10 +83,12 @@ export async function POST(req: NextRequest) {
       const result = verifyLedgerIntegrity();
       return NextResponse.json(result);
     } catch (error: unknown) {
-      logger.error('Ledger verification failed', { error: error.message });
+      logger.error('Ledger verification failed', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return NextResponse.json(
         {
-          error: error.message,
+          error: error instanceof Error ? error.message : String(error),
         },
         { status: 500 }
       );

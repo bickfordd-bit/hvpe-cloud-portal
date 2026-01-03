@@ -54,12 +54,13 @@ export async function POST(req: NextRequest) {
         hash: canon.meta.sha256.substring(0, 16) + '...',
       });
     } catch (error: unknown) {
-      logger.error('Canon verification failed', { error: error.message });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error('Canon verification failed', { error: errorMessage });
       return NextResponse.json(
         {
           success: false,
           error: 'Canon integrity check failed',
-          message: error.message,
+          message: errorMessage,
         } as ExecuteResponse,
         { status: 500 }
       );
@@ -71,12 +72,13 @@ export async function POST(req: NextRequest) {
     try {
       intent = parseIntent(body.intent);
     } catch (error: unknown) {
-      logger.error('Intent parsing failed', { error: error.message });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error('Intent parsing failed', { error: errorMessage });
       return NextResponse.json(
         {
           success: false,
           error: 'Failed to parse intent',
-          message: error.message,
+          message: errorMessage,
         } as ExecuteResponse,
         { status: 400 }
       );
@@ -102,12 +104,13 @@ export async function POST(req: NextRequest) {
     try {
       policyBinding = computeOPTR(intent, canon);
     } catch (error: unknown) {
-      logger.error('OPTR computation failed', { error: error.message });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error('OPTR computation failed', { error: errorMessage });
       return NextResponse.json(
         {
           success: false,
           error: 'No applicable policy found',
-          message: error.message,
+          message: errorMessage,
         } as ExecuteResponse,
         { status: 422 }
       );
@@ -169,9 +172,11 @@ export async function POST(req: NextRequest) {
     } as ExecuteResponse);
   } catch (error: unknown) {
     const durationMs = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
     logger.error('Execute API error', {
-      error: error.message,
-      stack: error.stack,
+      error: errorMessage,
+      stack: errorStack,
       durationMs,
     });
 
@@ -179,7 +184,7 @@ export async function POST(req: NextRequest) {
       {
         success: false,
         error: 'Internal server error',
-        message: error.message,
+        message: errorMessage,
       } as ExecuteResponse,
       { status: 500 }
     );
@@ -212,10 +217,11 @@ export async function GET() {
       ],
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
       {
         status: 'error',
-        error: error.message,
+        error: errorMessage,
       },
       { status: 500 }
     );

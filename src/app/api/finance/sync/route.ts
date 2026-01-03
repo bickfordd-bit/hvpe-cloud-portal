@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     // Return fallback data if Google Sheets fails
     return NextResponse.json({
       success: false,
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
       data: getFallbackData(),
       lastSync: new Date().toISOString(),
     });

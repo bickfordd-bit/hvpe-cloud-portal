@@ -60,7 +60,9 @@ export async function POST(req: NextRequest) {
       })
     );
   } catch (error: unknown) {
-    logger.error('LinkedIn post API error', { error: error.message });
+    logger.error('LinkedIn post API error', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(apiError(error), { status: 500 });
   }
 }

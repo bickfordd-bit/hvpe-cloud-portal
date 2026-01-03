@@ -50,7 +50,9 @@ export async function GET(req: NextRequest) {
 
     return response;
   } catch (error: unknown) {
-    logger.error('LinkedIn callback error', { error: error.message });
+    logger.error('LinkedIn callback error', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.redirect(new URL('/dashboard?error=linkedin_callback_failed', req.url));
   }
 }
