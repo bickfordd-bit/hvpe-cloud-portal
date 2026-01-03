@@ -1,107 +1,72 @@
-import { supabase } from '$lib/supabaseClient';
-import type { Database } from '$lib/database.types';
+// Stub implementation - Supabase integration not yet configured
+// TODO: Implement actual Supabase client when available
 
-type CodexSyncStatus = Database['public']['Tables']['codex_sync_status']['Row'];
+export type CodexTask = {
+  id: string;
+  description: string;
+  changes?: Array<{
+    type: string;
+    path: string;
+    content?: string;
+  }>;
+};
+
+/**
+ * Verifies the Codex webhook secret
+ * @param secret The secret to verify
+ * @returns True if valid
+ */
+export function verifyCodexSecret(secret: string): boolean {
+  const expectedSecret = process.env.CODEX_WEBHOOK_SECRET;
+  return !!expectedSecret && secret === expectedSecret;
+}
+
+/**
+ * Previews changes from a Codex task without applying them
+ * @param task The Codex task to preview
+ * @returns Preview information
+ */
+export async function previewCodexChanges(task: CodexTask): Promise<{
+  changes: Array<{ type: string; path: string; content?: string }>;
+  summary: string;
+}> {
+  // Stub implementation
+  return {
+    changes: task.changes || [],
+    summary: `Would apply ${task.changes?.length || 0} changes for: ${task.description}`,
+  };
+}
+
+/**
+ * Applies changes from a Codex task
+ * @param task The Codex task to apply
+ * @returns Result of the sync operation
+ */
+export async function syncCodexChanges(task: CodexTask): Promise<{
+  success: boolean;
+  error?: string;
+  appliedChanges?: number;
+}> {
+  // Stub implementation - actual sync logic not yet implemented
+  console.log("Codex sync called:", task.id, task.description);
+  return {
+    success: false,
+    error: "Codex sync not yet implemented - awaiting Supabase integration",
+    appliedChanges: 0,
+  };
+}
 
 /**
  * Fetches the current Codex sync status
  * @returns Promise resolving to the sync status or null
  */
-export async function getSyncStatus(): Promise<CodexSyncStatus | null> {
-	try {
-		const { data, error } = await supabase
-			.from('codex_sync_status')
-			.select('*')
-			.single();
-
-		if (error) {
-			console.error('Error fetching sync status:', error);
-			return null;
-		}
-
-		return data;
-	} catch (err) {
-		console.error('Unexpected error fetching sync status:', err);
-		return null;
-	}
+export async function getSyncStatus(): Promise<{
+  is_syncing: boolean;
+  last_successful_sync: string | null;
+} | null> {
+  // Stub implementation - returns mock status
+  return {
+    is_syncing: false,
+    last_successful_sync: null,
+  };
 }
-
-/**
- * Triggers a manual sync of Codex data
- * @returns Promise resolving to success status
- */
-/*
-export async function triggerSync(): Promise<boolean> {
-	try {
-		// Call the Edge Function to trigger sync
-		const { data, error } = await supabase.functions.invoke('sync-codex-data', {
-			method: 'POST'
-		});
-
-		if (error) {
-			console.error('Error triggering sync:', error);
-			return false;
-		}
-
-		return true;
-	} catch (err) {
-		console.error('Unexpected error triggering sync:', err);
-		return false;
-	}
-}
-*/
-
-/**
- * Subscribes to real-time updates of the sync status
- * @param callback Function to call when sync status changes
- * @returns Unsubscribe function
- */
-/*
-export function subscribeSyncStatus(
-	callback: (status: CodexSyncStatus | null) => void
-): () => void {
-	const channel = supabase
-		.channel('codex_sync_status_changes')
-		.on(
-			'postgres_changes',
-			{
-				event: '*',
-				schema: 'public',
-				table: 'codex_sync_status'
-			},
-			async (payload) => {
-				// Fetch the latest status after any change
-				const status = await getSyncStatus();
-				callback(status);
-			}
-		)
-		.subscribe();
-
-	// Return unsubscribe function
-	return () => {
-		supabase.removeChannel(channel);
-	};
-}
-*/
-
-/**
- * Gets the last successful sync timestamp
- * @returns Promise resolving to the timestamp or null
- */
-/*
-export async function getLastSyncTime(): Promise<string | null> {
-	const status = await getSyncStatus();
-	return status?.last_successful_sync || null;
-}
-*/
-
-/**
- * Checks if a sync is currently in progress
- * @returns Promise resolving to boolean indicating sync status
- */
-/*
-export async function isSyncInProgress(): Promise<boolean> {
-	const status = await getSyncStatus();
-	return status?.is_syncing || false;
-}
-*/
