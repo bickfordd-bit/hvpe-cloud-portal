@@ -29,12 +29,12 @@ check_interval: 30
 copilot_patterns:
   # GitHub username that should trigger auto-merge
   author: copilot
-  
+
   # PR labels that indicate a Copilot PR
   labels:
     - copilot-agent
     - copilot
-  
+
   # Branch name prefixes that indicate Copilot branches
   branch_prefixes:
     - copilot/

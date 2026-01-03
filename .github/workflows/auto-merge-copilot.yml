@@ -15,10 +15,10 @@ jobs:
   auto-merge:
     runs-on: ubuntu-latest
     if: |
-      github.event.pull_request.user.login == 'copilot' || 
+      github.event.pull_request.user.login == 'copilot' ||
       contains(github.event.pull_request.labels.*.name, 'copilot-agent') ||
       startsWith(github.head_ref, 'copilot/')
-    
+
     steps:
       - name: Check PR eligibility
         id: check-eligibility
@@ -26,42 +26,42 @@ jobs:
         with:
           script: |
             const pr = context.payload.pull_request;
-            
+
             // Check if PR is from copilot
-            const isCopilotPR = 
+            const isCopilotPR =
               pr.user.login === 'copilot' ||
               pr.labels.some(label => label.name === 'copilot-agent') ||
               pr.head.ref.startsWith('copilot/');
-            
+
             console.log('PR eligibility check:');
             console.log(`- Author: ${pr.user.login}`);
             console.log(`- Labels: ${pr.labels.map(l => l.name).join(', ')}`);
             console.log(`- Head ref: ${pr.head.ref}`);
             console.log(`- Is Copilot PR: ${isCopilotPR}`);
-            
+
             if (!isCopilotPR) {
               console.log('❌ Not a Copilot PR, skipping auto-merge');
               core.setOutput('eligible', 'false');
               return;
             }
-            
+
             // Check if PR is draft
             if (pr.draft) {
               console.log('❌ PR is draft, skipping auto-merge');
               core.setOutput('eligible', 'false');
               return;
             }
-            
+
             // Check if no-auto-merge flag is present
             if (pr.title.includes('[no-auto-merge]')) {
               console.log('❌ PR has [no-auto-merge] flag, skipping');
               core.setOutput('eligible', 'false');
               return;
             }
-            
+
             console.log('✅ PR is eligible for auto-merge');
             core.setOutput('eligible', 'true');
-      
+
       - name: Comment - Auto-merge initiated
         if: steps.check-eligibility.outputs.eligible == 'true'
         uses: actions/github-script@v7
