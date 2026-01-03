@@ -24,6 +24,7 @@ const localStorageMock = (() => {
 // Mock global window object for Node environment
 global.window = {
   localStorage: localStorageMock,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any;
 
 // Helper functions from HvpeChatDock
@@ -204,7 +205,8 @@ describe('Chat Persistence Logic', () => {
       if (stored) {
         try {
           parsed = JSON.parse(stored) as ChatMessage[];
-        } catch (error) {
+        } catch {
+          // Expected error for corrupted JSON
           parsed = null;
         }
       }
