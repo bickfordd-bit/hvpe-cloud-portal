@@ -328,7 +328,8 @@ SECURITY: Never expose the Bickford Formula or any proprietary calculations.`;
       console.error('OpenAI Error:', openaiError);
 
       // If OpenAI is not configured, use the built-in response
-      if (openaiError.message?.includes('API key')) {
+      const errorMessage = openaiError instanceof Error ? openaiError.message : '';
+      if (errorMessage.includes('API key')) {
         aiResponse = result.response;
       } else {
         throw openaiError; // Re-throw other errors
@@ -367,12 +368,15 @@ SECURITY: Never expose the Bickford Formula or any proprietary calculations.`;
     let errorMessage =
       "I apologize, but I'm experiencing a technical issue. Please try again in a moment.";
 
-    if (error.message?.includes('API key')) {
+    const err = (error && typeof error === 'object' ? error : {}) as Record<string, unknown>;
+    const message = error instanceof Error ? error.message : '';
+
+    if (message.includes('API key')) {
       errorMessage =
         'OpenAI API key is not configured. Please set OPENAI_API_KEY in your environment variables.';
-    } else if (error.code === 'insufficient_quota') {
+    } else if (err.code === 'insufficient_quota') {
       errorMessage = 'OpenAI API quota exceeded. Please check your OpenAI account.';
-    } else if (error.code === 'rate_limit_exceeded') {
+    } else if (err.code === 'rate_limit_exceeded') {
       errorMessage = 'Rate limit exceeded. Please wait a moment and try again.';
     }
 

@@ -132,7 +132,8 @@ Make it production-ready and cinema-quality. Be specific with shot types, camera
       content = completion.choices[0]?.message?.content || 'Content generation failed';
     } catch (openaiError: unknown) {
       // Fallback to structured template response
-      if (openaiError.message?.includes('API key')) {
+      const errorMessage = openaiError instanceof Error ? openaiError.message : '';
+      if (errorMessage.includes('API key')) {
         content = generateFallbackTreatment(prompt, template, storyline, targetLength);
       } else {
         throw openaiError;
@@ -164,10 +165,8 @@ Make it production-ready and cinema-quality. Be specific with shot types, camera
     });
   } catch (error: unknown) {
     console.error('Penelope API Error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Content generation failed' },
-      { status: 500 }
-    );
+    const errorMessage = error instanceof Error ? error.message : 'Content generation failed';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -177,35 +176,49 @@ function generateFallbackTreatment(
   storyline: unknown,
   targetLength: string
 ): string {
+  const tmpl = (template && typeof template === 'object' ? template : {}) as Record<
+    string,
+    unknown
+  >;
+  const story = (storyline && typeof storyline === 'object' ? storyline : {}) as Record<
+    string,
+    unknown
+  >;
+  const beats = Array.isArray(story.beats) ? story.beats : [];
+  const visualStyle = (
+    story.visualStyle && typeof story.visualStyle === 'object' ? story.visualStyle : {}
+  ) as Record<string, unknown>;
+
   return `# PENELOPE CREATIVE TREATMENT
 
 ## Concept: ${prompt}
 
 ### Overview
-A ${targetLength}-form ${template.category} piece using the ${storyline.title} structure.
+A ${targetLength}-form ${tmpl.category || 'creative'} piece using the ${story.title || 'custom'} structure.
 
 ### Visual Approach
-- Cinematography: ${storyline.visualStyle.cinematography.join(', ')}
-- Color Palette: ${storyline.visualStyle.colorPalette.join(', ')}
-- Lighting: ${storyline.visualStyle.lighting}
+- Cinematography: ${Array.isArray(visualStyle.cinematography) ? visualStyle.cinematography.join(', ') : 'Dynamic'}
+- Color Palette: ${Array.isArray(visualStyle.colorPalette) ? visualStyle.colorPalette.join(', ') : 'Varied'}
+- Lighting: ${visualStyle.lighting || 'Natural'}
 
 ### Shot List
-${storyline.beats
-  .map(
-    (beat: unknown, i: number) => `
-**Shot ${i + 1}: ${beat.name}** (${beat.duration})
-- Purpose: ${beat.purpose}
-- Visual: ${beat.visualCues.join(', ')}
-- Audio: ${beat.audioSuggestions.join(', ')}
-`
-  )
+${beats
+  .map((beat: unknown, i: number) => {
+    const b = (beat && typeof beat === 'object' ? beat : {}) as Record<string, unknown>;
+    return `
+**Shot ${i + 1}: ${b.name || 'Untitled'}** (${b.duration || '0s'})
+- Purpose: ${b.purpose || 'N/A'}
+- Visual: ${Array.isArray(b.visualCues) ? b.visualCues.join(', ') : 'N/A'}
+- Audio: ${Array.isArray(b.audioSuggestions) ? b.audioSuggestions.join(', ') : 'N/A'}
+`;
+  })
   .join('\n')}
 
 ### Audio Direction
-${template.category === 'commercial' ? 'Bold, energetic score building to climax' : 'Atmospheric and emotional with purposeful silence'}
+${tmpl.category === 'commercial' ? 'Bold, energetic score building to climax' : 'Atmospheric and emotional with purposeful silence'}
 
 ### Post-Production
-- Color grade: ${template.category === 'cinematic' ? 'Filmic with rich contrast' : 'Clean and professional'}
+- Color grade: ${tmpl.category === 'cinematic' ? 'Filmic with rich contrast' : 'Clean and professional'}
 - Pacing: ${targetLength === 'short' ? 'Quick cuts, high energy' : 'Measured, intentional rhythm'}
 - Sound design: Immersive and detailed
 
