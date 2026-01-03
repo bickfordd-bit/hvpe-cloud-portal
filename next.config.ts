@@ -10,28 +10,17 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
 
-  // Temporarily ignore ESLint errors during build
-  // These were fixed by PR #28
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
-  // Skip static generation for dynamic pages
-  experimental: {
-    missingSuspenseWithCSRBailout: false,
-  },
-
   // Optimize for Vercel deployment
-  swcMinify: true,
   reactStrictMode: true,
 
-  // Suppress Prisma telemetry warnings
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals.push("@prisma/client");
-    }
-    return config;
-  },
+  // Configure Turbopack (Next.js 16 default)
+  // Empty config to silence webpack compatibility warning
+  turbopack: {},
+
+  // Note: Next.js 16 uses Turbopack by default
+  // ESLint config moved to eslint.config.mjs (no longer supported in next.config)
+  // experimental.missingSuspenseWithCSRBailout removed (deprecated in Next.js 16)
+  // swcMinify is default and no longer configurable
 };
 
 export default nextConfig;
