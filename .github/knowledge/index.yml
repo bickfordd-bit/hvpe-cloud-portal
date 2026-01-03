@@ -1,0 +1,36 @@
+# Knowledge Base Index
+# Auto-generated - do not edit manually
+# Last updated: 2026-01-03T18:25:36.409Z
+
+version: 1.0.0
+total_entries: 3
+categories:
+  build_fix: 1
+  feature: 1
+  refactor: 0
+  bug_fix: 0
+  deployment: 1
+  configuration: 0
+  documentation: 0
+  test: 0
+  security: 0
+  performance: 0
+
+entries:
+  - id: "fix-codex-sync-2026-01-03"
+    type: "build_fix"
+    timestamp: "2026-01-03T18:15:29Z"
+    file: "entries/fix-codex-sync-2026-01-03.yml"
+    description: "Fix Codex sync module build failure"
+  
+  - id: "enable-auto-merge-2026-01-03"
+    type: "deployment"
+    timestamp: "2026-01-03T18:20:00Z"
+    file: "entries/enable-auto-merge-2026-01-03.yml"
+    description: "Enable auto-merge workflow for automated PR merging"
+  
+  - id: "build-knowledge-system-2026-01-03"
+    type: "feature"
+    timestamp: "2026-01-03T18:25:36Z"
+    file: "entries/build-knowledge-system-2026-01-03.yml"
+    description: "Build Knowledge Persistence System for coaching-style learning"
