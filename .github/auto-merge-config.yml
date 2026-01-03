@@ -1,0 +1,45 @@
+# Auto-merge configuration for Copilot PRs
+# This file configures the behavior of the auto-merge-copilot workflow
+
+# Merge method to use when auto-merging
+# Options: 'squash', 'merge', 'rebase'
+merge_method: squash
+
+# Required checks that must pass before auto-merge
+# These check names are matched against actual GitHub check names (case-insensitive, partial match)
+require_checks:
+  - lint
+  - build
+  - test
+
+# Whether to delete the branch after successful merge
+delete_branch_after_merge: true
+
+# Whether to post notifications as PR comments
+notify_on_merge: true
+
+# Maximum time to wait for checks (in minutes)
+max_wait_time: 30
+
+# Interval between check status polls (in seconds)
+check_interval: 30
+
+# Patterns to identify Copilot PRs
+# The workflow will auto-merge PRs that match ANY of these criteria:
+copilot_patterns:
+  # GitHub username that should trigger auto-merge
+  author: copilot
+  
+  # PR labels that indicate a Copilot PR
+  labels:
+    - copilot-agent
+    - copilot
+  
+  # Branch name prefixes that indicate Copilot branches
+  branch_prefixes:
+    - copilot/
+    - copilot-
+
+# Opt-out flag in PR title
+# PRs with this text in the title will NOT auto-merge
+no_auto_merge_flag: "[no-auto-merge]"
