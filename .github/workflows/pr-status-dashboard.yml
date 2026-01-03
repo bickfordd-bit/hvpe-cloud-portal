@@ -1,0 +1,232 @@
+name: PR Status Dashboard
+
+on:
+  pull_request:
+    branches: [main, mobile, ui-redesign-v1]
+    types: [opened, synchronize, reopened, ready_for_review]
+  check_suite:
+    types: [completed, requested]
+  check_run:
+    types: [completed, created, requested_action]
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]  # This references the workflow NAME from ci-cd.yml
+    types: [completed, requested]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: read
+  statuses: read
+
+jobs:
+  update-status:
+    name: Update PR Status Dashboard
+    runs-on: ubuntu-latest
+    if: github.event.pull_request != null || github.event.workflow_run.pull_requests[0] != null
+    steps:
+      - name: Update or create status comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            let prNumber;
+            let pr;
+            
+            // Get PR number from different event types
+            if (context.payload.pull_request) {
+              prNumber = context.payload.pull_request.number;
+              pr = context.payload.pull_request;
+            } else if (context.payload.workflow_run && context.payload.workflow_run.pull_requests[0]) {
+              prNumber = context.payload.workflow_run.pull_requests[0].number;
+              const prData = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber
+              });
+              pr = prData.data;
+            } else if (context.payload.check_suite && context.payload.check_suite.pull_requests[0]) {
+              prNumber = context.payload.check_suite.pull_requests[0].number;
+              const prData = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber
+              });
+              pr = prData.data;
+            } else {
+              console.log('No PR found for this event');
+              return;
+            }
+            
+            console.log(`Updating status dashboard for PR #${prNumber}`);
+            
+            // Get all check runs for the PR
+            const checkRuns = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: pr.head.sha,
+              per_page: 100
+            });
+            
+            // Get commit statuses
+            const statuses = await github.rest.repos.getCombinedStatusForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: pr.head.sha
+            }).catch((statusError) => {
+              console.log('Could not fetch commit statuses:', statusError.message || statusError);
+              return { data: { statuses: [], state: 'pending' } };
+            });
+            
+            // Categorize checks
+            const checks = {
+              success: [],
+              failure: [],
+              pending: [],
+              skipped: []
+            };
+            
+            checkRuns.data.check_runs.forEach(check => {
+              const status = check.conclusion || check.status;
+              if (status === 'success') {
+                checks.success.push(check);
+              } else if (status === 'failure' || status === 'cancelled' || status === 'timed_out') {
+                checks.failure.push(check);
+              } else if (status === 'skipped' || status === 'neutral') {
+                checks.skipped.push(check);
+              } else {
+                checks.pending.push(check);
+              }
+            });
+            
+            // Add commit statuses
+            statuses.data.statuses.forEach(status => {
+              const checkObj = {
+                name: status.context,
+                html_url: status.target_url,
+                conclusion: status.state
+              };
+              
+              if (status.state === 'success') {
+                checks.success.push(checkObj);
+              } else if (status.state === 'failure' || status.state === 'error') {
+                checks.failure.push(checkObj);
+              } else {
+                checks.pending.push(checkObj);
+              }
+            });
+            
+            // Calculate overall status
+            let overallStatus = '🟢 All checks passing';
+            let statusEmoji = '✅';
+            
+            if (checks.failure.length > 0) {
+              overallStatus = '🔴 Some checks failed';
+              statusEmoji = '❌';
+            } else if (checks.pending.length > 0) {
+              overallStatus = '🟡 Checks in progress';
+              statusEmoji = '⏳';
+            }
+            
+            // Get deployment info if available
+            const deployments = await github.rest.repos.listDeployments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: pr.head.ref,
+              per_page: 5
+            }).catch((deployError) => {
+              console.log('Could not fetch deployments:', deployError.message || deployError);
+              return { data: [] };
+            });
+            
+            let deploymentInfo = '';
+            if (deployments.data.length > 0) {
+              const latestDeployment = deployments.data[0];
+              const deploymentStatuses = await github.rest.repos.listDeploymentStatuses({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                deployment_id: latestDeployment.id
+              }).catch(() => ({ data: [] }));
+              
+              if (deploymentStatuses.data.length > 0) {
+                const latestStatus = deploymentStatuses.data[0];
+                const deployUrl = latestStatus.environment_url || latestStatus.target_url;
+                
+                if (deployUrl) {
+                  deploymentInfo = `\n\n### 🚀 Deployment\n- **Preview URL:** ${deployUrl}\n- **Environment:** ${latestDeployment.environment}\n- **Status:** ${latestStatus.state}`;
+                }
+              }
+            }
+            
+            // Build status message
+            const statusMessage = `## ${statusEmoji} PR Status Dashboard
+            
+            ${overallStatus}
+            
+            **Last updated:** ${new Date().toLocaleString('en-US', { timeZone: 'UTC' })} UTC
+            **Commit:** ${pr.head.sha.substring(0, 7)}
+            **Author:** @${pr.user.login}
+            
+            ### ✅ Passing Checks (${checks.success.length})
+            ${checks.success.length > 0 
+              ? checks.success.map(c => `- ✅ [${c.name}](${c.html_url || c.details_url || '#'})`).join('\n')
+              : '- None'
+            }
+            
+            ### ❌ Failed Checks (${checks.failure.length})
+            ${checks.failure.length > 0
+              ? checks.failure.map(c => `- ❌ [${c.name}](${c.html_url || c.details_url || '#'})`).join('\n')
+              : '- None'
+            }
+            
+            ### ⏳ Pending Checks (${checks.pending.length})
+            ${checks.pending.length > 0
+              ? checks.pending.map(c => `- ⏳ [${c.name}](${c.html_url || c.details_url || '#'})`).join('\n')
+              : '- None'
+            }
+            
+            ${checks.skipped.length > 0 ? `### ⚪ Skipped Checks (${checks.skipped.length})\n${checks.skipped.map(c => `- ⚪ ${c.name}`).join('\n')}` : ''}
+            ${deploymentInfo}
+            
+            ---
+            
+            ### 🤖 Auto-Merge Status
+            ${checks.failure.length === 0 && checks.pending.length === 0
+              ? '✅ **Ready to merge!** This PR will auto-merge once approved.'
+              : '⏳ **Waiting for checks...** This PR will auto-merge when all checks pass.'
+            }
+            
+            <sub>This comment is automatically updated as checks complete. Last refresh: ${new Date().toISOString()}</sub>
+            `;
+            
+            // Find existing status comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 100
+            });
+            
+            const botComment = comments.data.find(
+              comment => comment.user.login === 'github-actions[bot]' &&
+                         comment.body.includes('PR Status Dashboard')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: statusMessage
+              });
+              console.log('✅ Updated existing status comment');
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: statusMessage
+              });
+              console.log('✅ Created new status comment');
+            }

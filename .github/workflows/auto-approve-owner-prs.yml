@@ -1,0 +1,19 @@
+name: Auto-approve Owner PRs
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  auto-approve:
+    name: Auto-approve owner PRs
+    if: github.event.pull_request.user.login == 'bickfordd-bit'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-approve PR
+        uses: hmarr/auto-approve-action@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

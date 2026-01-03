@@ -151,6 +151,38 @@ Set these in `.env.local` (and in Vercel Project Settings → Environment Variab
 - `OPENAI_API_KEY` (for the in-portal HVPE chat dock)
 - `HVPE_OPENAI_API_KEY` (preferred alias for AI Core; falls back to `OPENAI_API_KEY`)
 
+## Unified Chat Agent Feature 💬
+
+The HVPE Cloud Portal includes a unified chat agent that provides an intelligent assistant experience with automatic daily archiving.
+
+### Key Features
+- **Unified Agent Experience**: Single AI agent (no persona selection) for streamlined interaction
+- **Daily Archiving**: Conversations automatically archive at the start of each new day
+- **Persistent State**: Messages persist across page refreshes within the same day
+- **Cross-screen Availability**: Chat dock appears on all screens throughout the portal
+- **Archive Status Display**: UI shows current date and automatic archiving status
+
+### How It Works
+1. **Persistence**: All conversations are stored in browser localStorage with date-based keys
+2. **Auto-archiving**: When the date changes (detected every 60 seconds), previous day's messages are automatically archived
+3. **Fresh Context**: Each new day starts with a clean slate while preserving history in archives
+4. **API Integration**: Uses `/api/hvpe-chat` endpoint with `mode: "general"` for unified agent responses
+
+### Storage Keys
+- Active conversation: `hvpe-chat-history-YYYY-MM-DD`
+- Archived conversations: `hvpe-chat-archive-YYYY-MM-DD`
+- Last seen date tracker: `hvpe-chat-last-date`
+
+### Testing
+Comprehensive test coverage for:
+- Date key generation and storage key formatting
+- Message persistence across sessions
+- Daily archiving trigger logic
+- Archive rotation when date changes
+- Corrupted data handling
+
+Run tests: `npm test -- src/components/chat/__tests__/HvpeChatDock.test.tsx`
+
 ## Prisma setup (Postgres)
 1) Generate client (requires `DATABASE_URL` set):
 ```bash
@@ -201,6 +233,63 @@ curl -X POST https://your-domain/api/license/approve \
 - Build: `npm run build`
 - Lint: `npm run lint`
 - Test: `npm test`
+
+## Automated Deployment (CI/CD) 🚀
+
+The project uses a **unified deployment pipeline** that automatically deploys on every push:
+
+### How It Works
+
+1. **Push your code** to any branch
+2. **GitHub Actions** automatically runs the deployment workflow
+3. **Get notified** when deployment completes with a live URL
+
+### Deployment Types
+
+- **Production:** Pushes to `main` or `mobile` → deployed to production
+- **Preview:** Pushes to any other branch → deployed to preview URL
+- **Pull Requests:** Automatic preview deployments with PR comments
+
+### Features
+
+✅ Automatic retries for transient failures  
+✅ Pre-deployment validation (catches issues early)  
+✅ Post-deployment smoke tests  
+✅ Real-time status updates via GitHub UI  
+✅ Zero manual intervention required  
+
+### Configuration
+
+Deployment is configured via GitHub Secrets:
+- `VERCEL_TOKEN` - Vercel authentication
+- `VERCEL_ORG_ID` - Organization ID
+- `VERCEL_PROJECT_ID` - Project ID
+
+Optional secrets (auto-detected):
+- `DATABASE_URL` - Database connection
+- `OPENAI_API_KEY` - AI features
+- `LICENSE_SESSION_SECRET` - License validation
+
+### Manual Deployment
+
+You can also deploy manually using helper scripts:
+
+```bash
+# Validate environment
+./scripts/preflight-check.sh
+
+# Deploy with automatic retries
+./scripts/deploy-with-retry.sh production
+
+# Verify deployment health
+./scripts/verify-deployment.sh https://your-url.vercel.app
+```
+
+### Documentation
+
+- **Quick Start:** See [Deployment Guide](./DEPLOYMENT.md)
+- **Comprehensive Reference:** See [CI/CD Guide](./docs/CI_CD_GUIDE.md)
+- **Workflow Details:** See `.github/workflows/master-deploy.yml`
 
 ## Docker Deployment 🐳
 
@@ -276,7 +365,33 @@ If you want, I can scaffold a simple CLA acceptance flow (web form + signed reco
 
 Security note: The `/api/ai/code` endpoint runs `git` commands on the host. Do not expose it publicly without authentication and approval gates. Prefer setting `AI_WEBHOOK_SECRET` and adding user authentication in front of it.
 
-CI: A GitHub Actions workflow is provided at `.github/workflows/ci-deploy.yml`. It builds the app on push/PR to `ui-redesign-v1` and attempts to deploy to Vercel when Vercel secrets are configured.
+## CI/CD: Unified Deployment Pipeline
+
+The project uses a **bulletproof unified deployment workflow** at `.github/workflows/master-deploy.yml`.
+
+### Key Features:
+- ✅ Single workflow handles all deployments (production + preview)
+- ✅ Automatic retry logic for transient failures (3 retries with exponential backoff)
+- ✅ Preflight validation catches issues before deployment starts
+- ✅ Post-deployment smoke tests verify deployment health
+- ✅ Real-time status updates via GitHub commit status API
+- ✅ Concurrency protection (queues instead of canceling deployments)
+- ✅ Auto-fixes common issues (stale dependencies, cache)
+
+### How to Use:
+**Just push your code!** The workflow automatically:
+1. Validates environment and dependencies
+2. Builds and tests the application
+3. Deploys to Vercel (production or preview based on branch)
+4. Verifies deployment health
+5. Comments on PR/commit with deployment URL
+
+### Documentation:
+- **Comprehensive Guide:** [docs/CI_CD_GUIDE.md](./docs/CI_CD_GUIDE.md)
+- **Deployment Platforms:** [DEPLOYMENT.md](./DEPLOYMENT.md)
+- **Workflow Source:** [.github/workflows/master-deploy.yml](./.github/workflows/master-deploy.yml)
+
+Legacy workflows (`ci-cd.yml`, `deploy-vercel.yml`, `ci-deploy.yml`) are deprecated and will be archived after a monitoring period. See `.github/workflows/archive/README.md` for details.
 
 ## HVPE chat dock
 - API: `POST /api/hvpe-chat` (requires `OPENAI_API_KEY`)
