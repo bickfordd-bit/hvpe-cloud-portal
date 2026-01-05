@@ -88,11 +88,11 @@ describe("IntentPanel", () => {
       ).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Fetch data")).toBeInTheDocument();
+    expect(screen.getByText(/Fetch data/)).toBeInTheDocument();
     expect(
       screen.getByText("To get the latest information"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Process results")).toBeInTheDocument();
+    expect(screen.getByText(/Process results/)).toBeInTheDocument();
     expect(screen.getByText("To prepare the output")).toBeInTheDocument();
     expect(screen.getByText(/Config flags: TEST_FLAG/i)).toBeInTheDocument();
   });
