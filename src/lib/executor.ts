@@ -17,10 +17,59 @@ import {
 import { loadCanon } from './canon';
 import { appendLedger } from './ledger';
 import { logger } from './logger';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_REPO = process.env.GITHUB_REPO || 'bickfordd-bit/hvpe-cloud-portal';
-const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
+const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'mobile';
+
+const GITHUB_API_BASE = 'https://api.github.com';
+
+function parseRepo(full: string): { owner: string; repo: string } {
+  const [owner, repo] = full.split('/');
+  if (!owner || !repo) {
+    throw new Error(`Invalid GITHUB_REPO format: "${full}" (expected "owner/repo")`);
+  }
+  return { owner, repo };
+}
+
+async function githubJson<T>(
+  method: string,
+  url: string,
+  body?: any,
+): Promise<T> {
+  if (!GITHUB_TOKEN) {
+    throw new Error('GITHUB_TOKEN is not set');
+  }
+
+  const res = await fetch(url, {
+    method,
+    headers: {
+      'Accept': 'application/vnd.github+json',
+      'Authorization': `Bearer ${GITHUB_TOKEN}`,
+      'X-GitHub-Api-Version': '2022-11-28',
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+    cache: 'no-store',
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`GitHub API ${method} ${url} failed: ${res.status} ${res.statusText}${text ? ` — ${text}` : ''}`);
+  }
+
+  return (await res.json()) as T;
+}
+
+function ensureDirForFile(relativePath: string) {
+  const abs = path.join(process.cwd(), relativePath);
+  const dir = path.dirname(abs);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
 
 /**
  * Check if GitHub API is configured
@@ -35,27 +84,33 @@ function isGitHubConfigured(): boolean {
 export function generateExecutionPlan(binding: PolicyBinding): ExecutionPlan {
   logger.info('Generating execution plan', { policyId: binding.policy.id });
   
-  // For now, generate a placeholder plan
-  // In production, this would use AI/templates to generate actual changes
   const changes: FileChange[] = [];
+
+  // Always generate a safe, append-only execution artifact (committed to GitHub when configured)
+  const tsSafe = binding.intent.timestamp.replace(/[:.]/g, '-');
+  const rand = Math.random().toString(36).slice(2, 8);
+  const artifactPath = `.bick/executions/${tsSafe}-${rand}.json`;
+  const canonHash = (() => {
+    try {
+      return loadCanon().meta.sha256;
+    } catch {
+      return 'unknown';
+    }
+  })();
   
-  // Example: for docs policy, create/update README
-  if (binding.intent.intentType === 'docs') {
-    changes.push({
-      path: 'README.md',
-      operation: 'modify',
-      preview: '# Updated documentation\n\n' + binding.intent.rawText
-    });
-  }
-  
-  // Example: for config policy, update config file
-  if (binding.intent.intentType === 'config') {
-    changes.push({
-      path: 'config/settings.json',
-      operation: 'modify',
-      preview: JSON.stringify({ updated: true }, null, 2)
-    });
-  }
+  changes.push({
+    path: artifactPath,
+    operation: 'create',
+    preview: JSON.stringify({
+      id: `${tsSafe}-${rand}`,
+      timestamp: binding.intent.timestamp,
+      intent: binding.intent.rawText,
+      intentType: binding.intent.intentType,
+      policyId: binding.policy.id,
+      canonHash,
+      reasoning: binding.reasoning,
+    }, null, 2) + '\n',
+  });
   
   const plan: ExecutionPlan = {
     intent: binding.intent,
@@ -190,16 +245,12 @@ async function commitToGitHub(
     };
   }
   
-  // Format commit message
-  const fullMessage = `BICKFORD AUTO-COMMIT
-
-Intent: ${message}
-Canon: ${canonHash.substring(0, 16)}...
-Policy: ${policyId}
-Status: VERIFIED
-
-${changes.map(c => `${c.operation}: ${c.path}`).join('\n')}
-`;
+  const fullMessage = `BICKFORD AUTO-COMMIT\n\n` +
+    `Intent: ${message}\n` +
+    `Canon: ${canonHash.substring(0, 16)}...\n` +
+    `Policy: ${policyId}\n` +
+    `Branch: ${GITHUB_BRANCH}\n\n` +
+    `${changes.map(c => `${c.operation}: ${c.path}`).join('\n')}\n`;
   
   logger.info('Committing to GitHub', {
     repo: GITHUB_REPO,
@@ -208,26 +259,78 @@ ${changes.map(c => `${c.operation}: ${c.path}`).join('\n')}
   });
   
   try {
-    // NOTE: This is a simplified implementation
-    // In production, would use Octokit or GitHub API to:
-    // 1. Get current commit SHA
-    // 2. Create blobs for each file
-    // 3. Create tree
-    // 4. Create commit
-    // 5. Update ref
-    
-    // For now, return simulated commit
+    const { owner, repo } = parseRepo(GITHUB_REPO);
+
+    // 1) Resolve branch ref -> base commit SHA
+    const ref = await githubJson<{ object: { sha: string } }>(
+      'GET',
+      `${GITHUB_API_BASE}/repos/${owner}/${repo}/git/ref/heads/${encodeURIComponent(GITHUB_BRANCH)}`,
+    );
+    const baseSha = ref.object.sha;
+
+    // 2) Load base commit -> base tree SHA
+    const baseCommit = await githubJson<{ tree: { sha: string } }>(
+      'GET',
+      `${GITHUB_API_BASE}/repos/${owner}/${repo}/git/commits/${baseSha}`,
+    );
+    const baseTreeSha = baseCommit.tree.sha;
+
+    // 3) Create blobs + build tree entries
+    const tree: Array<{ path: string; mode: string; type: 'blob'; sha: string }> = [];
+
+    for (const change of changes) {
+      if (change.operation === 'delete') {
+        throw new Error(`Delete operations are not supported by the auto-commit runtime: ${change.path}`);
+      }
+      if (typeof change.preview !== 'string') {
+        throw new Error(`Missing file content for ${change.operation} ${change.path}`);
+      }
+
+      const blob = await githubJson<{ sha: string }>(
+        'POST',
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/git/blobs`,
+        { content: change.preview, encoding: 'utf-8' },
+      );
+
+      tree.push({
+        path: change.path.replace(/^\//, ''),
+        mode: '100644',
+        type: 'blob',
+        sha: blob.sha,
+      });
+    }
+
+    // 4) Create new tree
+    const newTree = await githubJson<{ sha: string }>(
+      'POST',
+      `${GITHUB_API_BASE}/repos/${owner}/${repo}/git/trees`,
+      { base_tree: baseTreeSha, tree },
+    );
+
+    // 5) Create commit
+    const commit = await githubJson<{ sha: string }>(
+      'POST',
+      `${GITHUB_API_BASE}/repos/${owner}/${repo}/git/commits`,
+      { message: fullMessage, tree: newTree.sha, parents: [baseSha] },
+    );
+
+    // 6) Update branch ref
+    await githubJson(
+      'PATCH',
+      `${GITHUB_API_BASE}/repos/${owner}/${repo}/git/refs/heads/${encodeURIComponent(GITHUB_BRANCH)}`,
+      { sha: commit.sha, force: false },
+    );
+
     const commitInfo: CommitInfo = {
-      sha: `auto-${Date.now()}`,
+      sha: commit.sha,
       message: fullMessage,
       files: changes.map(c => c.path),
       timestamp: new Date().toISOString(),
       author: 'bickford-system',
-      url: `https://github.com/${GITHUB_REPO}/commit/auto-${Date.now()}`
+      url: `https://github.com/${GITHUB_REPO}/commit/${commit.sha}`,
     };
-    
+
     logger.info('GitHub commit created', { sha: commitInfo.sha });
-    
     return commitInfo;
   } catch (error: any) {
     logger.error('GitHub commit failed', { error: error.message });
@@ -291,6 +394,23 @@ export async function executePolicy(binding: PolicyBinding): Promise<ExecutionRe
     const commits: CommitInfo[] = [];
     
     if (plan.changes.length > 0) {
+      // Write local artifacts best-effort (supports file-based ledger + dev inspection)
+      for (const change of plan.changes) {
+        if (change.operation === 'create' || change.operation === 'modify') {
+          if (typeof change.preview === 'string') {
+            try {
+              ensureDirForFile(change.path);
+              fs.writeFileSync(path.join(process.cwd(), change.path), change.preview, 'utf-8');
+            } catch (e: any) {
+              logger.warn('Failed to write local execution artifact (best-effort)', {
+                path: change.path,
+                error: e?.message || String(e),
+              });
+            }
+          }
+        }
+      }
+
       const canon = loadCanon();
       const commit = await commitToGitHub(
         plan.changes,

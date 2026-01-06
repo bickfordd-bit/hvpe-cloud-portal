@@ -83,7 +83,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const requiredChecks = ['quality', 'test', 'build'];
+            const requiredChecks = ['lint', 'build', 'test'];
             const maxAttempts = 60; // 30 minutes max wait
             const delayMs = 30000; // 30 seconds between checks
 
