@@ -5,8 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { queryLedger, getLedgerStats, verifyLedgerIntegrity } from '@/lib/ledger';
-import { LedgerQueryRequest, LedgerQueryResponse } from '@/lib/types';
+import { queryLedgerDisplay } from '@/lib/ledger';
 import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
@@ -19,27 +18,23 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    
-    const query: LedgerQueryRequest = {
-      startDate: searchParams.get('startDate') || undefined,
-      endDate: searchParams.get('endDate') || undefined,
-      intentType: searchParams.get('intentType') as any || undefined,
-      outcome: searchParams.get('outcome') as any || undefined,
-      limit: parseInt(searchParams.get('limit') || '50')
-    };
-    
-    logger.info('Ledger query', { query });
-    
-    const entries = queryLedger(query);
-    const hasMore = entries.length >= (query.limit || 50);
-    
-    const response: LedgerQueryResponse = {
+
+    const limit = parseInt(searchParams.get('limit') || '10', 10);
+    const startDate = searchParams.get('startDate') || undefined;
+    const endDate = searchParams.get('endDate') || undefined;
+    const intentType = searchParams.get('intentType') || undefined;
+    const outcome = (searchParams.get('outcome') as any) || undefined;
+
+    const query = { startDate, endDate, intentType, outcome, limit };
+    logger.info('Ledger query (display)', { query });
+
+    const entries = queryLedgerDisplay(query);
+
+    return NextResponse.json({
       entries,
       total: entries.length,
-      hasMore
-    };
-    
-    return NextResponse.json(response);
+      hasMore: false,
+    });
   } catch (error: any) {
     logger.error('Ledger query failed', { error: error.message });
     return NextResponse.json({
@@ -48,39 +43,3 @@ export async function GET(req: NextRequest) {
   }
 }
 
-/**
- * POST /api/ledger/stats
- * 
- * Get ledger statistics
- */
-export async function POST(req: NextRequest) {
-  const { pathname } = new URL(req.url);
-  
-  if (pathname.endsWith('/stats')) {
-    try {
-      const stats = getLedgerStats();
-      return NextResponse.json(stats);
-    } catch (error: any) {
-      logger.error('Ledger stats failed', { error: error.message });
-      return NextResponse.json({
-        error: error.message
-      }, { status: 500 });
-    }
-  }
-  
-  if (pathname.endsWith('/verify')) {
-    try {
-      const result = verifyLedgerIntegrity();
-      return NextResponse.json(result);
-    } catch (error: any) {
-      logger.error('Ledger verification failed', { error: error.message });
-      return NextResponse.json({
-        error: error.message
-      }, { status: 500 });
-    }
-  }
-  
-  return NextResponse.json({
-    error: 'Unknown endpoint'
-  }, { status: 404 });
-}
