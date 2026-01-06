@@ -13,6 +13,16 @@ import { logger } from './logger';
 
 const LEDGER_DIR = path.join(process.cwd(), '.bick', 'ledger');
 
+export interface LedgerDisplayEntry {
+  id: string;
+  timestamp: string;
+  intentType: string;
+  outcome: 'ALLOW' | 'DENY' | 'FAIL';
+  reasoning: string;
+  denialReason?: string;
+  canonRule?: string;
+}
+
 /**
  * Ensure ledger directory exists
  */
@@ -230,6 +240,17 @@ export function queryLedger(options: {
         const filepath = path.join(dirPath, file);
         const content = fs.readFileSync(filepath, 'utf-8');
         const entry = JSON.parse(content) as LedgerEntry;
+
+        // Skip legacy/non-conforming entries to avoid runtime crashes
+        if (!entry || typeof entry !== 'object' || !('intent' in entry)) {
+          continue;
+        }
+        if (!entry.intent || typeof entry.intent !== 'object') {
+          continue;
+        }
+        if (typeof entry.id !== 'string' || typeof entry.timestamp !== 'string') {
+          continue;
+        }
         
         // Apply filters
         if (options.intentType && entry.intent.intentType !== options.intentType) {
@@ -251,6 +272,130 @@ export function queryLedger(options: {
     return entries;
   } catch (error: any) {
     logger.error('Failed to query ledger', { error: error.message });
+    return entries;
+  }
+}
+
+function normalizeOutcome(raw: unknown): LedgerDisplayEntry['outcome'] | null {
+  if (raw === 'ALLOW' || raw === 'DENY' || raw === 'FAIL') {
+    return raw;
+  }
+  // Map a few legacy patterns if present
+  if (raw === 'SUCCESS') return 'ALLOW';
+  if (raw === 'FAILED') return 'FAIL';
+  if (raw === 'DENIED') return 'DENY';
+  return null;
+}
+
+function normalizeDisplayEntry(fileName: string, raw: any): LedgerDisplayEntry | null {
+  const id = typeof raw?.id === 'string' ? raw.id : fileName.replace(/\.json$/i, '');
+  const timestamp =
+    (typeof raw?.timestamp === 'string' && raw.timestamp) ||
+    (typeof raw?.ts === 'string' && raw.ts) ||
+    '';
+
+  if (!timestamp) return null;
+
+  const intentType =
+    (typeof raw?.intentType === 'string' && raw.intentType) ||
+    (typeof raw?.intent?.intentType === 'string' && raw.intent.intentType) ||
+    'unknown';
+
+  const outcome = normalizeOutcome(raw?.outcome) ||
+    normalizeOutcome(raw?.result?.status) ||
+    normalizeOutcome(raw?.execution?.status);
+
+  if (!outcome) return null;
+
+  const reasoning =
+    (typeof raw?.reasoning === 'string' && raw.reasoning) ||
+    (typeof raw?.intent === 'string' && raw.intent) ||
+    (typeof raw?.payload?.intent === 'string' && raw.payload.intent) ||
+    (typeof raw?.subject === 'string' && raw.subject) ||
+    'Execution recorded';
+
+  const denialReason = typeof raw?.denialReason === 'string' ? raw.denialReason : undefined;
+  const canonRule = typeof raw?.canonRule === 'string' ? raw.canonRule : undefined;
+
+  return {
+    id,
+    timestamp,
+    intentType,
+    outcome,
+    reasoning,
+    denialReason,
+    canonRule,
+  };
+}
+
+/**
+ * Schema-tolerant ledger query used by the homepage.
+ * Reads mixed legacy/new entries under `.bick/ledger` and returns a stable UI shape.
+ */
+export function queryLedgerDisplay(options: {
+  startDate?: string;
+  endDate?: string;
+  intentType?: string;
+  outcome?: LedgerDisplayEntry['outcome'];
+  limit?: number;
+}): LedgerDisplayEntry[] {
+  const entries: LedgerDisplayEntry[] = [];
+
+  try {
+    if (!fs.existsSync(LEDGER_DIR)) {
+      return entries;
+    }
+
+    const dateDirs = fs.readdirSync(LEDGER_DIR)
+      .filter(name => /^\d{4}-\d{2}-\d{2}$/.test(name))
+      .sort()
+      .reverse();
+
+    const filteredDirs = dateDirs.filter(dateDir => {
+      if (options.startDate && dateDir < options.startDate) return false;
+      if (options.endDate && dateDir > options.endDate) return false;
+      return true;
+    });
+
+    for (const dateDir of filteredDirs) {
+      const dirPath = path.join(LEDGER_DIR, dateDir);
+      const files = fs.readdirSync(dirPath)
+        .filter(name => name.endsWith('.json'))
+        .sort()
+        .reverse();
+
+      for (const file of files) {
+        const filepath = path.join(dirPath, file);
+        const content = fs.readFileSync(filepath, 'utf-8');
+
+        let parsed: any;
+        try {
+          parsed = JSON.parse(content);
+        } catch {
+          continue;
+        }
+
+        const normalized = normalizeDisplayEntry(file, parsed);
+        if (!normalized) continue;
+
+        if (options.intentType && normalized.intentType !== options.intentType) {
+          continue;
+        }
+        if (options.outcome && normalized.outcome !== options.outcome) {
+          continue;
+        }
+
+        entries.push(normalized);
+
+        if (options.limit && entries.length >= options.limit) {
+          return entries;
+        }
+      }
+    }
+
+    return entries;
+  } catch (error: any) {
+    logger.error('Failed to query ledger display entries', { error: error.message });
     return entries;
   }
 }
