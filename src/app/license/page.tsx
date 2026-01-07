@@ -43,9 +43,9 @@ function LicenseForm() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-black">
+    <div className="flex items-center justify-center min-h-screen bg-black font-sans">
       <div className="w-full max-w-md p-8 bg-neutral-900 border border-neutral-800 rounded-lg">
-        <h1 className="text-2xl font-bold text-white mb-6">
+        <h1 className="text-2xl font-bold text-white mb-6 font-sans">
           Enter License Key
         </h1>
 
@@ -56,19 +56,19 @@ function LicenseForm() {
             if (e.key === "Enter") submit();
           }}
           placeholder="BICK-...."
-          className="w-full px-4 py-3 bg-neutral-800 text-white border border-neutral-700 rounded-md focus:outline-none focus:border-neutral-500 mb-4"
+          className="w-full px-4 py-3 bg-neutral-800 text-white border border-neutral-700 rounded-md focus:outline-none focus:border-neutral-500 mb-4 font-sans"
           disabled={loading}
         />
 
         <button
           onClick={submit}
           disabled={loading}
-          className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-700 text-white font-medium rounded-md transition-colors"
+          className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-700 text-white font-medium rounded-md transition-colors font-sans"
         >
           {loading ? "Validating..." : "Continue"}
         </button>
 
-        {err && <p className="mt-4 text-red-500 text-sm">{err}</p>}
+        {err && <p className="mt-4 text-red-500 text-sm font-sans">{err}</p>}
       </div>
     </div>
   );
@@ -78,8 +78,8 @@ export default function LicensePage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-screen bg-black">
-          <div className="text-white">Loading...</div>
+        <div className="flex items-center justify-center min-h-screen bg-black font-sans">
+          <div className="text-white font-sans">Loading...</div>
         </div>
       }
     >
