@@ -1,0 +1,51 @@
+{
+  "id": "fix-license-font-billy-key",
+  "timestamp": "2026-01-07T19:50:00.000Z",
+  "intent": "Fix license page font readability and add new Billy license key BICK-BILLY-LIFETIME-0002",
+  "execution_contract": {
+    "scope": "Update license page UI styling and create Billy license seed script",
+    "plan": [
+      "Add font-sans class to license page components",
+      "Create scripts/seed-billy-license.ts with both Billy keys",
+      "Build and validate changes",
+      "Run code review and security scan"
+    ],
+    "risk": "Low - UI styling change and database seed script addition",
+    "rollback": "Revert font-sans classes; seed script is idempotent via upsert"
+  },
+  "proof": {
+    "artifacts": [
+      "commit: c8f2be3",
+      "files: src/app/license/page.tsx, scripts/seed-billy-license.ts",
+      "build: successful",
+      "screenshot: https://github.com/user-attachments/assets/71fd6d8b-46ce-4e80-bfa8-9b5a1c11e2e7"
+    ],
+    "verification_commands": [
+      "npm run build",
+      "npx tsc --noEmit src/app/license/page.tsx",
+      "npx playwright open http://localhost:3000/license"
+    ],
+    "security": {
+      "code_review_alerts": 1,
+      "code_review_comment": "Both keys share email - verified intentional",
+      "codeql_alerts": 0
+    }
+  },
+  "result": {
+    "what_changed": [
+      "License page now uses font-sans throughout (heading, input, button, error, loading)",
+      "Created scripts/seed-billy-license.ts that seeds BICK-BILLY-LIFETIME-0001 and BICK-BILLY-LIFETIME-0002",
+      "Both keys configured for role=BILLY, tenant=billy, paper trading mode"
+    ],
+    "what_remains": [
+      "Global font (--font-bickford) still cursive for rest of app (intentional)",
+      "Seed script must be run with DATABASE_URL to populate database",
+      "License validation API endpoints unchanged (working as expected)"
+    ]
+  },
+  "t2v_metric": {
+    "effort_removed": "User can now read license page, new Billy key available",
+    "time_invested": "~30 minutes (exploration, implementation, validation)",
+    "t2v_score": "High - immediate usability improvement"
+  }
+}
