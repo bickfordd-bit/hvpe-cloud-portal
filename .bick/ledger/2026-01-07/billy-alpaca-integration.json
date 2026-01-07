@@ -1,0 +1,86 @@
+{
+  "id": "billy-alpaca-integration-2026-01-07",
+  "timestamp": "2026-01-07T19:47:09.760Z",
+  "agent": "github-copilot",
+  "task": "Add Alpaca API Integration + Bickford Chat + Dashboard to Billy Portal",
+  "intent": "Enable Billy to manage Alpaca trading credentials and view portfolio through UI, with AI-powered investment advice",
+  "execution_contract": {
+    "scope": "Add three components to /t/billy: AlpacaConnect (credential input), AlpacaDashboard (portfolio view), BickfordChat (AI assistant)",
+    "plan": [
+      "1. Explore repository structure and patterns",
+      "2. Create component directory structure",
+      "3. Implement AlpacaConnect with credential validation",
+      "4. Create API route for credential storage via Vercel API",
+      "5. Implement AlpacaDashboard with live data fetching",
+      "6. Create API route for portfolio data",
+      "7. Implement BickfordChat with GPT-4 integration",
+      "8. Create chat API route",
+      "9. Update Billy page to integrate components",
+      "10. Add unit tests for components",
+      "11. Run code review and fix issues",
+      "12. Document features and setup"
+    ],
+    "risk": "Low - paper trading only, session-gated, encrypted storage",
+    "rollback": "git revert commits or close PR without merge"
+  },
+  "proof": {
+    "artifacts": [
+      "Branch: copilot/add-alpaca-api-integration",
+      "Commits: 144ed25, 3b11718, 30cb2e9, c4f32e4",
+      "Files created: 10 (3 components, 3 API routes, 2 test files, 2 docs)",
+      "Tests: 10/10 passing",
+      "Build: successful",
+      "Screenshots: 2 (initial view, chat test)"
+    ],
+    "verification_commands": [
+      "npm run build",
+      "npx jest --testPathPattern=\"(AlpacaConnect|BickfordChat)\"",
+      "npm run dev && navigate to http://localhost:3000/t/billy"
+    ]
+  },
+  "result": {
+    "what_changed": [
+      "Added AlpacaConnect component for credential management",
+      "Added AlpacaDashboard component for portfolio visualization",
+      "Added BickfordChat component for AI-powered investment advice",
+      "Created /api/alpaca/connect route with Vercel API integration",
+      "Created /api/alpaca/portfolio route for account data",
+      "Created /api/bickford/chat route with GPT-4",
+      "Updated /t/billy page with new components",
+      "Added comprehensive test coverage (10 tests)",
+      "Fixed code review issues (message capture, error handling)",
+      "Created documentation at docs/BILLY_ALPACA_INTEGRATION.md"
+    ],
+    "what_remains": [
+      "Set VERCEL_TOKEN and VERCEL_PROJECT_ID in production",
+      "Set OPENAI_API_KEY or HVPE_OPENAI_API_KEY",
+      "Billy must enter Alpaca credentials through UI",
+      "Optional: Add trade execution features",
+      "Optional: Add portfolio charts and analytics"
+    ]
+  },
+  "metrics": {
+    "files_created": 10,
+    "files_modified": 1,
+    "lines_added": 750,
+    "tests_added": 10,
+    "tests_passing": 10,
+    "build_status": "passing",
+    "security_review": "passed",
+    "code_review": "passed"
+  },
+  "t2v_analysis": {
+    "time_to_value": "immediate upon merge and env var setup",
+    "user_effort_removed": "Billy no longer needs manual Vercel env var configuration",
+    "automation_score": 9,
+    "notes": "Credentials are automatically validated and stored via UI, eliminating manual configuration steps"
+  },
+  "security_summary": [
+    "All API routes session-gated (BILLY role only)",
+    "Paper trading enforced (paper-api.alpaca.markets)",
+    "Credentials stored encrypted in Vercel",
+    "Tenant-scoped environment variables",
+    "No credential leakage in error messages",
+    "Proper error handling prevents sensitive data exposure"
+  ]
+}
