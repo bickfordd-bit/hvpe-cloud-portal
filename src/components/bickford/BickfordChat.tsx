@@ -14,6 +14,7 @@ export function BickfordChat() {
     if (!message.trim()) return;
 
     const userMessage = { role: "user", content: message };
+    const currentMessage = message; // Capture before clearing
     setChat((prev) => [...prev, userMessage]);
     setMessage("");
     setLoading(true);
@@ -23,7 +24,7 @@ export function BickfordChat() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message,
+          message: currentMessage,
           history: chat,
         }),
       });

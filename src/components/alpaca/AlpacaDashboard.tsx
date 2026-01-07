@@ -19,6 +19,7 @@ interface PortfolioData {
 export function AlpacaDashboard() {
   const [data, setData] = useState<PortfolioData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchPortfolio() {
@@ -27,7 +28,13 @@ export function AlpacaDashboard() {
         if (res.ok) {
           const portfolio = await res.json();
           setData(portfolio);
+          setError(null);
+        } else {
+          const errorData = await res.json();
+          setError(errorData.error || "Failed to fetch portfolio");
         }
+      } catch (err) {
+        setError("Unable to connect to portfolio service");
       } finally {
         setLoading(false);
       }
@@ -40,6 +47,16 @@ export function AlpacaDashboard() {
 
   if (loading) {
     return <div className="text-neutral-400">Loading portfolio...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="text-neutral-400">
+        {error === "Alpaca API not connected"
+          ? "Connect Alpaca to view portfolio"
+          : `Error: ${error}`}
+      </div>
+    );
   }
 
   if (!data) {

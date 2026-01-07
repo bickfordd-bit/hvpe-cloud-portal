@@ -50,33 +50,47 @@ export async function POST(req: NextRequest) {
     }
 
     // Set environment variables via Vercel API
-    await fetch(`https://api.vercel.com/v10/projects/${vercelProjectId}/env`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${vercelToken}`,
-        "Content-Type": "application/json",
+    const keyResponse = await fetch(
+      `https://api.vercel.com/v10/projects/${vercelProjectId}/env`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${vercelToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          key: `ALPACA_API_KEY_${session.tenant}`,
+          value: apiKey,
+          type: "encrypted",
+          target: ["production", "preview"],
+        }),
       },
-      body: JSON.stringify({
-        key: `ALPACA_API_KEY_${session.tenant}`,
-        value: apiKey,
-        type: "encrypted",
-        target: ["production", "preview"],
-      }),
-    });
+    );
 
-    await fetch(`https://api.vercel.com/v10/projects/${vercelProjectId}/env`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${vercelToken}`,
-        "Content-Type": "application/json",
+    if (!keyResponse.ok) {
+      throw new Error("Failed to store API key in Vercel");
+    }
+
+    const secretResponse = await fetch(
+      `https://api.vercel.com/v10/projects/${vercelProjectId}/env`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${vercelToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          key: `ALPACA_API_SECRET_${session.tenant}`,
+          value: apiSecret,
+          type: "encrypted",
+          target: ["production", "preview"],
+        }),
       },
-      body: JSON.stringify({
-        key: `ALPACA_API_SECRET_${session.tenant}`,
-        value: apiSecret,
-        type: "encrypted",
-        target: ["production", "preview"],
-      }),
-    });
+    );
+
+    if (!secretResponse.ok) {
+      throw new Error("Failed to store API secret in Vercel");
+    }
 
     return NextResponse.json({
       success: true,
