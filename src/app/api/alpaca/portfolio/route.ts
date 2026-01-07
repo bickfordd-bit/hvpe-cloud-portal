@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/licenseSession.crypto";
 import { executeWithPresence } from "@/lib/execution/withPresence";
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   const session = await getSession();
   if (!session || session.role !== "BILLY") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

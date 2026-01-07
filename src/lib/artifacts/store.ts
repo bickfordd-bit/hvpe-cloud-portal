@@ -41,7 +41,7 @@ export async function storeArtifact(opts: {
 /**
  * Retrieve artifacts for an execution.
  */
-export async function getArtifacts(execution_id: string): Promise<Artifact[]> {
+export async function getArtifacts(_execution_id: string): Promise<Artifact[]> {
   // TODO: Implement actual retrieval
   return [];
 }
