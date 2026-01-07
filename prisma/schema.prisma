@@ -320,3 +320,11 @@ model Ledger {
   @@index([hash])
   @@index([prevHash])
 }
+
+model LedgerEntry {
+  id        String   @id @default(cuid())
+  data      Json     // Envelope with tenantId, executionId, artifacts, etc.
+  createdAt DateTime @default(now())
+  
+  @@index([createdAt])
+}

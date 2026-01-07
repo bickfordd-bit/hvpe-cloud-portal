@@ -1,45 +1,37 @@
-/**
- * Ledger Query API
- * 
- * Read-only access to execution ledger
- */
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getTenantIdFromRequest } from "@/lib/tenant";
 
-import { NextRequest, NextResponse } from 'next/server';
-import { queryLedgerDisplay } from '@/lib/ledger';
-import { logger } from '@/lib/logger';
-
-export const dynamic = 'force-dynamic';
-
-/**
- * GET /api/ledger
- * 
- * Query ledger entries with optional filters
- */
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(req.url);
+    // 1. Get tenant from request (throws if missing)
+    const tenantId = getTenantIdFromRequest();
 
-    const limit = parseInt(searchParams.get('limit') || '10', 10);
-    const startDate = searchParams.get('startDate') || undefined;
-    const endDate = searchParams.get('endDate') || undefined;
-    const intentType = searchParams.get('intentType') || undefined;
-    const outcome = (searchParams.get('outcome') as any) || undefined;
+    // 2. Fetch recent ledger entries
+    const rows = await prisma.ledgerEntry.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      select: { id: true, createdAt: true, data: true },
+    });
 
-    const query = { startDate, endDate, intentType, outcome, limit };
-    logger.info('Ledger query (display)', { query });
-
-    const entries = queryLedgerDisplay(query);
+    // 3. Filter to tenant-owned entries only
+    const scoped = rows.filter((r) => {
+      const envelope = r.data as any;
+      return envelope?.tenantId === tenantId;
+    });
 
     return NextResponse.json({
-      entries,
-      total: entries.length,
-      hasMore: false,
+      tenantId,
+      entries: scoped,
     });
   } catch (error: any) {
-    logger.error('Ledger query failed', { error: error.message });
-    return NextResponse.json({
-      error: error.message
-    }, { status: 500 });
+    // Handle missing tenant context
+    if (error.message?.includes("Missing tenant context")) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
-
