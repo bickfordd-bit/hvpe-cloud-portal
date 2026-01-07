@@ -1,4 +1,7 @@
 import { IntentPanel } from "@/components/intent/IntentPanel";
+import { AlpacaConnect } from "@/components/alpaca/AlpacaConnect";
+import { AlpacaDashboard } from "@/components/alpaca/AlpacaDashboard";
+import { BickfordChat } from "@/components/bickford/BickfordChat";
 
 /**
  * Billy Build: Trading-focused execution.
@@ -20,77 +23,18 @@ export default async function BillyPage() {
   return (
     <main className="min-h-screen bg-black text-white">
       <header className="border-b border-neutral-800 px-6 py-4">
-        <h1 className="text-2xl font-bold">Portfolio</h1>
+        <h1 className="text-2xl font-bold">Billy's Portfolio</h1>
       </header>
 
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Intent Panel */}
-        <IntentPanel />
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        {/* Alpaca Connection */}
+        <AlpacaConnect />
 
-        {/* Trading Grid */}
-        <div className="grid grid-cols-3 gap-6">
-          {/* Account Section */}
-          <section className="border border-neutral-700 rounded-lg p-6">
-            <h2 className="text-lg font-semibold mb-4">Account</h2>
-            <div className="space-y-3 text-sm text-neutral-400">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-neutral-500">
-                  Balance
-                </p>
-                <p className="text-2xl font-bold text-white mt-1">$0.00</p>
-              </div>
-              <div className="pt-3 border-t border-neutral-700">
-                <p className="text-xs uppercase tracking-wider text-neutral-500">
-                  Role
-                </p>
-                <p className="text-white mt-1">BILLY</p>
-              </div>
-            </div>
-          </section>
+        {/* Portfolio Dashboard */}
+        <AlpacaDashboard />
 
-          {/* Invest Section */}
-          <section className="border border-neutral-700 rounded-lg p-6">
-            <h2 className="text-lg font-semibold mb-4">Invest</h2>
-            <div className="space-y-3 text-sm text-neutral-400">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-neutral-500">
-                  Opportunities
-                </p>
-                <p className="text-2xl font-bold text-white mt-1">0</p>
-              </div>
-              <div className="pt-3 border-t border-neutral-700">
-                <p className="text-xs uppercase tracking-wider text-neutral-500">
-                  Status
-                </p>
-                <p className="text-yellow-400 mt-1">Ready to evaluate</p>
-              </div>
-            </div>
-          </section>
-
-          {/* Positions Section */}
-          <section className="border border-neutral-700 rounded-lg p-6">
-            <h2 className="text-lg font-semibold mb-4">Positions</h2>
-            <div className="space-y-3 text-sm text-neutral-400">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-neutral-500">
-                  Active
-                </p>
-                <p className="text-2xl font-bold text-white mt-1">0</p>
-              </div>
-              <div className="pt-3 border-t border-neutral-700">
-                <p className="text-xs uppercase tracking-wider text-neutral-500">
-                  P&L
-                </p>
-                <p className="text-neutral-400 mt-1">—</p>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        {/* Details */}
-        <footer className="border-t border-neutral-800 px-6 py-4 text-xs text-neutral-500 mt-12">
-          <p>Mode: Trading</p>
-        </footer>
+        {/* Bickford Chat */}
+        <BickfordChat />
       </div>
     </main>
   );
