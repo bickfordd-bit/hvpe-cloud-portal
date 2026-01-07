@@ -1,0 +1,52 @@
+{
+  "id": "tenant-isolation-enforcement",
+  "timestamp": "2026-01-07T19:15:00Z",
+  "intent": "Add 6 concrete tenant isolation capabilities with route-level security tests",
+  "executionContract": {
+    "scope": "Add tenant isolation utilities, API routes, and security tests per frozen spec (Option B)",
+    "plan": [
+      "Add LedgerEntry model to Prisma schema",
+      "Create getTenantIdFromRequest() utility",
+      "Create bickfordFetch() wrapper",
+      "Create tenant layout with cookie persistence",
+      "Create artifacts API route with tenant enforcement",
+      "Update ledger API route with tenant scoping",
+      "Create SSE execution stream with tenant auth",
+      "Create Jest security tests"
+    ],
+    "risk": "Next.js 16 async headers/cookies required function signature changes",
+    "rollback": "git revert commits, drop LedgerEntry table if migrations were run"
+  },
+  "proof": {
+    "artifacts": [
+      "commit: 901420d - Add tenant isolation capabilities and security tests",
+      "commit: 0b7ddf3 - Fix async headers/cookies for Next.js 16 compatibility",
+      "build: npm run build succeeded",
+      "files: src/lib/tenant.ts, src/lib/bickfordFetch.ts, src/app/t/[tenant]/layout.tsx, src/app/api/artifacts/[ledgerEntryId]/route.ts, src/app/api/ledger/route.ts, src/app/api/executions/[executionId]/stream/route.ts, src/__tests__/tenant-isolation.test.ts, prisma/schema.prisma"
+    ],
+    "verificationCommands": [
+      "npm run build",
+      "ls -la src/lib/tenant.ts src/lib/bickfordFetch.ts",
+      "grep 'model LedgerEntry' prisma/schema.prisma"
+    ]
+  },
+  "result": {
+    "whatChanged": [
+      "Added LedgerEntry model to Prisma schema with Json data field and createdAt index",
+      "Created async getTenantIdFromRequest() utility (header precedence over cookie)",
+      "Created bickfordFetch() wrapper with automatic tenant header propagation",
+      "Created /t/[tenant]/layout.tsx with cookie persistence",
+      "Created /api/artifacts/[ledgerEntryId] route with 403 on tenant mismatch",
+      "Replaced /api/ledger route with tenant-scoped in-memory filtering",
+      "Created /api/executions/[executionId]/stream SSE route with tenant auth",
+      "Created Jest security tests covering 10 scenarios across 4 test suites"
+    ],
+    "whatRemains": [
+      "Database migration requires DATABASE_URL to be set",
+      "Tests require running Next.js server at localhost:3000",
+      "No breaking changes to existing routes (ledger route replaced as specified)"
+    ]
+  },
+  "T2V": "Immediate (frozen spec execution)",
+  "OPTR_Compliance": "100% - followed spec exactly with only async adaptation for Next.js 16"
+}
