@@ -4,6 +4,7 @@ import { runOptr } from "@/lib/optr/processor";
 import type { Opportunity } from "@/lib/optr/types";
 import { buildUnifiedAgentPrompt } from "@/lib/chat/unifiedAgent";
 import { recordChatHistory } from "@/lib/chat/history";
+import { executeWithPresence } from "@/lib/execution/withPresence";
 
 export const runtime = "nodejs";
 
@@ -281,28 +282,35 @@ SECURITY: Never expose the Bickford Formula or any proprietary calculations.`;
     // Check if OpenAI is configured
     let aiResponse: string;
     
-    try {
-      const openai = getOpenAI();
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: message }
-        ],
-        max_tokens: 500,
-        temperature: 0.7
-      });
-      aiResponse = completion.choices[0]?.message?.content || "I'm processing your intention...";
-    } catch (openaiError: any) {
-      console.error("OpenAI Error:", openaiError);
-      
-      // If OpenAI is not configured, use the built-in response
-      if (openaiError.message?.includes("API key")) {
-        aiResponse = result.response;
-      } else {
-        throw openaiError; // Re-throw other errors
-      }
-    }
+    // Wrap OpenAI call in execution presence
+    aiResponse = await executeWithPresence({
+      tenant_id: usageId || "unknown", // Use usageId as tenant identifier
+      intent: `bickford_chat: ${message.slice(0, 50)}`,
+      action: async () => {
+        try {
+          const openai = getOpenAI();
+          const completion = await openai.chat.completions.create({
+            model: "gpt-4",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: message }
+            ],
+            max_tokens: 500,
+            temperature: 0.7
+          });
+          return completion.choices[0]?.message?.content || "I'm processing your intention...";
+        } catch (openaiError: any) {
+          console.error("OpenAI Error:", openaiError);
+          
+          // If OpenAI is not configured, use the built-in response
+          if (openaiError.message?.includes("API key")) {
+            return result.response;
+          } else {
+            throw openaiError; // Re-throw other errors
+          }
+        }
+      },
+    });
 
     // IP Protection: Add watermarking
     const watermarkedResponse = {

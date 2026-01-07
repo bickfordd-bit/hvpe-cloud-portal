@@ -12,6 +12,9 @@ const config: Config = {
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
+  transformIgnorePatterns: [
+    "node_modules/(?!(uuid)/)",
+  ],
   collectCoverageFrom: [
     "src/lib/**/*.ts",
     "!src/lib/**/*.d.ts",
