@@ -9,9 +9,9 @@ import { headers, cookies } from "next/headers";
  *
  * Query params are intentionally NOT allowed.
  */
-export function getTenantIdFromRequest(): string {
-  const h = headers();
-  const c = cookies();
+export async function getTenantIdFromRequest(): Promise<string> {
+  const h = await headers();
+  const c = await cookies();
 
   const headerTenant = h.get("x-bickford-tenant");
   if (headerTenant?.trim()) return headerTenant.trim();

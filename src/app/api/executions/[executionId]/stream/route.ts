@@ -10,7 +10,7 @@ export async function GET(
 ) {
   try {
     // 1. Get tenant from request (throws if missing)
-    const tenantId = getTenantIdFromRequest();
+    const tenantId = await getTenantIdFromRequest();
     const executionId = params.executionId;
 
     // 2. Find execution in ledger

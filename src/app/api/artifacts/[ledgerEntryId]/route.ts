@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     // 1. Get tenant from request (throws if missing)
-    const tenantId = getTenantIdFromRequest();
+    const tenantId = await getTenantIdFromRequest();
     const ledgerEntryId = params.ledgerEntryId;
 
     // 2. Fetch ledger entry

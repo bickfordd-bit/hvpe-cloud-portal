@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { ReactNode } from "react";
 
-export default function TenantLayout({
+export default async function TenantLayout({
   children,
   params,
 }: {
@@ -9,7 +9,8 @@ export default function TenantLayout({
   params: { tenant: string };
 }) {
   // Persist tenant for server routes
-  cookies().set("bickford_tenant", params.tenant, {
+  const cookieStore = await cookies();
+  cookieStore.set("bickford_tenant", params.tenant, {
     httpOnly: false, // Allow client-side JS to read (for bickfordFetch)
     path: "/",
     sameSite: "lax",

@@ -5,7 +5,7 @@ import { getTenantIdFromRequest } from "@/lib/tenant";
 export async function GET() {
   try {
     // 1. Get tenant from request (throws if missing)
-    const tenantId = getTenantIdFromRequest();
+    const tenantId = await getTenantIdFromRequest();
 
     // 2. Fetch recent ledger entries
     const rows = await prisma.ledgerEntry.findMany({
