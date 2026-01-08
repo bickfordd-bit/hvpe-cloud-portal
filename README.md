@@ -5,6 +5,7 @@ HVPE Cloud Portal – Next.js (App Router) with Stripe and Prisma-backed licensi
 **NEW**: The root homepage (`/`) is now the Bickford execution runtime with zero-approval intent-to-reality flow.
 
 ### Features
+
 - **Intent Input**: Natural language intent parsing
 - **OPTR Policy Selection**: Automatic policy binding via T2V optimization
 - **Canon Verification**: SHA-256 integrity checking on every execution
@@ -13,6 +14,7 @@ HVPE Cloud Portal – Next.js (App Router) with Stripe and Prisma-backed licensi
 - **Real-Time Status**: Live execution tracking and history visualization
 
 ### Quick Start
+
 ```bash
 npm install
 npm run dev
@@ -20,21 +22,27 @@ npm run dev
 ```
 
 ### API Endpoints
+
 - `GET /api/execute` - Check canon status and capabilities
 - `POST /api/execute` - Submit intent for execution (body: `{ "intent": "your intent text" }`)
 - `GET /api/ledger?limit=10` - Query execution history
 
 ### Environment Variables
+
 Required for full functionality:
+
 - `GITHUB_TOKEN` - For auto-commits to repository
 - `DATABASE_URL` - PostgreSQL connection (optional, falls back to file-based ledger)
 
 Optional:
+
 - `GITHUB_REPO` - Target repository (default: bickfordd-bit/hvpe-cloud-portal)
 - `GITHUB_BRANCH` - Target branch (default: main)
 
 ### Canon System
+
 The canonical specification is stored in `/canon/`:
+
 - `CANON.md` - Full specification (11KB, LOCKED status)
 - `CANON.meta.json` - SHA-256 hash and metadata
 
@@ -59,6 +67,7 @@ When the repository owner (`bickfordd-bit`) creates a PR:
 ### Requirements
 
 For auto-merge to trigger, the PR must:
+
 - ✅ Be created by repository owner (`bickfordd-bit`)
 - ✅ Not be in draft state
 - ✅ Not have `[no-auto-merge]` in the title
@@ -67,8 +76,9 @@ For auto-merge to trigger, the PR must:
 ### Required Status Checks
 
 Auto-merge waits for these checks to pass:
+
 - **Lint** - ESLint validation
-- **Build** - Next.js build verification  
+- **Build** - Next.js build verification
 - **Test** - Jest test suite
 
 ### Disabling Auto-Merge
@@ -82,11 +92,13 @@ To disable auto-merge for a specific PR, add `[no-auto-merge]` anywhere in the P
 ### Monitoring PR Progress
 
 **GitHub Notifications:**
+
 - Watch repository → Custom → Select "Pull requests"
 - Enable email notifications for PR activity
 
 **PR Comments:**
 The auto-merge workflow posts status updates:
+
 - 🤖 "Auto-merge initiated" - When workflow starts
 - ⏱️ "Waiting for checks" - While checks are running
 - ✅ "Auto-merge enabled" - When checks pass and merge is queued
@@ -95,6 +107,7 @@ The auto-merge workflow posts status updates:
 
 **Workflow Logs:**
 View detailed execution logs at:
+
 ```
 https://github.com/bickfordd-bit/hvpe-cloud-portal/actions
 ```
@@ -110,6 +123,7 @@ To configure branch protection rules:
 5. Click **Run workflow** button
 
 This configures:
+
 - Required status checks (lint, build, test)
 - Force push protection
 - Branch deletion protection
@@ -118,17 +132,20 @@ This configures:
 ### Troubleshooting
 
 **Auto-merge didn't trigger:**
+
 - Check PR author is `bickfordd-bit`
 - Ensure PR is not in draft
 - Verify title doesn't contain `[no-auto-merge]`
 - Check workflow logs for errors
 
 **Checks are failing:**
+
 - Review workflow run logs
 - Fix failing tests/lints locally
 - Push fixes - auto-merge will retry
 
 **Workflow timed out:**
+
 - Checks took longer than 30 minutes
 - Auto-merge will retry on next push
 - Check for stuck/hanging tests
@@ -136,6 +153,7 @@ This configures:
 ---
 
 ## Canon + Sale Architecture
+
 - **Executable canon** lives in [`src/lib/btiCanon.ts`](./src/lib/btiCanon.ts) and drives the proof-gated $1B sale plan.
 - Human-readable mirror: [`docs/BICKFORD_CANON.md`](./docs/BICKFORD_CANON.md).
 - Update the TypeScript source first; regenerate the doc afterward to keep parity.
@@ -144,6 +162,7 @@ This configures:
   - Pilot scope doc (to be co-signed) — [`docs/MICROSOFT_PILOT_SCOPE.md`](./docs/MICROSOFT_PILOT_SCOPE.md)
 
 ## Environment
+
 Set these in `.env.local` (and in Vercel Project Settings → Environment Variables):
 
 - `DATABASE_URL` (Postgres)
@@ -156,6 +175,7 @@ Set these in `.env.local` (and in Vercel Project Settings → Environment Variab
 The HVPE Cloud Portal includes a unified chat agent that provides an intelligent assistant experience with automatic daily archiving.
 
 ### Key Features
+
 - **Unified Agent Experience**: Single AI agent (no persona selection) for streamlined interaction
 - **Daily Archiving**: Conversations automatically archive at the start of each new day
 - **Persistent State**: Messages persist across page refreshes within the same day
@@ -163,18 +183,22 @@ The HVPE Cloud Portal includes a unified chat agent that provides an intelligent
 - **Archive Status Display**: UI shows current date and automatic archiving status
 
 ### How It Works
+
 1. **Persistence**: All conversations are stored in browser localStorage with date-based keys
 2. **Auto-archiving**: When the date changes (detected every 60 seconds), previous day's messages are automatically archived
 3. **Fresh Context**: Each new day starts with a clean slate while preserving history in archives
 4. **API Integration**: Uses `/api/hvpe-chat` endpoint with `mode: "general"` for unified agent responses
 
 ### Storage Keys
+
 - Active conversation: `hvpe-chat-history-YYYY-MM-DD`
 - Archived conversations: `hvpe-chat-archive-YYYY-MM-DD`
 - Last seen date tracker: `hvpe-chat-last-date`
 
 ### Testing
+
 Comprehensive test coverage for:
+
 - Date key generation and storage key formatting
 - Message persistence across sessions
 - Daily archiving trigger logic
@@ -184,23 +208,29 @@ Comprehensive test coverage for:
 Run tests: `npm test -- src/components/chat/__tests__/HvpeChatDock.test.tsx`
 
 ## Prisma setup (Postgres)
-1) Generate client (requires `DATABASE_URL` set):
+
+1. Generate client (requires `DATABASE_URL` set):
+
 ```bash
 npx prisma generate
 ```
-2) Apply schema to your DB (creates License + LicenseRequest tables):
+
+2. Apply schema to your DB (creates License + LicenseRequest tables):
+
 ```bash
 npx prisma migrate dev --name init_license_models
 # In production, use: npx prisma migrate deploy
 ```
 
 If you added the AI Embedding and patch models, run a new migration:
+
 ```bash
 npx prisma migrate dev --name add_embeddings_and_ai_patches
 npx prisma generate
 ```
 
 PGVector setup (optional, recommended for fast ANN searches)
+
 1. Install the `pgvector` extension on your Postgres instance. If you manage Postgres yourself, follow https://github.com/pgvector/pgvector.
 2. Run the provided SQL to create the `pg_embeddings` table and index:
 
@@ -211,16 +241,26 @@ psql $DATABASE_URL -f prisma/pgvector_setup.sql
 Note: The app will try to write to `pg_embeddings` if available; this is best-effort and will not break the app if the extension/table is missing.
 
 ## License approval API
+
 Endpoint: `POST /api/license/approve`
 Payload:
+
 ```json
 { "requestId": "YOUR_PENDING_REQUEST_ID" }
 ```
+
 Response (example):
+
 ```json
-{ "success": true, "licenseKey": "HVPE-XXXXXX-XXXXXX-XXXXXX", "email": "user@example.com" }
+{
+  "success": true,
+  "licenseKey": "HVPE-XXXXXX-XXXXXX-XXXXXX",
+  "email": "user@example.com"
+}
 ```
+
 Use from the live site (browser console or curl):
+
 ```bash
 curl -X POST https://your-domain/api/license/approve \
   -H "Content-Type: application/json" \
@@ -228,6 +268,7 @@ curl -X POST https://your-domain/api/license/approve \
 ```
 
 ## Dev commands
+
 - Install deps: `npm install`
 - Dev server: `npm run dev`
 - Build: `npm run build`
@@ -256,16 +297,18 @@ The project uses a **unified deployment pipeline** that automatically deploys on
 ✅ Pre-deployment validation (catches issues early)  
 ✅ Post-deployment smoke tests  
 ✅ Real-time status updates via GitHub UI  
-✅ Zero manual intervention required  
+✅ Zero manual intervention required
 
 ### Configuration
 
 Deployment is configured via GitHub Secrets:
+
 - `VERCEL_TOKEN` - Vercel authentication
 - `VERCEL_ORG_ID` - Organization ID
 - `VERCEL_PROJECT_ID` - Project ID
 
 Optional secrets (auto-detected):
+
 - `DATABASE_URL` - Database connection
 - `OPENAI_API_KEY` - AI features
 - `LICENSE_SESSION_SECRET` - License validation
@@ -294,6 +337,7 @@ You can also deploy manually using helper scripts:
 ## Docker Deployment 🐳
 
 ### Quick Start with Docker Compose
+
 ```bash
 # Development mode (with hot reload)
 docker-compose -f docker-compose.dev.yml up
@@ -303,6 +347,7 @@ docker-compose up -d
 ```
 
 ### Build & Push to GitHub Container Registry
+
 ```bash
 # Login to GHCR
 echo $GITHUB_TOKEN | docker login ghcr.io -u bickfordd-bit --password-stdin
@@ -317,6 +362,7 @@ docker push ghcr.io/bickfordd-bit/hvpe-cloud-portal:latest
 ```
 
 ### Pull & Run from Registry
+
 ```bash
 # Pull latest
 docker pull ghcr.io/bickfordd-bit/hvpe-cloud-portal:latest
@@ -331,6 +377,7 @@ docker run -d \
 ```
 
 **See [DOCKER.md](./DOCKER.md) for complete containerization guide** including:
+
 - Multi-arch builds (amd64, arm64)
 - Kubernetes deployment
 - Health checks & monitoring
@@ -352,6 +399,7 @@ Required environment variables for full automation (set as repo secrets in GitHu
 - `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` (optional) — if set, the GitHub Actions workflow will deploy to Vercel on push.
 
 Admin approval and deploy secrets
+
 - `ADMIN_DASH_TOKEN` or `ADMIN_APPLY_SECRET` — required by the approval and apply endpoints. The admin UI will attempt to send `x-admin-secret` header when approving/applying patches; set this to a strong value and only expose the admin UI to trusted users.
 
 **Protecting IP & contributions**
@@ -370,6 +418,7 @@ Security note: The `/api/ai/code` endpoint runs `git` commands on the host. Do n
 The project uses a **bulletproof unified deployment workflow** at `.github/workflows/master-deploy.yml`.
 
 ### Key Features:
+
 - ✅ Single workflow handles all deployments (production + preview)
 - ✅ Automatic retry logic for transient failures (3 retries with exponential backoff)
 - ✅ Preflight validation catches issues before deployment starts
@@ -379,7 +428,9 @@ The project uses a **bulletproof unified deployment workflow** at `.github/workf
 - ✅ Auto-fixes common issues (stale dependencies, cache)
 
 ### How to Use:
+
 **Just push your code!** The workflow automatically:
+
 1. Validates environment and dependencies
 2. Builds and tests the application
 3. Deploys to Vercel (production or preview based on branch)
@@ -387,6 +438,7 @@ The project uses a **bulletproof unified deployment workflow** at `.github/workf
 5. Comments on PR/commit with deployment URL
 
 ### Documentation:
+
 - **Comprehensive Guide:** [docs/CI_CD_GUIDE.md](./docs/CI_CD_GUIDE.md)
 - **Deployment Platforms:** [DEPLOYMENT.md](./DEPLOYMENT.md)
 - **Workflow Source:** [.github/workflows/master-deploy.yml](./.github/workflows/master-deploy.yml)
@@ -394,10 +446,12 @@ The project uses a **bulletproof unified deployment workflow** at `.github/workf
 Legacy workflows (`ci-cd.yml`, `deploy-vercel.yml`, `ci-deploy.yml`) are deprecated and will be archived after a monitoring period. See `.github/workflows/archive/README.md` for details.
 
 ## HVPE chat dock
+
 - API: `POST /api/hvpe-chat` (requires `OPENAI_API_KEY`)
 - UI: floating chat button/dock on all pages via `HvpeChatDock`
 
 ## AI Core endpoint
+
 - API: `POST /api/ai/run` (preferred key `HVPE_OPENAI_API_KEY`)
 - Modes supported:
   - `optr-gap-analysis` (RFI/RFP delta analysis)
@@ -409,6 +463,7 @@ Legacy workflows (`ci-cd.yml`, `deploy-vercel.yml`, `ci-deploy.yml`) are depreca
 - Logs usage to `AiUsageLog` (Prisma)
 
 ## Admin
+
 - AI usage logs: `/admin/ai-logs`
 - Protected by middleware; set `ADMIN_DASH_TOKEN` (use Bearer token or `?token=` query)
 
@@ -427,3 +482,15 @@ npx expo start
 ### Notes
 
 This project uses Expo Router. If you add gesture-handler or reanimated, follow the Expo setup guide for those packages. The current implementation uses the core Animated API and does not require extra setup steps.
+
+---
+
+## ⚠️ Vercel Billing Requirement
+
+**Production builds and deployments require a Vercel project with billing enabled.**
+
+- Free-tier Vercel accounts may hit build limits, cold starts, or resource restrictions that prevent the app from running as designed.
+- To ensure uninterrupted production deployments, upgrade your Vercel project to a paid plan and enable billing.
+- See [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md) for step-by-step instructions.
+
+---

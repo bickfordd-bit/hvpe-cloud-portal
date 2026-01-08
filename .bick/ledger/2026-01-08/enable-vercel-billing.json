@@ -1,0 +1,29 @@
+{
+  "id": "enable-vercel-billing",
+  "date": "2026-01-08",
+  "actor": "bickford-agent",
+  "intent": "Ensure Vercel billing is enabled for production builds and deployments.",
+  "actions": [
+    "Added billing requirement section to README.md",
+    "Added billing warning to VERCEL_DEPLOYMENT.md",
+    "Added billing check/warning to deploy.sh script"
+  ],
+  "proof": {
+    "files": ["README.md", "VERCEL_DEPLOYMENT.md", "deploy.sh"],
+    "verification": [
+      "cat README.md | grep -i vercel",
+      "cat VERCEL_DEPLOYMENT.md | grep -i billing",
+      "bash deploy.sh (should output billing warning if not set)"
+    ]
+  },
+  "result": {
+    "changed": [
+      "README.md documents billing requirement",
+      "VERCEL_DEPLOYMENT.md documents billing requirement",
+      "deploy.sh warns if billing is not enabled"
+    ],
+    "remains": [
+      "Actual billing setup must be completed in Vercel dashboard by project owner"
+    ]
+  }
+}

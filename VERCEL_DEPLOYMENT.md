@@ -1,5 +1,13 @@
 # Vercel Deployment Guide - GitHub Integration
 
+> **⚠️ IMPORTANT: Billing Required for Production**
+>
+> To deploy and run this app in production, your Vercel project must be on a paid plan with billing enabled.
+>
+> - Free-tier accounts may experience build failures, cold starts, or resource limits.
+> - Upgrade your Vercel project to a paid plan at https://vercel.com/pricing and ensure billing is enabled in your project settings.
+> - See [Vercel Billing Docs](https://vercel.com/docs/projects/billing) for details.
+
 **Repository:** bickfordd-bit/hvpe-cloud-portal  
 **Branch:** mobile  
 **Status:** Ready to deploy
@@ -9,18 +17,22 @@
 ## Step-by-Step Instructions
 
 ### 1. Go to Vercel
+
 Visit: https://vercel.com/new
 
 ### 2. Import Git Repository
+
 - Click "Import Git Repository"
 - Select "GitHub" as the provider
 - Search for: `bickfordd-bit/hvpe-cloud-portal`
 - Click "Import"
 
 ### 3. Configure Project
+
 **Framework Preset:** Next.js (auto-detected)
 
 **Build Settings:**
+
 - Build Command: `npm run build`
 - Output Directory: `.next`
 - Install Command: `npm install`
@@ -55,6 +67,7 @@ AI_WEBHOOK_SECRET=...
 ```
 
 ### 5. Deploy
+
 - Click "Deploy"
 - Vercel will:
   1. Clone the repository
@@ -65,10 +78,12 @@ AI_WEBHOOK_SECRET=...
 ### 6. Post-Deployment
 
 **Your URLs:**
+
 - Production: `https://hvpe-cloud-portal.vercel.app`
 - Or custom domain: `https://your-domain.com`
 
 **Test endpoints:**
+
 ```bash
 # Health check
 curl https://hvpe-cloud-portal.vercel.app/api/health
@@ -93,6 +108,7 @@ npx prisma migrate deploy
 ```
 
 Or use Vercel CLI:
+
 ```bash
 vercel env pull .env.local
 npx prisma migrate deploy
@@ -103,6 +119,7 @@ npx prisma migrate deploy
 ## Automatic Deployments
 
 **Every push to `mobile` branch triggers:**
+
 1. Automatic build
 2. Automatic deployment
 3. Zero-downtime rollout
@@ -116,17 +133,20 @@ https://vercel.com/bickfordd-bit/hvpe-cloud-portal/deployments
 ## Environment Variable Management
 
 **Add variables:**
+
 ```bash
 vercel env add DATABASE_URL production
 # Paste value when prompted
 ```
 
 **List variables:**
+
 ```bash
 vercel env ls
 ```
 
 **Pull to local:**
+
 ```bash
 vercel env pull .env.local
 ```
@@ -148,16 +168,19 @@ vercel env pull .env.local
 ## Troubleshooting
 
 ### Build Fails
+
 - Check build logs in Vercel dashboard
 - Verify all environment variables are set
 - Test locally: `npm run build`
 
 ### Database Connection Issues
+
 - Verify `DATABASE_URL` format
 - Check Prisma schema is up to date
 - Run migrations if needed
 
 ### API Errors
+
 - Check environment variables
 - Review function logs in Vercel dashboard
 - Test locally with same env vars
@@ -167,12 +190,14 @@ vercel env pull .env.local
 ## Monitoring
 
 **Vercel Dashboard:**
+
 - Real-time logs
 - Performance metrics
 - Error tracking
 - Analytics
 
 **Custom Monitoring:**
+
 ```bash
 # Check ledger entries
 curl https://your-domain.com/api/bickford/ledger

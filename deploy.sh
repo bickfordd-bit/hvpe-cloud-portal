@@ -49,6 +49,18 @@ else
     npm run dev
 fi
 
+# Vercel billing check (warn only)
+if command -v vercel >/dev/null 2>&1; then
+    VERCEL_PROJECT_INFO=$(npx vercel projects ls --json 2>/dev/null | grep '"name":' | grep 'hvpe-cloud-portal')
+    if [[ "$VERCEL_PROJECT_INFO" != *'"plan":"pro"'* && "$VERCEL_PROJECT_INFO" != *'"plan":"enterprise"'* ]]; then
+        echo "\n⚠️  WARNING: Your Vercel project may not have billing enabled (plan is not Pro/Enterprise)."
+        echo "Production builds may fail or be limited. Enable billing at https://vercel.com/dashboard > [Your Project] > Settings > Billing."
+    fi
+else
+    echo "\n⚠️  WARNING: Unable to check Vercel billing status (Vercel CLI not installed)."
+    echo "Please verify billing is enabled for your project in the Vercel dashboard."
+fi
+
 echo ""
 echo "🎉 Bickford is now live!"
 echo "Visit: http://localhost:3000/bickford"
