@@ -25,7 +25,9 @@
     "postinstall": "test -n \"$DATABASE_URL\" && prisma generate || prisma generate --schema=prisma/schema.prisma || true",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "prepare": "husky"
+    "prepare": "husky",
+    "print-sam": "npx tsx scripts/print-all-sam-data.ts",
+    "print-sam:simple": "node scripts/print-sam-standalone.js"
   },
   "dependencies": {
     "@bickfordd-bit/bickford": "file:packages/bickford",

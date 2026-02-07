@@ -450,6 +450,72 @@ Legacy workflows (`ci-cd.yml`, `deploy-vercel.yml`, `ci-deploy.yml`) are depreca
 - API: `POST /api/hvpe-chat` (requires `OPENAI_API_KEY`)
 - UI: floating chat button/dock on all pages via `HvpeChatDock`
 
+## SAM.gov Integration
+
+The portal integrates with SAM.gov (System for Award Management) to fetch federal government contracting opportunities.
+
+### Print All SAM Data
+
+Two scripts are available to print SAM.gov data:
+
+```bash
+# Full-featured TypeScript version (requires dependencies)
+npm run print-sam -- --format=table --all
+
+# Standalone JavaScript version (no dependencies needed)
+npm run print-sam:simple -- --format=json --limit=50
+```
+
+### Available Options
+
+- `--format=json|table|csv` - Output format (default: json)
+- `--all` - Fetch all records with pagination
+- `--q="search query"` - Search query (e.g., "AI OR cloud")
+- `--agency=CODE` - Filter by agency (e.g., DOD, NASA)
+- `--naics=CODE` - Filter by NAICS code (e.g., 541512)
+- `--psc=CODE` - Filter by PSC code
+- `--type=TYPE` - Filter by notice type (e.g., Solicitation)
+- `--limit=N` - Records per request (default: 100, max: 1000)
+
+### Examples
+
+```bash
+# Print DoD AI opportunities in table format
+npm run print-sam:simple -- --agency=DOD --q="AI" --format=table
+
+# Export all cloud opportunities to CSV
+npm run print-sam:simple -- --all --q="cloud" --format=csv > opportunities.csv
+
+# Get small business set-asides
+npm run print-sam:simple -- --setAside=SB --format=json
+```
+
+### API Endpoints
+
+- `GET /api/sam/search` - Search SAM opportunities
+- `GET /api/optr/opportunity?id=<noticeId>` - Get single opportunity with OPTR scoring
+- `GET /api/optr/top10` - Get top 10 OPTR-scored opportunities
+
+### Web UI
+
+A live SAM.gov search interface is available at `/dashboard/optr/sam` (Derek instance only, gated by `INSTANCE_OWNER=derek`).
+
+### Environment Setup
+
+Set your SAM.gov API key (get one free at https://sam.gov/data-services/):
+
+```bash
+export SAM_API_KEY=your_api_key_here
+```
+
+Or add to `.env.local`:
+
+```env
+SAM_API_KEY=your_api_key_here
+```
+
+**Full Documentation:** [docs/SAM_DATA_GUIDE.md](./docs/SAM_DATA_GUIDE.md)
+
 ## AI Core endpoint
 
 - API: `POST /api/ai/run` (preferred key `HVPE_OPENAI_API_KEY`)
