@@ -31,6 +31,11 @@
 import { searchSamOpportunities, type SamOpportunity } from '@/lib/sam/client';
 import { logger } from '@/lib/logger';
 
+// SAM.gov API limit for records per request
+const MAX_SAM_API_BATCH_SIZE = 1000;
+const DEFAULT_BATCH_SIZE = 100;
+const BATCH_DELAY_MS = 500; // Delay between batches to avoid rate limiting
+
 type OutputFormat = 'json' | 'table' | 'csv';
 
 interface CliArgs {
@@ -159,7 +164,7 @@ function escapeCSV(value: string): string {
 
 async function fetchAllOpportunities(args: CliArgs): Promise<SamOpportunity[]> {
   const allOpportunities: SamOpportunity[] = [];
-  const batchSize = Math.min(args.limit || 100, 1000); // SAM.gov typically limits to 1000 per request
+  const batchSize = Math.min(args.limit || DEFAULT_BATCH_SIZE, MAX_SAM_API_BATCH_SIZE);
   let start = 0;
   let hasMore = true;
   
@@ -194,7 +199,7 @@ async function fetchAllOpportunities(args: CliArgs): Promise<SamOpportunity[]> {
       } else {
         start += batchSize;
         // Add a small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
       }
       
     } catch (err) {

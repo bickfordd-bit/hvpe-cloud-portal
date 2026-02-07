@@ -11,6 +11,11 @@ const { URL, URLSearchParams } = require('url');
 
 const SAM_BASE = 'https://api.sam.gov/prod/opportunities/v2/search';
 
+// SAM.gov API limit for records per request
+const MAX_SAM_API_BATCH_SIZE = 1000;
+const DEFAULT_BATCH_SIZE = 100;
+const BATCH_DELAY_MS = 500; // Delay between batches to avoid rate limiting
+
 // Parse command line arguments
 function parseArgs(argv) {
   const args = {};
@@ -159,7 +164,7 @@ function fetchSamData(params) {
 // Fetch all with pagination
 async function fetchAll(args) {
   const allOpportunities = [];
-  const batchSize = Math.min(Number(args.limit) || 100, 1000);
+  const batchSize = Math.min(Number(args.limit) || DEFAULT_BATCH_SIZE, MAX_SAM_API_BATCH_SIZE);
   let start = 0;
   let hasMore = true;
   
@@ -196,7 +201,7 @@ async function fetchAll(args) {
       } else {
         start += batchSize;
         // Delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
       }
     } catch (err) {
       console.error(`Error fetching batch starting at ${start}: ${err.message}`);
