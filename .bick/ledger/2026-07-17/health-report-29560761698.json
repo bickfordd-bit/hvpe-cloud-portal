@@ -1,0 +1,22 @@
+{
+  "id": "health-report-29560761698",
+  "ts": "2026-07-17T06:42:57+00:00",
+  "kind": "health-report",
+  "subject": "daily-health-check",
+  "payload": {
+    "vulnerabilities": {
+      "total": "70",
+      "critical": "3",
+      "high": "30",
+      "moderate": "35",
+      "low": "2"
+    },
+    "build_status": "✅ passing",
+    "coverage_percentage": "0",
+    "lint_errors": "10",
+    "lint_warnings": "75",
+    "bundle_size": "N/A"
+  },
+  "hash": "health-1784270577",
+  "parentId": null
+}
